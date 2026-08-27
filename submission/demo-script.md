@@ -12,6 +12,8 @@
 
 **Visual:** The graph pulses from Moonwell through Multiply and Summon ducks. The failure card appears: **Twelve ducks. One indoor lake.**
 
+**Reference capture:** `screenshots/01-failure-diagnosis.jpg`
+
 **Voiceover:** “This rain spell multiplies before it has a bounded target. It summons twelve ducks and floods the observatory.”
 
 ## 0:18–0:30 — Semantic diagnosis
@@ -38,6 +40,8 @@
 
 **Visual:** The patch card reads **Give the ducks umbrellas** and explicitly shows that the ducks remain preserved.
 
+**Reference capture:** `screenshots/02-constraint-aware-patch.jpg`
+
 **Voiceover:** “The agent searches under that constraint and proposes a versioned patch. It changes nothing until the person approves.”
 
 ## 0:57–1:08 — Apply and verify
@@ -51,6 +55,8 @@
 ## 1:08–1:15 — Close
 
 **Visual:** Hold on **The moonflower blooms**, the sacred duck pin, and the visible tool history.
+
+**Reference capture:** `screenshots/03-successful-recast.jpg`
 
 **Voiceover:** “Hex Machina: graph interfaces let humans and agents negotiate executable intent. Magic is just code with worse documentation.”
 

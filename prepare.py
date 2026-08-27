@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -85,6 +86,46 @@ def load_package() -> tuple[dict, Check]:
     except (json.JSONDecodeError, OSError) as error:
         return {}, Check("package manifest", False, f"invalid package.json: {error}")
     return package, Check("package manifest", True, "package.json parsed")
+
+
+def jpeg_dimensions(data: bytes) -> tuple[int, int]:
+    if len(data) < 4 or data[:2] != b"\xff\xd8":
+        raise ValueError("not a valid JPEG header")
+    offset = 2
+    start_of_frame = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+    while offset + 8 <= len(data):
+        if data[offset] != 0xFF:
+            offset += 1
+            continue
+        marker = data[offset + 1]
+        offset += 2
+        if marker in {0xD8, 0xD9}:
+            continue
+        if offset + 2 > len(data):
+            break
+        segment_length = struct.unpack(">H", data[offset:offset + 2])[0]
+        if segment_length < 2 or offset + segment_length > len(data):
+            break
+        if marker in start_of_frame:
+            height, width = struct.unpack(">HH", data[offset + 3:offset + 7])
+            return width, height
+        offset += segment_length
+    raise ValueError("JPEG dimensions not found")
+
+
+def screenshot_capture_check(relative_path: str, expected_size: tuple[int, int] = (1280, 720)) -> Check:
+    path = ROOT / relative_path
+    try:
+        data = path.read_bytes()
+        width, height = jpeg_dimensions(data)
+    except (OSError, ValueError, struct.error) as error:
+        return Check(f"screenshot {relative_path}", False, str(error))
+    valid = (width, height) == expected_size and len(data) >= 50_000
+    return Check(
+        f"screenshot {relative_path}",
+        valid,
+        f"{width}×{height}, {len(data) // 1024} KiB" if valid else f"expected {expected_size[0]}×{expected_size[1]} JPEG >= 50 KiB; received {width}×{height}, {len(data) // 1024} KiB",
+    )
 
 
 def browser_evidence_check(require_site_tools: bool) -> Check:
@@ -284,6 +325,10 @@ def main() -> int:
         "submission/architecture.md",
         "submission/tool-inventory.md",
         "submission/limitations.md",
+        "submission/screenshots/README.md",
+        "submission/screenshots/01-failure-diagnosis.jpg",
+        "submission/screenshots/02-constraint-aware-patch.jpg",
+        "submission/screenshots/03-successful-recast.jpg",
         "public/og.png",
         "public/favicon.png",
     ):
@@ -295,6 +340,13 @@ def main() -> int:
                 "present" if path.exists() and path.stat().st_size > 0 else "missing or empty",
             )
         )
+
+    for screenshot in (
+        "submission/screenshots/01-failure-diagnosis.jpg",
+        "submission/screenshots/02-constraint-aware-patch.jpg",
+        "submission/screenshots/03-successful-recast.jpg",
+    ):
+        checks.append(screenshot_capture_check(screenshot))
 
     package, package_check = load_package()
     checks.append(package_check)

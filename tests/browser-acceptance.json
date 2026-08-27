@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-08-27T06:38:14-04:00",
+  "verified_at": "2026-08-27T13:27:05-04:00",
   "url": "http://localhost:3000/",
   "browser": "Codex In-app Browser",
   "completed_steps": [
@@ -11,7 +11,8 @@
     "propose_spell_patch",
     "apply_spell_patch",
     "verified_success",
-    "local_console_shared_handler_flow"
+    "local_console_shared_handler_flow",
+    "submission_screenshots_captured"
   ],
   "final_state": "Stable",
   "final_graph_version": 3,
