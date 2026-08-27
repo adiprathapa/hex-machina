@@ -30,7 +30,8 @@ The collaboration is consequential rather than cosmetic: protecting the ducks pr
 - Visible tool activity and patch evidence
 - Keyboard-accessible controls, reduced-motion support, and responsive fallback
 - No OpenAI API key required
+- Experimental two-round Familiar graph network that ranks suspicious runes while leaving the deterministic simulator authoritative
 
 ## Built with
 
-TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test runner, and a small deterministic graph engine.
+TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test runner, a small deterministic graph engine, and an optional frozen-weight message-passing Familiar.

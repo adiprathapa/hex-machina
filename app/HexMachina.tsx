@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RuneNode, SpellGraph, SpellPatch } from "@/src/domain/spell";
+import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolHandlers } from "@/src/tools/handlers";
@@ -212,6 +213,10 @@ export function HexMachina() {
   const selectedNode = graph.nodes.find((node) => node.id === selected);
   const highlightedIds = new Set(activity[0]?.nodeIds ?? []);
   const isSacred = graph.constraints.some((item) => item.targetId === "summon-ducks");
+  const familiarPrediction = useMemo(
+    () => FAMILIAR_GNN_ENABLED && cast && !cast.success ? inferFamiliar(graph, cast) : null,
+    [cast, graph],
+  );
   const stage = cast?.success ? "stable" : patch ? "patch" : isSacred ? "constraint" : cast ? "failure" : "ready";
 
   return (
@@ -361,6 +366,27 @@ export function HexMachina() {
               <p className="section-kicker">Current read</p>
               <p>{cast?.success ? "The graph is stable. Every promise survived the repair." : cast ? "I can see the flood path. Tell me what must survive before I touch the spell." : "Cast first. Good magic begins with evidence."}</p>
             </div>
+          )}
+
+          {familiarPrediction && (
+            <section className="familiar-signal" aria-label="Experimental Familiar graph prediction">
+              <div className="familiar-signal-heading">
+                <div><p className="section-kicker">Experimental graph signal</p><strong>Two-hop suspect ranking</strong></div>
+                <span title="Advisory model; the simulator remains authoritative">Advisory</span>
+              </div>
+              <ol>
+                {familiarPrediction.ranking.map((item, index) => (
+                  <li key={item.nodeId}>
+                    <button type="button" onClick={() => setSelected(item.nodeId)} aria-label={`Inspect ${item.label}, Familiar rank ${index + 1}`}>
+                      <span><b>{index + 1}</b>{item.label}</span>
+                      <strong>{Math.round(item.probability * 100)}%</strong>
+                    </button>
+                    <span className="signal-meter" aria-hidden="true"><i style={{ width: `${Math.round(item.probability * 100)}%` }} /></span>
+                  </li>
+                ))}
+              </ol>
+              <p>Two message-passing rounds suggest where to inspect. The deterministic trace still decides what happened.</p>
+            </section>
           )}
 
           <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting"}</small></div>

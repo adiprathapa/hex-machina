@@ -19,6 +19,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, sacred-constraint handling, and patch preview.
 - `src/tools/handlers.ts`: validated semantic operations independent of the browser adapter.
 - `src/tools/webmcp.ts`: guarded WebMCP registration with narrow schemas and honest annotations.
+- `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
 - `app/HexMachina.tsx`: visual canvas, local fallback controls, visible constraints, patch review, and activity evidence.
 
 ## Mutation protocol
@@ -38,3 +39,7 @@ The scenario contains a fixed seed, stable IDs, sorted serialization, and pure s
 ## Browser compatibility
 
 Registration is feature-detected through `document.modelContext?.registerTool`. When unavailable, the complete guided local console invokes the identical handlers. No OpenAI API key or embedded model call is needed.
+
+## Familiar experiment
+
+After a failed deterministic cast, Moth projects bounded simulator evidence into scalar rune features and performs two directed message-passing rounds over the live graph. A softmax readout ranks three inspection candidates. The model is explicitly advisory, deterministic, dependency-free, and removable with `NEXT_PUBLIC_FAMILIAR_GNN=off`; the simulator and causal trace remain authoritative.

@@ -22,6 +22,8 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);
+  assert.match(client, /Experimental Familiar graph prediction/);
+  assert.match(client, /inferFamiliar\(graph, cast\)/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);

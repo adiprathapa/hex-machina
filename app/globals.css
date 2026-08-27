@@ -697,6 +697,103 @@ kbd {
   font-size: 10px;
 }
 
+.familiar-signal {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(181,161,255,.28);
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(181,161,255,.09), transparent 68%);
+}
+
+.familiar-signal-heading,
+.familiar-signal-heading > div,
+.familiar-signal li button span {
+  min-width: 0;
+}
+
+.familiar-signal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.familiar-signal-heading strong {
+  font-size: 11px;
+}
+
+.familiar-signal-heading > span {
+  padding: 4px 6px;
+  border: 1px solid rgba(181,161,255,.3);
+  border-radius: 999px;
+  color: var(--lilac);
+  font: 600 7px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.familiar-signal ol {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.familiar-signal li button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 0 5px;
+  border: 0;
+  background: transparent;
+  color: #d2d0c8;
+  cursor: pointer;
+  text-align: left;
+}
+
+.familiar-signal li button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.familiar-signal li button b {
+  margin-right: 7px;
+  color: var(--lilac);
+  font: 600 8px/1 var(--font-geist-mono), monospace;
+}
+
+.familiar-signal li button > strong {
+  color: var(--aqua);
+  font: 600 9px/1 var(--font-geist-mono), monospace;
+}
+
+.signal-meter {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  overflow: hidden;
+}
+
+.signal-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lilac), var(--aqua));
+}
+
+.familiar-signal > p {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
 .activity-header {
   display: flex;
   justify-content: space-between;

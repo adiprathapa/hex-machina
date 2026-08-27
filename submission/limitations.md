@@ -11,14 +11,14 @@
 
 The full fallback experience works when the browser does not expose `document.modelContext`. Live Site Tools discovery depends on supported browser configuration and is verified separately from source-level registration tests.
 
-## GNN decision
+## Familiar graph network
 
-The MVP intentionally uses deterministic graph algorithms. A GNN would not be the authoritative simulator or explanation layer. A future optional “Familiar” model could rank the rune most likely to cause an unintended effect across generated spell graphs, while the deterministic simulator remains ground truth.
+The optional Familiar is a tiny frozen-weight message-passing prototype, not a trained general-purpose model. It ranks likely inspection targets only after the deterministic simulator supplies bounded failure evidence. It never changes state, provides causal truth, or replaces the simulator. A future version could train the same interface on generated spell failures.
 
 ## Natural extensions
 
 - Additional authored spell puzzles and rune types
 - Import/export and shareable spell replays
 - Drag-to-compose graph editing
-- A learned Familiar ranking model trained on simulated spell failures
+- A learned Familiar ranking model trained on a larger corpus of generated spell failures
 - Collaborative puzzle authoring

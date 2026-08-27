@@ -53,6 +53,7 @@ Every visible action is also available through a narrow semantic tool. In unsupp
 - `src/simulator/` — cast execution and ordered event traces
 - `src/solver/` — causal diagnosis and constraint-aware repair search
 - `src/tools/` — shared semantic handlers and guarded WebMCP registration
+- `src/familiar/` — optional deterministic message-passing suspect ranking
 - `app/` — the visual spell canvas and local fallback console
 - `tests/` — graph, simulation, repair, and WebMCP contract coverage
 
@@ -69,6 +70,10 @@ The browser application remains the source of truth. WebMCP handlers call the sa
 - `apply_spell_patch`
 
 The tool adapter registers only when `document.modelContext.registerTool` is available. Ordinary browsers retain the complete playable fallback.
+
+## Experimental Familiar
+
+After a failed cast, Moth runs two rounds of frozen-weight message passing over active runes and ranks three likely inspection targets. It is an advisory visualization—not a source of causal truth—and never mutates the graph. Disable it at build time with `NEXT_PUBLIC_FAMILIAR_GNN=off`.
 
 ## Durable build loop
 
