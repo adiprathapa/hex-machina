@@ -133,6 +133,23 @@ test("production browser completes the constraint-preserving spell journey", { t
       if (message.type() === "error") browserErrors.push(`console: ${message.text()}`);
     });
     page.on("pageerror", (error) => browserErrors.push(`page: ${error.message}`));
+    await page.addInitScript(() => {
+      const tools = new Map();
+      Object.defineProperty(window, "__hexWebMCPTools", { value: tools, configurable: true });
+      Object.defineProperty(document, "modelContext", {
+        configurable: true,
+        value: {
+          registerTool(definition, options = {}) {
+            if (tools.has(definition.name)) {
+              return Promise.reject(new DOMException(`Duplicate tool: ${definition.name}`, "InvalidStateError"));
+            }
+            tools.set(definition.name, definition);
+            options.signal?.addEventListener("abort", () => tools.delete(definition.name), { once: true });
+            return Promise.resolve();
+          },
+        },
+      });
+    });
 
     await page.goto(server.url, { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Cast spell/ }).click();
@@ -186,6 +203,51 @@ test("production browser completes the constraint-preserving spell journey", { t
     await moonwell.press("ArrowRight");
     const afterLeft = await moonwell.evaluate((element) => Number.parseFloat(element.style.left));
     assert.equal(afterLeft, beforeLeft + 2, "arrow keys nudge a focused rune by two percent");
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.reload({ waitUntil: "networkidle" });
+    await assertVisible(page.getByText("7 site tools live", { exact: true }), "production WebMCP registration is visible");
+    const registeredNames = await page.evaluate(() => [...window.__hexWebMCPTools.keys()].sort());
+    assert.deepEqual(registeredNames, [
+      "apply_spell_patch",
+      "explain_side_effect",
+      "inspect_spell",
+      "propose_spell_patch",
+      "set_sacred_constraint",
+      "simulate_cast",
+      "trace_effect",
+    ]);
+    const invokeTool = (name, input = {}) => page.evaluate(
+      async ({ toolName, toolInput }) => {
+        const definition = window.__hexWebMCPTools.get(toolName);
+        if (!definition) throw new Error(`Unregistered tool: ${toolName}`);
+        return definition.execute(toolInput, { signal: new AbortController().signal });
+      },
+      { toolName: name, toolInput: input },
+    );
+
+    await invokeTool("inspect_spell");
+    const agentFailure = await invokeTool("simulate_cast");
+    assert.equal(agentFailure.success, false);
+    await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "agent simulation drives the visible failure");
+    await invokeTool("trace_effect", { effectId: "flooded-observatory" });
+    await invokeTool("explain_side_effect", { sideEffectId: "flooded-observatory" });
+    await invokeTool("set_sacred_constraint", {
+      targetId: "summon-ducks",
+      reason: "The ducks are funny. They must remain in the final spell.",
+    });
+    await assertVisible(page.locator(".rune.sacred"), "agent constraint visibly pins the duck rune");
+    const agentProposal = await invokeTool("propose_spell_patch");
+    await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "agent proposal drives the patch preview");
+    const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
+    await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
+    assert.equal(agentApply.verification.success, true);
+    assert.match(await page.locator(".activity-list").innerText(), /inspect_spell[\s\S]*simulate_cast|simulate_cast[\s\S]*inspect_spell/);
+
+    await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });
+    await assertVisible(page.getByText("Side effect detected", { exact: true }), "agent rollback restores visible failure state");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v4/);
+    assert.equal(await page.locator(".rune.sacred").count(), 1, "agent rollback preserves sacred intent");
 
     assert.deepEqual(browserErrors, [], `production browser emitted errors:\n${browserErrors.join("\n")}`);
   } catch (error) {

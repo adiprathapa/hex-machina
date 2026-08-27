@@ -20,7 +20,8 @@
     "mobile_44px_compact_targets",
     "keyboard_rune_nudge",
     "automated_production_browser_journey",
-    "reversible_patch_undo"
+    "reversible_patch_undo",
+    "registered_tools_drive_visible_ui"
   ],
   "final_state": "Stable",
   "final_graph_version": 3,
@@ -36,5 +37,7 @@
     "minimum_compact_target_height_px": 44
   },
   "site_tools_api_available": false,
+  "registered_tool_contract_harness": true,
+  "automated_harness_verified_at": "2026-08-27T19:52:37-04:00",
   "site_tools_note": "The local production page did not expose document.modelContext in this controlled browser session. Abort-scoped registration, runtime validation, and the shared fallback flow are verified; deployed live discovery remains pending."
 }

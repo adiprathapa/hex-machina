@@ -184,6 +184,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "keyboard_rune_nudge",
         "automated_production_browser_journey",
         "reversible_patch_undo",
+        "registered_tools_drive_visible_ui",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []

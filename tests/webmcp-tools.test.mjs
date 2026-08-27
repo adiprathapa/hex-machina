@@ -98,10 +98,12 @@ test("registration lifecycle removes tools before a Strict Mode remount", async 
 test("tool handlers preserve human intent through a verified write", async () => {
   let graph = createMoonflowerScenario();
   const events = [];
+  const presentations = [];
   const handlers = createSpellToolHandlers({
     getGraph: () => graph,
     setGraph: (next) => { graph = next; },
     recordActivity(tool, detail) { events.push({ tool, detail }); },
+    presentResult(event) { presentations.push(event); },
   });
 
   const inspection = await handlers.inspect_spell({ nodeIds: ["multiply", "summon-ducks"] });
@@ -146,6 +148,16 @@ test("tool handlers preserve human intent through a verified write", async () =>
     ]),
   );
   assert.equal(events.some((event) => event.tool === "apply_spell_patch"), true);
+  assert.deepEqual(
+    presentations.map((event) => event.tool),
+    [
+      "simulate_cast",
+      "set_sacred_constraint",
+      "propose_spell_patch",
+      "apply_spell_patch",
+      "apply_spell_patch",
+    ],
+  );
 });
 
 test("tool handlers reject malformed, unknown, and stale inputs without mutation", async () => {

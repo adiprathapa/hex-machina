@@ -12,7 +12,7 @@ import {
 import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
-import { createSpellToolHandlers } from "@/src/tools/handlers";
+import { createSpellToolHandlers, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
 
 interface Activity {
@@ -101,6 +101,21 @@ export function HexMachina() {
     if (nodeIds[0]) setSelected(nodeIds[0]);
   }, []);
 
+  const presentToolResult = useCallback((event: SpellToolPresentation) => {
+    if (event.tool === "simulate_cast") {
+      setCast(event.simulation);
+      setPatch(null);
+    } else if (event.tool === "set_sacred_constraint") {
+      setPatch(null);
+    } else if (event.tool === "propose_spell_patch") {
+      setPatch(event.patches[0] ?? null);
+    } else {
+      setCast(event.verification);
+      setPatch(null);
+      setRevertToken(event.revertToken ?? null);
+    }
+  }, []);
+
   const handlers = useMemo(
     // The closures read graphRef only when a tool executes, never during render.
     // eslint-disable-next-line react-hooks/refs
@@ -114,8 +129,9 @@ export function HexMachina() {
         setConnectionDraft(null);
       },
       recordActivity,
+      presentResult: presentToolResult,
     }),
-    [recordActivity],
+    [presentToolResult, recordActivity],
   );
 
   useEffect(() => {
@@ -135,9 +151,8 @@ export function HexMachina() {
   }, [handlers]);
 
   const castSpell = async () => {
-    setPatch(null);
     setRevertToken(null);
-    setCast(await handlers.simulate_cast());
+    await handlers.simulate_cast();
   };
 
   const diagnose = async () => {
@@ -154,24 +169,17 @@ export function HexMachina() {
   };
 
   const proposeRepair = async () => {
-    const result = await handlers.propose_spell_patch();
-    setPatch(result.patches[0]?.predictedOutcome ? result.patches[0] : result.patches[0] ?? null);
+    await handlers.propose_spell_patch();
   };
 
   const applyRepair = async () => {
     if (!patch) return;
-    const result = await handlers.apply_spell_patch({ patchId: patch.id });
-    setCast(result.verification);
-    setRevertToken(result.action === "apply" ? result.revertToken : null);
-    setPatch(null);
+    await handlers.apply_spell_patch({ patchId: patch.id });
   };
 
   const undoRepair = async () => {
     if (!revertToken) return;
     const result = await handlers.apply_spell_patch({ revertToken });
-    setCast(result.verification);
-    setPatch(null);
-    setRevertToken(null);
     setConsoleOutput(JSON.stringify(result, null, 2));
   };
 
@@ -278,10 +286,7 @@ export function HexMachina() {
       } else if (tool === "trace_effect") {
         result = await handlers.trace_effect({ effectId: "flooded-observatory" });
       } else if (tool === "simulate_cast") {
-        const simulation = await handlers.simulate_cast();
-        setCast(simulation);
-        setPatch(null);
-        result = simulation;
+        result = await handlers.simulate_cast();
       } else if (tool === "explain_side_effect") {
         result = await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
       } else if (tool === "set_sacred_constraint") {
@@ -289,19 +294,11 @@ export function HexMachina() {
           targetId: "summon-ducks",
           reason: "The ducks are funny. They must remain in the final spell.",
         });
-        setPatch(null);
-        setRevertToken(null);
       } else if (tool === "propose_spell_patch") {
-        const proposal = await handlers.propose_spell_patch();
-        setPatch(proposal.patches[0] ?? null);
-        result = proposal;
+        result = await handlers.propose_spell_patch();
       } else {
         if (!patch) throw new Error("Propose a current patch before applying it.");
-        const applied = await handlers.apply_spell_patch({ patchId: patch.id });
-        setCast(applied.verification);
-        setRevertToken(applied.action === "apply" ? applied.revertToken : null);
-        setPatch(null);
-        result = applied;
+        result = await handlers.apply_spell_patch({ patchId: patch.id });
       }
       setConsoleOutput(JSON.stringify(result, null, 2));
     } catch (error) {

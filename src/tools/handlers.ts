@@ -3,8 +3,9 @@ import {
   cloneGraph,
   type SacredConstraint,
   type SpellGraph,
+  type SpellPatch,
 } from "../domain/spell.ts";
-import { simulateCast } from "../simulator/cast.ts";
+import { simulateCast, type CastResult } from "../simulator/cast.ts";
 import { explainFlood, previewPatch, proposePatches } from "../solver/repair.ts";
 
 export const MAX_INSPECT_NODES = 12;
@@ -36,7 +37,18 @@ export interface SpellToolContext {
   getGraph(): SpellGraph;
   setGraph(graph: SpellGraph): void;
   recordActivity(tool: string, detail: string, nodeIds?: string[]): void;
+  presentResult?(event: SpellToolPresentation): void;
 }
+
+export type SpellToolPresentation =
+  | { tool: "simulate_cast"; simulation: CastResult }
+  | { tool: "set_sacred_constraint" }
+  | { tool: "propose_spell_patch"; patches: SpellPatch[] }
+  | {
+      tool: "apply_spell_patch";
+      verification: CastResult;
+      revertToken?: string;
+    };
 
 function requireNode(graph: SpellGraph, nodeId: string) {
   if (!graph.nodes.some((node) => node.id === nodeId)) {
@@ -100,6 +112,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       requireToolInput(input, "simulate_cast", []);
       const result = simulateCast(context.getGraph());
       context.recordActivity("simulate_cast", result.summary, result.events.map((event) => event.nodeId));
+      context.presentResult?.({ tool: "simulate_cast", simulation: result });
       return result;
     },
     explain_side_effect: async (input: unknown = {}) => {
@@ -140,6 +153,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       next.version += 1;
       context.setGraph(next);
       context.recordActivity("set_sacred_constraint", !preserve ? `Released ${targetId}.` : `Protected ${targetId}: ${reason}`, [targetId]);
+      context.presentResult?.({ tool: "set_sacred_constraint" });
       return { graphVersion: next.version, before: before.constraints, after: next.constraints };
     },
     propose_spell_patch: async (input: unknown = {}) => {
@@ -155,6 +169,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         return { ...patch, predictedOutcome };
       });
       context.recordActivity("propose_spell_patch", patches.length ? `Prepared ${patches.length} constraint-aware patch.` : "No patch is needed.");
+      context.presentResult?.({ tool: "propose_spell_patch", patches });
       return { graphVersion: graph.version, patches };
     },
     apply_spell_patch: async (input: unknown = {}) => {
@@ -191,6 +206,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           `Reverted the agent patch. Spell restored as v${restored.version}.`,
           restored.constraints.map((constraint) => constraint.targetId),
         );
+        context.presentResult?.({ tool: "apply_spell_patch", verification });
         return {
           action: "revert" as const,
           reverted: true,
@@ -221,6 +237,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       };
       const verification = simulateCast(next);
       context.recordActivity("apply_spell_patch", `Applied ${patch.title}. ${verification.summary}`, patch.operations.flatMap((operation) => operation.op === "add_edge" ? [operation.edge.from, operation.edge.to] : operation.op === "activate_node" ? [operation.nodeId] : []));
+      context.presentResult?.({ tool: "apply_spell_patch", verification, revertToken });
       return {
         action: "apply" as const,
         before: { version: before.version, edgeCount: before.edges.length },

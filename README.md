@@ -45,7 +45,7 @@ The requirement-by-requirement evidence and exact release condition are tracked 
 4. Preview and apply the smallest valid structural patch.
 5. Recast: umbrella-equipped ducks water the Moonflower while the room stays dry.
 
-Every visible action is also available through a narrow semantic tool. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
+Every visible action is also available through a narrow semantic tool. Tool results flow through one shared presentation channel, so calls from a browser agent visibly drive the same cast spectacle, causal highlights, constraint pins, patch preview, and verification state as local controls. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
 Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
 
 ## Judge journey
