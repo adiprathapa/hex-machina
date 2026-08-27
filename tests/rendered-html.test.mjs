@@ -32,5 +32,13 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /button:focus-visible/);
+  const mobileStart = css.indexOf("@media (max-width: 760px)");
+  const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)");
+  assert.notEqual(mobileStart, -1);
+  assert.equal(reducedMotionStart > mobileStart, true);
+  const mobileCss = css.slice(mobileStart, reducedMotionStart);
+  assert.match(mobileCss, /\.mission-chip\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*center;/);
+  assert.doesNotMatch(mobileCss, /\.canvas-panel\s*\{\s*order:\s*-1/);
+  assert.match(mobileCss, /\.tool-console-grid button,[\s\S]*?\.connection-editor select\s*\{\s*min-height:\s*44px;/);
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });

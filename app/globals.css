@@ -1118,19 +1118,30 @@ kbd {
 
 @media (max-width: 760px) {
   .machina { padding: 10px; overflow: auto; }
-  .topbar { padding-inline: 4px; }
+  .topbar { grid-template-columns: 1fr auto; padding-inline: 4px; }
+  .mission-chip {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+  }
   .site-tool-state { font-size: 0; }
   .workspace { display: flex; flex-direction: column; }
   .brief-panel { border-right: 0; }
   .brief-panel h2 { max-width: none; }
   .controls { margin-top: 0; }
-  .canvas-panel { order: -1; margin: 0; }
+  .canvas-panel { margin: 0; }
   .spell-canvas { min-height: 570px; }
   .rune { width: 98px; grid-template-columns: 28px 1fr; padding: 7px; }
   .rune-glyph { width: 27px; height: 27px; font-size: 13px; }
   .rune-copy strong { font-size: 9px; }
   .activity-list { grid-template-columns: 1fr; }
   .tool-console-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tool-console-grid button,
+  .familiar-signal li button,
+  .connection-editor button,
+  .connection-editor select { min-height: 44px; }
   .node-inspector { grid-template-columns: 34px 92px 1fr; }
 }
 

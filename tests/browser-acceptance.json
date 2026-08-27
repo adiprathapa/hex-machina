@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
-  "verified_at": "2026-08-27T13:27:05-04:00",
-  "url": "http://localhost:3000/",
-  "browser": "Codex In-app Browser",
+  "schema_version": 2,
+  "verified_at": "2026-08-27T15:23:05-04:00",
+  "url": "http://127.0.0.1:4174/",
+  "browser": "Codex In-app Browser, local production build",
   "completed_steps": [
     "cast_failure",
     "trace_effect",
@@ -12,13 +12,27 @@
     "apply_spell_patch",
     "verified_success",
     "local_console_shared_handler_flow",
-    "submission_screenshots_captured"
+    "submission_screenshots_captured",
+    "production_build_canonical_flow",
+    "mobile_objective_visible",
+    "mobile_brief_before_canvas",
+    "mobile_no_horizontal_overflow",
+    "mobile_44px_compact_targets",
+    "keyboard_rune_nudge"
   ],
   "final_state": "Stable",
   "final_graph_version": 3,
   "final_outcome": "The moonflower blooms",
   "sacred_constraints_visible": 1,
   "console_errors": 0,
+  "responsive_evidence": {
+    "viewport": "390x844",
+    "objective_visible": true,
+    "brief_top_px": 184,
+    "canvas_top_px": 763,
+    "horizontal_overflow": false,
+    "minimum_compact_target_height_px": 44
+  },
   "site_tools_api_available": false,
-  "site_tools_note": "The controlled local browser session did not expose document.modelContext. Guarded registration and the seven-button fallback console were verified through the complete constraint-preserving repair flow; live discovery remains pending."
+  "site_tools_note": "The local production page did not expose document.modelContext in this controlled browser session. Abort-scoped registration, runtime validation, and the shared fallback flow are verified; deployed live discovery remains pending."
 }

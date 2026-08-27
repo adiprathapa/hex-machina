@@ -176,6 +176,12 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "propose_spell_patch",
         "apply_spell_patch",
         "verified_success",
+        "production_build_canonical_flow",
+        "mobile_objective_visible",
+        "mobile_brief_before_canvas",
+        "mobile_no_horizontal_overflow",
+        "mobile_44px_compact_targets",
+        "keyboard_rune_nudge",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []

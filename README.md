@@ -71,6 +71,8 @@ The browser application remains the source of truth. WebMCP handlers call the sa
 
 The canvas is semantically editable as well as draggable. Select a rune, choose **Link from rune**, then select one of the glowing compatible targets. The editor exposes the valid edge category, rejects invalid or duplicate connections, activates linked workshop runes, and advances the graph version atomically. Reset restores the canonical judge scenario.
 
+On small screens the objective and guided investigation remain ahead of the graph, with no horizontal overflow and touch-sized semantic controls. Keyboard users can move focused runes with the arrow keys throughout the same responsive layout.
+
 ## Site tools
 
 - `inspect_spell`
