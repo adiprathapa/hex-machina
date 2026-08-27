@@ -266,6 +266,24 @@ def main() -> int:
             )
         )
 
+    for required in (
+        "submission/description.md",
+        "submission/demo-script.md",
+        "submission/architecture.md",
+        "submission/tool-inventory.md",
+        "submission/limitations.md",
+        "public/og.png",
+        "public/favicon.png",
+    ):
+        path = ROOT / required
+        checks.append(
+            Check(
+                f"deliverable {required}",
+                path.exists() and path.stat().st_size > 0,
+                "present" if path.exists() and path.stat().st_size > 0 else "missing or empty",
+            )
+        )
+
     package, package_check = load_package()
     checks.append(package_check)
     files = source_files()
