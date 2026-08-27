@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-08-26T22:46:00-04:00",
+  "verified_at": "2026-08-27T06:38:14-04:00",
   "url": "http://localhost:3000/",
   "browser": "Codex In-app Browser",
   "completed_steps": [
@@ -10,7 +10,8 @@
     "set_sacred_constraint",
     "propose_spell_patch",
     "apply_spell_patch",
-    "verified_success"
+    "verified_success",
+    "local_console_shared_handler_flow"
   ],
   "final_state": "Stable",
   "final_graph_version": 3,
@@ -18,5 +19,5 @@
   "sacred_constraints_visible": 1,
   "console_errors": 0,
   "site_tools_api_available": false,
-  "site_tools_note": "The controlled local browser session did not expose document.modelContext. Guarded registration and local fallback were verified; live discovery remains pending."
+  "site_tools_note": "The controlled local browser session did not expose document.modelContext. Guarded registration and the seven-button fallback console were verified through the complete constraint-preserving repair flow; live discovery remains pending."
 }

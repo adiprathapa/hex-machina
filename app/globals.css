@@ -750,6 +750,135 @@ kbd {
   line-height: 1.4;
 }
 
+.tool-console {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(255,255,255,.018);
+  overflow: hidden;
+}
+
+.tool-console summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tool-console summary::-webkit-details-marker {
+  display: none;
+}
+
+.tool-console summary strong,
+.tool-console summary small {
+  display: block;
+}
+
+.tool-console summary strong {
+  color: #d2d0c8;
+  font: 600 9px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tool-console summary small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.tool-console[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.tool-console > p {
+  margin: 0;
+  padding: 10px 12px 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.tool-console-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 10px 12px 12px;
+}
+
+.tool-console-grid button {
+  min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255,255,255,.025);
+  color: #d2d0c8;
+  cursor: pointer;
+}
+
+.tool-console-grid button:hover:not(:disabled) {
+  border-color: rgba(181,161,255,.5);
+  background: rgba(181,161,255,.07);
+}
+
+.tool-console-grid button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.tool-console-grid button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.tool-console-grid button small {
+  color: var(--muted);
+  font: 600 7px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.console-result-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 600 8px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.console-result-header small {
+  color: var(--aqua);
+  font-size: 8px;
+}
+
+.tool-console pre {
+  max-height: 210px;
+  margin: 0;
+  padding: 11px 12px 13px;
+  overflow: auto;
+  border-top: 1px solid rgba(255,255,255,.05);
+  color: #b7c9c3;
+  background: rgba(0,0,0,.2);
+  font: 500 8px/1.5 var(--font-geist-mono), monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @keyframes edge-pulse {
   to { opacity: .45; }
 }
@@ -760,6 +889,7 @@ kbd {
   .workspace { grid-template-columns: 220px 1fr; }
   .familiar-panel { grid-column: 1 / -1; border: 1px solid var(--line); margin-top: 18px; }
   .activity-list { grid-template-columns: repeat(3, 1fr); }
+  .tool-console-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .spell-canvas { min-height: 500px; }
 }
 
@@ -777,6 +907,7 @@ kbd {
   .rune-glyph { width: 27px; height: 27px; font-size: 13px; }
   .rune-copy strong { font-size: 9px; }
   .activity-list { grid-template-columns: 1fr; }
+  .tool-console-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .node-inspector { grid-template-columns: 34px 100px 1fr; }
 }
 

@@ -45,6 +45,10 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   const applyTool = definitions.find((item) => item.name === "apply_spell_patch");
   assert.deepEqual(applyTool.inputSchema.required, ["patchId"]);
   assert.equal(applyTool.inputSchema.properties.patchId.type, "string");
+  const inspectTool = definitions.find((item) => item.name === "inspect_spell");
+  const inspectNodeIds = inspectTool.inputSchema.properties.nodeIds;
+  assert.equal(inspectNodeIds.maxItems, 12);
+  assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
 });
 
 test("tool handlers preserve human intent through a verified write", async () => {

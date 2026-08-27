@@ -19,6 +19,25 @@ interface NodePosition {
   y: number;
 }
 
+type ConsoleTool =
+  | "inspect_spell"
+  | "trace_effect"
+  | "simulate_cast"
+  | "explain_side_effect"
+  | "set_sacred_constraint"
+  | "propose_spell_patch"
+  | "apply_spell_patch";
+
+const consoleTools: Array<{ name: ConsoleTool; label: string; mutates: boolean }> = [
+  { name: "inspect_spell", label: "Inspect", mutates: false },
+  { name: "trace_effect", label: "Trace", mutates: false },
+  { name: "simulate_cast", label: "Simulate", mutates: false },
+  { name: "explain_side_effect", label: "Explain", mutates: false },
+  { name: "set_sacred_constraint", label: "Protect ducks", mutates: true },
+  { name: "propose_spell_patch", label: "Propose", mutates: false },
+  { name: "apply_spell_patch", label: "Apply patch", mutates: true },
+];
+
 function initialPositions(graph: SpellGraph): Record<string, NodePosition> {
   return Object.fromEntries(graph.nodes.map((node) => [node.id, { x: node.x, y: node.y }]));
 }
@@ -47,6 +66,8 @@ export function HexMachina() {
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
   const [dragging, setDragging] = useState<string | null>(null);
   const [mcpReady, setMcpReady] = useState(false);
+  const [consoleOutput, setConsoleOutput] = useState("Select a tool to inspect its structured result.");
+  const [consoleBusy, setConsoleBusy] = useState<ConsoleTool | null>(null);
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef<string | null>(null);
@@ -120,6 +141,8 @@ export function HexMachina() {
     setPositions(initialPositions(next));
     setDragging(null);
     draggingRef.current = null;
+    setConsoleOutput("Lesson reset. Select a tool to inspect graph v1.");
+    setConsoleBusy(null);
   };
 
   const moveNode = useCallback((nodeId: string, x: number, y: number) => {
@@ -143,6 +166,48 @@ export function HexMachina() {
     draggingRef.current = null;
     setDragging(null);
   }, []);
+
+  const runConsoleTool = async (tool: ConsoleTool) => {
+    setConsoleBusy(tool);
+    try {
+      let result: unknown;
+      if (tool === "inspect_spell") {
+        result = await handlers.inspect_spell();
+      } else if (tool === "trace_effect") {
+        result = await handlers.trace_effect({ effectId: "flooded-observatory" });
+      } else if (tool === "simulate_cast") {
+        const simulation = await handlers.simulate_cast();
+        setCast(simulation);
+        setPatch(null);
+        result = simulation;
+      } else if (tool === "explain_side_effect") {
+        result = await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
+      } else if (tool === "set_sacred_constraint") {
+        result = await handlers.set_sacred_constraint({
+          targetId: "summon-ducks",
+          reason: "The ducks are funny. They must remain in the final spell.",
+        });
+        setPatch(null);
+      } else if (tool === "propose_spell_patch") {
+        const proposal = await handlers.propose_spell_patch();
+        setPatch(proposal.patches[0] ?? null);
+        result = proposal;
+      } else {
+        if (!patch) throw new Error("Propose a current patch before applying it.");
+        const applied = await handlers.apply_spell_patch({ patchId: patch.id });
+        setCast(applied.verification);
+        setPatch(null);
+        result = applied;
+      }
+      setConsoleOutput(JSON.stringify(result, null, 2));
+    } catch (error) {
+      setConsoleOutput(JSON.stringify({
+        error: error instanceof Error ? error.message : "Tool execution failed.",
+      }, null, 2));
+    } finally {
+      setConsoleBusy(null);
+    }
+  };
 
   const selectedNode = graph.nodes.find((node) => node.id === selected);
   const highlightedIds = new Set(activity[0]?.nodeIds ?? []);
@@ -305,6 +370,33 @@ export function HexMachina() {
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
             ))}
           </div>
+
+          <details className="tool-console">
+            <summary>
+              <span><strong>Local tool console</strong><small>Same handlers · structured JSON</small></span>
+              <span aria-hidden="true">⌄</span>
+            </summary>
+            <p>Invoke the seven semantic tools directly when browser Site Tools are unavailable.</p>
+            <div className="tool-console-grid" aria-label="Semantic tool console">
+              {consoleTools.map((tool) => (
+                <button
+                  key={tool.name}
+                  type="button"
+                  onClick={() => runConsoleTool(tool.name)}
+                  disabled={consoleBusy !== null || (tool.name === "apply_spell_patch" && !patch)}
+                  title={tool.name}
+                >
+                  <span>{tool.label}</span>
+                  <small>{tool.mutates ? "Write" : "Read"}</small>
+                </button>
+              ))}
+            </div>
+            <div className="console-result-header">
+              <span>Structured result</span>
+              <small>{consoleBusy ? `Running ${consoleBusy}` : `Graph v${graph.version}`}</small>
+            </div>
+            <pre aria-live="polite" aria-label="Tool result JSON">{consoleOutput}</pre>
+          </details>
         </aside>
       </section>
     </main>

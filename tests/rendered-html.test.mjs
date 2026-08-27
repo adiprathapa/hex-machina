@@ -18,6 +18,10 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /The ducks are funny\. They stay\./);
   assert.match(client, /Drag runes to rearrange/);
   assert.match(client, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
+  assert.match(client, /Same handlers · structured JSON/);
+  assert.match(client, /aria-label="Semantic tool console"/);
+  assert.match(client, /handlers\.inspect_spell/);
+  assert.match(client, /handlers\.apply_spell_patch/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
