@@ -87,6 +87,7 @@ On small screens the objective and guided investigation remain ahead of the grap
 
 The tool adapter registers only when `document.modelContext.registerTool` is available. Ordinary browsers retain the complete playable fallback.
 Registrations are scoped to the page lifecycle with abort cleanup, and the shared handlers revalidate every runtime argument rather than assuming that a browser or TypeScript has enforced the JSON schema.
+The targeted experimental API surface and evidence are recorded in the dated [`submission/webmcp-conformance.md`](submission/webmcp-conformance.md) snapshot.
 
 ## Experimental Familiar
 

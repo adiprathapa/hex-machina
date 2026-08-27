@@ -274,6 +274,8 @@ def script_check(
 
 def static_checks(files: list[Path], combined: str) -> list[Check]:
     relative_files = [str(path.relative_to(ROOT)) for path in files]
+    adapter_path = ROOT / "src" / "tools" / "webmcp.ts"
+    adapter_text = adapter_path.read_text(encoding="utf-8") if adapter_path.exists() else ""
     found_tools = {tool for tool in REQUIRED_TOOLS if tool in combined}
     missing_tools = sorted(REQUIRED_TOOLS - found_tools)
 
@@ -283,7 +285,12 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
     feature_detection = bool(
         re.search(r"document\.modelContext\??\.registerTool|typeof\s+document\.modelContext", combined)
     )
-    read_only_marker = "readOnlyHint" in combined
+    standard_annotations = all(
+        marker in adapter_text for marker in ("readOnlyHint", "untrustedContentHint")
+    ) and "destructiveHint" not in adapter_text
+    execution_cancellation = all(
+        marker in combined for marker in ("WebMCPExecutionOptions", "signal.aborted", "AbortError")
+    )
     registration_lifecycle = all(
         marker in combined
         for marker in ("new AbortController()", "registration.signal", "registration.abort()")
@@ -327,8 +334,13 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         ),
         Check(
             "tool safety annotations",
-            read_only_marker,
-            "readOnlyHint detected" if read_only_marker else "readOnlyHint not detected",
+            standard_annotations,
+            "current read-only and trusted-output annotations detected" if standard_annotations else "current standard annotations are incomplete or include legacy fields",
+        ),
+        Check(
+            "WebMCP execution cancellation",
+            execution_cancellation,
+            "pre-cancelled calls fail before handler execution" if execution_cancellation else "execution AbortSignal is not guarded",
         ),
         Check(
             "WebMCP registration lifecycle",
@@ -373,6 +385,7 @@ def main() -> int:
         "submission/demo-script.md",
         "submission/architecture.md",
         "submission/acceptance-matrix.md",
+        "submission/webmcp-conformance.md",
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",

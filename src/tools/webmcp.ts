@@ -20,7 +20,6 @@ declare global {
         inputSchema: Record<string, unknown>;
         annotations?: {
           readOnlyHint?: boolean;
-          destructiveHint?: boolean;
           untrustedContentHint?: boolean;
         };
         execute(input: unknown, options?: WebMCPExecutionOptions): Promise<unknown>;
@@ -31,6 +30,19 @@ declare global {
 
 const emptySchema = { type: "object", properties: {}, additionalProperties: false };
 const moonflowerRuneIds = createMoonflowerScenario().nodes.map((node) => node.id);
+const trustedReadAnnotations = { readOnlyHint: true, untrustedContentHint: false };
+const trustedWriteAnnotations = { readOnlyHint: false, untrustedContentHint: false };
+
+function withExecutionSignal<T>(handler: (input: unknown) => Promise<T>) {
+  return (input: unknown, options?: WebMCPExecutionOptions) => {
+    if (options?.signal.aborted) {
+      return Promise.reject(
+        options.signal.reason ?? new DOMException("Tool execution was cancelled", "AbortError"),
+      );
+    }
+    return handler(input);
+  };
+}
 
 export async function registerWebMCPTools(
   handlers: SpellToolHandlers,
@@ -57,6 +69,7 @@ export async function registerWebMCPTools(
         properties: {
           nodeIds: {
             type: "array",
+            description: "Optional unique rune IDs to include; omit to inspect the complete spell.",
             items: {
               type: "string",
               enum: moonflowerRuneIds,
@@ -67,8 +80,8 @@ export async function registerWebMCPTools(
         },
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: true },
-      execute: handlers.inspect_spell,
+      annotations: trustedReadAnnotations,
+      execute: withExecutionSignal(handlers.inspect_spell),
     },
     {
       name: "trace_effect",
@@ -76,19 +89,25 @@ export async function registerWebMCPTools(
       description: "Trace the bounded causal path responsible for a spell effect or current failure.",
       inputSchema: {
         type: "object",
-        properties: { effectId: { type: "string", enum: ["flooded-observatory"] } },
+        properties: {
+          effectId: {
+            type: "string",
+            description: "The known effect to trace; defaults to the current observatory flood.",
+            enum: ["flooded-observatory"],
+          },
+        },
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: true },
-      execute: handlers.trace_effect,
+      annotations: trustedReadAnnotations,
+      execute: withExecutionSignal(handlers.trace_effect),
     },
     {
       name: "simulate_cast",
       title: "Simulate cast",
       description: "Simulate the current spell without mutating editor state and return an ordered event trace.",
       inputSchema: emptySchema,
-      annotations: { readOnlyHint: true },
-      execute: handlers.simulate_cast,
+      annotations: trustedReadAnnotations,
+      execute: withExecutionSignal(handlers.simulate_cast),
     },
     {
       name: "explain_side_effect",
@@ -96,12 +115,18 @@ export async function registerWebMCPTools(
       description: "Explain a side effect from the smallest responsible spell subgraph.",
       inputSchema: {
         type: "object",
-        properties: { sideEffectId: { type: "string", enum: ["flooded-observatory"] } },
+        properties: {
+          sideEffectId: {
+            type: "string",
+            description: "The side-effect identifier returned by simulate_cast.",
+            enum: ["flooded-observatory"],
+          },
+        },
         required: ["sideEffectId"],
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: true },
-      execute: handlers.explain_side_effect,
+      annotations: trustedReadAnnotations,
+      execute: withExecutionSignal(handlers.explain_side_effect),
     },
     {
       name: "set_sacred_constraint",
@@ -110,23 +135,35 @@ export async function registerWebMCPTools(
       inputSchema: {
         type: "object",
         properties: {
-          targetId: { type: "string", enum: ["summon-ducks"] },
-          reason: { type: "string", minLength: 1, maxLength: 180 },
-          preserve: { type: "boolean" },
+          targetId: {
+            type: "string",
+            description: "The rune whose meaning the human wants to preserve.",
+            enum: ["summon-ducks"],
+          },
+          reason: {
+            type: "string",
+            description: "A short human-authored explanation of why this rune matters.",
+            minLength: 1,
+            maxLength: 180,
+          },
+          preserve: {
+            type: "boolean",
+            description: "True to add or update the constraint; false to release it.",
+          },
         },
         required: ["targetId", "reason"],
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: false, destructiveHint: false },
-      execute: handlers.set_sacred_constraint,
+      annotations: trustedWriteAnnotations,
+      execute: withExecutionSignal(handlers.set_sacred_constraint),
     },
     {
       name: "propose_spell_patch",
       title: "Propose spell patch",
       description: "Search for ranked spell repairs under the current sacred constraints without changing the graph.",
       inputSchema: emptySchema,
-      annotations: { readOnlyHint: true },
-      execute: handlers.propose_spell_patch,
+      annotations: trustedReadAnnotations,
+      execute: withExecutionSignal(handlers.propose_spell_patch),
     },
     {
       name: "apply_spell_patch",
@@ -137,10 +174,12 @@ export async function registerWebMCPTools(
         properties: {
           patchId: {
             type: "string",
+            description: "A current patch ID returned by propose_spell_patch.",
             pattern: "^patch-(umbrella|direct)-v[0-9]+$",
           },
           revertToken: {
             type: "string",
+            description: "The one-use token returned by the latest unchanged patch application.",
             pattern: "^revert-patch-(umbrella|direct)-v[0-9]+-after-v[0-9]+$",
           },
         },
@@ -150,8 +189,8 @@ export async function registerWebMCPTools(
         ],
         additionalProperties: false,
       },
-      annotations: { readOnlyHint: false, destructiveHint: false },
-      execute: handlers.apply_spell_patch,
+      annotations: trustedWriteAnnotations,
+      execute: withExecutionSignal(handlers.apply_spell_patch),
     },
   ];
 

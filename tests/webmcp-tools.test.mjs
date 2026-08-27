@@ -45,6 +45,8 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.equal(readOnly.includes("simulate_cast"), true);
   assert.equal(readOnly.includes("propose_spell_patch"), true);
   assert.equal(readOnly.includes("apply_spell_patch"), false);
+  assert.equal(definitions.every((item) => item.annotations?.untrustedContentHint === false), true);
+  assert.equal(definitions.every((item) => !("destructiveHint" in item.annotations)), true);
   assert.equal(definitions.every((item) => item.inputSchema.additionalProperties === false), true);
   const applyTool = definitions.find((item) => item.name === "apply_spell_patch");
   assert.deepEqual(applyTool.inputSchema.oneOf, [
@@ -56,7 +58,21 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   const inspectTool = definitions.find((item) => item.name === "inspect_spell");
   const inspectNodeIds = inspectTool.inputSchema.properties.nodeIds;
   assert.equal(inspectNodeIds.maxItems, 12);
+  assert.equal(typeof inspectNodeIds.description, "string");
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
+  assert.equal(
+    definitions.flatMap((item) => Object.values(item.inputSchema.properties)).every(
+      (property) => typeof property.description === "string" && property.description.length > 0,
+    ),
+    true,
+  );
+
+  const cancelled = new AbortController();
+  cancelled.abort(new Error("cancelled before execution"));
+  await assert.rejects(
+    definitions.find((item) => item.name === "simulate_cast").execute({}, { signal: cancelled.signal }),
+    /cancelled before execution/,
+  );
 });
 
 test("registration lifecycle removes tools before a Strict Mode remount", async () => {

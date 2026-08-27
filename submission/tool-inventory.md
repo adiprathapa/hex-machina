@@ -16,7 +16,8 @@
 - Every handler independently validates the runtime input object, allowed fields, primitive types, collection bounds, and known IDs; browser-side schema enforcement is not trusted.
 - Scenario IDs use explicit enums or narrow patterns.
 - Read tools declare `readOnlyHint: true`.
-- Writes declare `readOnlyHint: false` and `destructiveHint: false`.
+- Every tool declares the current standard annotations explicitly: reads use `readOnlyHint: true`, writes use `readOnlyHint: false`, and deterministic application-owned outputs use `untrustedContentHint: false`.
+- Registered callbacks reject already-cancelled executions before invoking shared application logic.
 - Agent-supplied graph operations are never accepted.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
 - Patch applications return one-use revert tokens; rollback fails closed after any intervening graph mutation and never discards the human's sacred constraint.
