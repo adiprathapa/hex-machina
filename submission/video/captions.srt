@@ -1,0 +1,34 @@
+1
+00:00:00,000 --> 00:00:08,000
+Hex Machina is a cooperative spell debugger.
+The spell is an executable graph shared by a person and their agent.
+
+2
+00:00:08,000 --> 00:00:18,000
+This spell should water a rare Moonflower.
+Instead, twelve lunar ducks flood the observatory.
+
+3
+00:00:18,000 --> 00:00:30,000
+Moth suggests suspicious runes. WebMCP tools inspect the exact graph
+and trace the responsible path. The simulator remains authoritative.
+
+4
+00:00:30,000 --> 00:00:42,000
+The human contributes taste: “The ducks are funny.”
+They become sacred, so deleting them is no longer valid.
+
+5
+00:00:42,000 --> 00:00:57,000
+The agent proposes umbrellas and redirects the rain.
+The versioned diff changes nothing until the person approves.
+
+6
+00:00:57,000 --> 00:01:08,000
+The application validates and applies the patch atomically.
+The recast is Stable: the room is dry and the ducks remain.
+
+7
+00:01:08,000 --> 00:01:15,000
+Humans and agents negotiate executable intent—not pixels.
+Magic is just code with worse documentation.

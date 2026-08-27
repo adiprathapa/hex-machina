@@ -52,6 +52,8 @@ Every visible action is also available through a narrow semantic tool. In unsupp
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
+The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages that verified journey as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+
 ## Architecture
 
 - `src/domain/` — typed graph schema, validation, stable serialization, atomic patches
@@ -63,6 +65,7 @@ The complete submission capture set covers the [failure diagnosis](submission/sc
 - `app/` — the visual spell canvas and local fallback console
 - `tests/` — graph, simulation, repair, and WebMCP contract coverage
 - `submission/screenshots/` — verified 1280×720 judge-journey evidence
+- `submission/video/` — reproducible narrated demo, captions, and media evidence
 
 The browser application remains the source of truth. WebMCP handlers call the same domain functions used by the local interface; the agent never owns graph state or invariant enforcement.
 

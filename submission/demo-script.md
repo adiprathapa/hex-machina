@@ -1,5 +1,9 @@
 # Hex Machina — 75-second demo script
 
+**Rendered submission video:** [`video/hex-machina-demo.mp4`](video/hex-machina-demo.mp4)
+
+**Accessible captions:** [`video/captions.srt`](video/captions.srt)
+
 ## 0:00–0:08 — Premise
 
 **Visual:** Open on the complete spell canvas.

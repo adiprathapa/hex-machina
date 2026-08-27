@@ -128,6 +128,37 @@ def screenshot_capture_check(relative_path: str, expected_size: tuple[int, int] 
     )
 
 
+def demo_video_check() -> Check:
+    video_path = ROOT / "submission" / "video" / "hex-machina-demo.mp4"
+    metadata_path = ROOT / "submission" / "video" / "metadata.json"
+    try:
+        header = video_path.read_bytes()[:32]
+        size = video_path.stat().st_size
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        duration = float(metadata["format"]["duration"])
+        streams = metadata["streams"]
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+        return Check("narrated demo video", False, str(error))
+
+    video_stream = next((stream for stream in streams if stream.get("codec_type") == "video"), None)
+    audio_stream = next((stream for stream in streams if stream.get("codec_type") == "audio"), None)
+    valid = all(
+        (
+            b"ftyp" in header,
+            size >= 500_000,
+            74.9 <= duration <= 75.1,
+            video_stream is not None,
+            audio_stream is not None,
+            video_stream is not None and video_stream.get("codec_name") == "h264",
+            video_stream is not None and video_stream.get("width") == 1920,
+            video_stream is not None and video_stream.get("height") == 1080,
+            audio_stream is not None and audio_stream.get("codec_name") == "aac",
+        )
+    )
+    detail = f"{duration:.1f}s H.264/AAC, 1920×1080, {size // 1024} KiB"
+    return Check("narrated demo video", valid, detail if valid else f"invalid media evidence: {detail}")
+
+
 def browser_evidence_check(require_site_tools: bool) -> Check:
     evidence_path = ROOT / "tests" / "browser-acceptance.json"
     if not evidence_path.exists():
@@ -329,6 +360,12 @@ def main() -> int:
         "submission/screenshots/01-failure-diagnosis.jpg",
         "submission/screenshots/02-constraint-aware-patch.jpg",
         "submission/screenshots/03-successful-recast.jpg",
+        "submission/video/README.md",
+        "submission/video/narration.txt",
+        "submission/video/captions.srt",
+        "submission/video/render-demo.sh",
+        "submission/video/metadata.json",
+        "submission/video/hex-machina-demo.mp4",
         "public/og.png",
         "public/favicon.png",
     ):
@@ -347,6 +384,8 @@ def main() -> int:
         "submission/screenshots/03-successful-recast.jpg",
     ):
         checks.append(screenshot_capture_check(screenshot))
+
+    checks.append(demo_video_check())
 
     package, package_check = load_package()
     checks.append(package_check)

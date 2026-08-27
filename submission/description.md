@@ -39,6 +39,8 @@ TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test
 
 ## Submission assets
 
+- [`video/hex-machina-demo.mp4`](video/hex-machina-demo.mp4) — reproducible narrated 75-second judge walkthrough
+- [`video/captions.srt`](video/captions.srt) — accessible English caption sidecar
 - [`screenshots/01-failure-diagnosis.jpg`](screenshots/01-failure-diagnosis.jpg) — failed cast, deterministic diagnosis, and advisory Familiar ranking
 - [`screenshots/02-constraint-aware-patch.jpg`](screenshots/02-constraint-aware-patch.jpg) — sacred duck constraint and reviewable patch preview
 - [`screenshots/03-successful-recast.jpg`](screenshots/03-successful-recast.jpg) — Stable v3 graph, blooming Moonflower, and visible tool history
