@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-08-26T22:46:00-04:00",
+  "url": "http://localhost:3000/",
+  "browser": "Codex In-app Browser",
+  "completed_steps": [
+    "cast_failure",
+    "trace_effect",
+    "explain_side_effect",
+    "set_sacred_constraint",
+    "propose_spell_patch",
+    "apply_spell_patch",
+    "verified_success"
+  ],
+  "final_state": "Stable",
+  "final_graph_version": 3,
+  "final_outcome": "The moonflower blooms",
+  "sacred_constraints_visible": 1,
+  "console_errors": 0,
+  "site_tools_api_available": false,
+  "site_tools_note": "The controlled local browser session did not expose document.modelContext. Guarded registration and local fallback were verified; live discovery remains pending."
+}

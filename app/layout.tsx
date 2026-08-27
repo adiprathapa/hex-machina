@@ -1,0 +1,74 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const title = "Hex Machina — Cooperative Spell Debugging";
+const description =
+  "Build executable spell graphs with an agent. Preserve what you love, repair what breaks, and cast again.";
+
+function safeOrigin(host: string | null, forwardedProtocol: string | null) {
+  const safeHost = host && /^[a-z0-9.-]+(?::[0-9]+)?$/i.test(host)
+    ? host
+    : "localhost:3000";
+  const protocol = forwardedProtocol === "https" || !safeHost.startsWith("localhost")
+    ? "https"
+    : "http";
+  return `${protocol}://${safeHost}`;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const origin = safeOrigin(
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"),
+    requestHeaders.get("x-forwarded-proto"),
+  );
+  const imageUrl = `${origin}/og.png`;
+
+  return {
+    title,
+    description,
+    icons: {
+      icon: "/favicon.svg",
+      shortcut: "/favicon.svg",
+    },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina spell graph with three umbrella ducks and a blooming moonflower" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+      </body>
+    </html>
+  );
+}
