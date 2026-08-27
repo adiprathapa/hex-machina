@@ -54,6 +54,12 @@ function requireShortText(value: string, label: string, maximum: number) {
 }
 
 export function createSpellToolHandlers(context: SpellToolContext) {
+  let reversiblePatch: {
+    token: string;
+    appliedVersion: number;
+    graphBeforeApply: SpellGraph;
+  } | null = null;
+
   return {
     inspect_spell: async (input: unknown = {}) => {
       const parsed = requireToolInput(input, "inspect_spell", ["nodeIds"]);
@@ -152,7 +158,48 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       return { graphVersion: graph.version, patches };
     },
     apply_spell_patch: async (input: unknown = {}) => {
-      const parsed = requireToolInput(input, "apply_spell_patch", ["patchId"]);
+      const parsed = requireToolInput(input, "apply_spell_patch", ["patchId", "revertToken"]);
+      const hasPatchId = parsed.patchId !== undefined;
+      const hasRevertToken = parsed.revertToken !== undefined;
+      if (hasPatchId === hasRevertToken) {
+        throw new Error("apply_spell_patch requires exactly one of patchId or revertToken");
+      }
+
+      if (hasRevertToken) {
+        const revertToken = requireString(parsed.revertToken, "revertToken");
+        if (!/^revert-patch-(umbrella|direct)-v[0-9]+-after-v[0-9]+$/.test(revertToken)) {
+          throw new Error("Invalid revert token");
+        }
+        const current = context.getGraph();
+        if (!reversiblePatch || revertToken !== reversiblePatch.token) {
+          throw new Error("Revert token is unavailable or has already been used");
+        }
+        if (current.version !== reversiblePatch.appliedVersion) {
+          throw new Error(
+            `Revert token is stale for graph v${current.version}; expected v${reversiblePatch.appliedVersion}`,
+          );
+        }
+
+        const restored = cloneGraph(reversiblePatch.graphBeforeApply);
+        restored.version = current.version + 1;
+        const beforeSummary = { version: current.version, edgeCount: current.edges.length };
+        context.setGraph(restored);
+        reversiblePatch = null;
+        const verification = simulateCast(restored);
+        context.recordActivity(
+          "apply_spell_patch",
+          `Reverted the agent patch. Spell restored as v${restored.version}.`,
+          restored.constraints.map((constraint) => constraint.targetId),
+        );
+        return {
+          action: "revert" as const,
+          reverted: true,
+          before: beforeSummary,
+          after: { version: restored.version, edgeCount: restored.edges.length },
+          verification,
+        };
+      }
+
       const patchId = requireString(parsed.patchId, "patchId");
       if (!/^patch-(umbrella|direct)-v[0-9]+$/.test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
@@ -166,12 +213,20 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
       const next = applyPatch(before, patch);
       context.setGraph(next);
+      const revertToken = `revert-${patch.id}-after-v${next.version}`;
+      reversiblePatch = {
+        token: revertToken,
+        appliedVersion: next.version,
+        graphBeforeApply: cloneGraph(before),
+      };
       const verification = simulateCast(next);
       context.recordActivity("apply_spell_patch", `Applied ${patch.title}. ${verification.summary}`, patch.operations.flatMap((operation) => operation.op === "add_edge" ? [operation.edge.from, operation.edge.to] : operation.op === "activate_node" ? [operation.nodeId] : []));
       return {
+        action: "apply" as const,
         before: { version: before.version, edgeCount: before.edges.length },
         after: { version: next.version, edgeCount: next.edges.length },
         verification,
+        revertToken,
       };
     },
   };

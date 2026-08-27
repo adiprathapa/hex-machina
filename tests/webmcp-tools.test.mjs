@@ -47,8 +47,12 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.equal(readOnly.includes("apply_spell_patch"), false);
   assert.equal(definitions.every((item) => item.inputSchema.additionalProperties === false), true);
   const applyTool = definitions.find((item) => item.name === "apply_spell_patch");
-  assert.deepEqual(applyTool.inputSchema.required, ["patchId"]);
+  assert.deepEqual(applyTool.inputSchema.oneOf, [
+    { required: ["patchId"] },
+    { required: ["revertToken"] },
+  ]);
   assert.equal(applyTool.inputSchema.properties.patchId.type, "string");
+  assert.equal(applyTool.inputSchema.properties.revertToken.type, "string");
   const inspectTool = definitions.find((item) => item.name === "inspect_spell");
   const inspectNodeIds = inspectTool.inputSchema.properties.nodeIds;
   assert.equal(inspectNodeIds.maxItems, 12);
@@ -115,8 +119,20 @@ test("tool handlers preserve human intent through a verified write", async () =>
   const proposal = await handlers.propose_spell_patch();
   assert.equal(proposal.patches[0].preserves.includes("summon-ducks"), true);
   const result = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
+  assert.equal(result.action, "apply");
   assert.equal(result.verification.success, true);
   assert.equal(result.verification.assertions.ducksPresent, true);
+  assert.match(result.revertToken, /^revert-patch-umbrella/);
+  const reverted = await handlers.apply_spell_patch({ revertToken: result.revertToken });
+  assert.equal(reverted.action, "revert");
+  assert.equal(reverted.verification.success, false);
+  assert.equal(reverted.verification.assertions.ducksPresent, true);
+  assert.equal(graph.version, 4);
+  assert.equal(graph.constraints.some((constraint) => constraint.targetId === "summon-ducks"), true);
+  await assert.rejects(
+    handlers.apply_spell_patch({ revertToken: result.revertToken }),
+    /unavailable or has already been used/,
+  );
   assert.deepEqual(
     new Set(events.map((event) => event.tool)),
     new Set([
@@ -174,6 +190,22 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
     /unknown field: force/,
   );
   await assert.rejects(
+    handlers.apply_spell_patch({}),
+    /exactly one of patchId or revertToken/,
+  );
+  await assert.rejects(
+    handlers.apply_spell_patch({ patchId: "patch-direct-v1", revertToken: "revert-patch-direct-v1-after-v2" }),
+    /exactly one of patchId or revertToken/,
+  );
+  await assert.rejects(
+    handlers.apply_spell_patch({ revertToken: "anything" }),
+    /Invalid revert token/,
+  );
+  await assert.rejects(
+    handlers.apply_spell_patch({ revertToken: "revert-patch-direct-v1-after-v2" }),
+    /unavailable or has already been used/,
+  );
+  await assert.rejects(
     handlers.apply_spell_patch({ patchId: "anything" }),
     /Invalid patch ID/,
   );
@@ -182,4 +214,31 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
     /unavailable or stale/,
   );
   assert.equal(JSON.stringify(graph), initialGraph);
+});
+
+test("revert tokens fail closed after an intervening graph mutation", async () => {
+  let graph = createMoonflowerScenario();
+  const handlers = createSpellToolHandlers({
+    getGraph: () => graph,
+    setGraph: (next) => { graph = next; },
+    recordActivity() {},
+  });
+
+  await handlers.set_sacred_constraint({
+    targetId: "summon-ducks",
+    reason: "They are funny.",
+  });
+  const proposal = await handlers.propose_spell_patch();
+  const applied = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
+  await handlers.set_sacred_constraint({
+    targetId: "summon-ducks",
+    reason: "They are funny and now have names.",
+  });
+  const snapshot = JSON.stringify(graph);
+
+  await assert.rejects(
+    handlers.apply_spell_patch({ revertToken: applied.revertToken }),
+    /Revert token is stale for graph v4; expected v3/,
+  );
+  assert.equal(JSON.stringify(graph), snapshot);
 });

@@ -153,6 +153,11 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v3/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
 
+    await page.getByRole("button", { name: "Undo agent patch", exact: true }).click();
+    await assertVisible(page.getByText("Side effect detected", { exact: true }), "undo restores the failed spell");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v4/);
+    assert.equal(await page.locator(".rune.sacred").count(), 1, "undo preserves the human's sacred constraint");
+
     await page.getByRole("button", { name: "Reset lesson", exact: true }).click();
     await assertVisible(page.getByText("Ready to cast", { exact: true }), "reset returns to the initial state");
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/);

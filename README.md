@@ -35,6 +35,7 @@ python3 prepare.py
 ```
 
 The full command also checks production E2E behavior and recorded browser evidence. Live `document.modelContext` discovery requires a compatible WebMCP browser, so an ordinary browser can pass every local gate while that final deployment gate remains pending.
+The requirement-by-requirement evidence and exact release condition are tracked in [`submission/acceptance-matrix.md`](submission/acceptance-matrix.md).
 
 ## The 60-second story
 
@@ -45,6 +46,7 @@ The full command also checks production E2E behavior and recorded browser eviden
 5. Recast: umbrella-equipped ducks water the Moonflower while the room stays dry.
 
 Every visible action is also available through a narrow semantic tool. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
+Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
 
 ## Judge journey
 
@@ -94,16 +96,9 @@ After a failed cast, Moth runs two rounds of frozen-weight message passing over 
 
 The seven-day build specification is in `program.md`. Use `python3 train.py status` for milestone state and `python3 train.py context` for a complete continuation handoff.
 
-## Put this repository on GitHub
+## Repository
 
-The project is already initialized on the `main` branch with a clean, reviewable commit history. After creating an empty GitHub repository—do not add a README or `.gitignore` there—connect and push it:
-
-```bash
-git remote add origin git@github.com:YOUR-ACCOUNT/hex-machina.git
-git push -u origin main
-```
-
-Use an HTTPS remote instead if that matches your GitHub authentication setup. No remote is configured by default, and no source is published without the owner’s explicit action.
+The private source repository is [adiprathapa/hex-machina](https://github.com/adiprathapa/hex-machina). Its `main` branch is verified by the clean-install acceptance, dependency-audit, and production-browser journey workflow on every push and pull request.
 
 ## Contributing and licensing
 

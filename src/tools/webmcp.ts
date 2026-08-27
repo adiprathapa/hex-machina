@@ -131,7 +131,7 @@ export async function registerWebMCPTools(
     {
       name: "apply_spell_patch",
       title: "Apply spell patch",
-      description: "Atomically apply a versioned spell patch and return before/after evidence plus a verification cast.",
+      description: "Atomically apply a versioned spell patch, or revert the most recent unchanged application with its one-use token.",
       inputSchema: {
         type: "object",
         properties: {
@@ -139,8 +139,15 @@ export async function registerWebMCPTools(
             type: "string",
             pattern: "^patch-(umbrella|direct)-v[0-9]+$",
           },
+          revertToken: {
+            type: "string",
+            pattern: "^revert-patch-(umbrella|direct)-v[0-9]+-after-v[0-9]+$",
+          },
         },
-        required: ["patchId"],
+        oneOf: [
+          { required: ["patchId"] },
+          { required: ["revertToken"] },
+        ],
         additionalProperties: false,
       },
       annotations: { readOnlyHint: false, destructiveHint: false },

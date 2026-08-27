@@ -3,6 +3,7 @@
 :root {
   --ink: #f4f1e8;
   --muted: #9f9a93;
+  --subtle: #858a87;
   --night: #090b0c;
   --panel: #101315;
   --panel-raised: #161a1b;
@@ -210,7 +211,7 @@ button:focus-visible {
   padding: 9px;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: #656a69;
+  color: var(--subtle);
   transition: color .2s, background .2s, border-color .2s;
 }
 
@@ -296,7 +297,7 @@ kbd {
   margin: 16px 0 0;
   padding: 12px;
   border-left: 2px solid #4b4e4c;
-  color: #747977;
+  color: var(--subtle);
   font-size: 12px;
   line-height: 1.45;
   transition: .25s ease;
@@ -510,7 +511,7 @@ kbd {
   left: 14px;
   bottom: 10px;
   margin: 0;
-  color: #777d79;
+  color: var(--subtle);
   font: 500 8px/1 var(--font-geist-mono), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;

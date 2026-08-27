@@ -183,6 +183,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "mobile_44px_compact_targets",
         "keyboard_rune_nudge",
         "automated_production_browser_journey",
+        "reversible_patch_undo",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []
@@ -370,6 +371,7 @@ def main() -> int:
         "submission/description.md",
         "submission/demo-script.md",
         "submission/architecture.md",
+        "submission/acceptance-matrix.md",
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",

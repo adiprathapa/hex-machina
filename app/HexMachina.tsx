@@ -77,6 +77,7 @@ export function HexMachina() {
   const [activity, setActivity] = useState<Activity[]>([]);
   const [cast, setCast] = useState<CastResult | null>(null);
   const [patch, setPatch] = useState<SpellPatch | null>(null);
+  const [revertToken, setRevertToken] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>("multiply");
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
   const [dragging, setDragging] = useState<string | null>(null);
@@ -108,6 +109,7 @@ export function HexMachina() {
       setGraph: (next) => {
         graphRef.current = next;
         setGraph(next);
+        setRevertToken(null);
         setConnectFrom(null);
         setConnectionDraft(null);
       },
@@ -134,6 +136,7 @@ export function HexMachina() {
 
   const castSpell = async () => {
     setPatch(null);
+    setRevertToken(null);
     setCast(await handlers.simulate_cast());
   };
 
@@ -159,7 +162,17 @@ export function HexMachina() {
     if (!patch) return;
     const result = await handlers.apply_spell_patch({ patchId: patch.id });
     setCast(result.verification);
+    setRevertToken(result.action === "apply" ? result.revertToken : null);
     setPatch(null);
+  };
+
+  const undoRepair = async () => {
+    if (!revertToken) return;
+    const result = await handlers.apply_spell_patch({ revertToken });
+    setCast(result.verification);
+    setPatch(null);
+    setRevertToken(null);
+    setConsoleOutput(JSON.stringify(result, null, 2));
   };
 
   const reset = () => {
@@ -168,6 +181,7 @@ export function HexMachina() {
     setGraph(next);
     setCast(null);
     setPatch(null);
+    setRevertToken(null);
     setActivity([]);
     setSelected("multiply");
     setPositions(initialPositions(next));
@@ -246,6 +260,7 @@ export function HexMachina() {
       setGraph(next);
       setCast(null);
       setPatch(null);
+      setRevertToken(null);
       setConnectFrom(null);
       setConnectionDraft(null);
       setConnectionMessage(`Added ${connectionDraft.edgeType}: ${from?.label} → ${to?.label}. Spell advanced to v${next.version}.`);
@@ -275,6 +290,7 @@ export function HexMachina() {
           reason: "The ducks are funny. They must remain in the final spell.",
         });
         setPatch(null);
+        setRevertToken(null);
       } else if (tool === "propose_spell_patch") {
         const proposal = await handlers.propose_spell_patch();
         setPatch(proposal.patches[0] ?? null);
@@ -283,6 +299,7 @@ export function HexMachina() {
         if (!patch) throw new Error("Propose a current patch before applying it.");
         const applied = await handlers.apply_spell_patch({ patchId: patch.id });
         setCast(applied.verification);
+        setRevertToken(applied.action === "apply" ? applied.revertToken : null);
         setPatch(null);
         result = applied;
       }
@@ -349,6 +366,7 @@ export function HexMachina() {
             {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectDucks}>Protect the ducks</button>}
             {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
             {patch && <button className="primary" onClick={applyRepair}>Apply patch & recast</button>}
+            {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
 

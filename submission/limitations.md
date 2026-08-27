@@ -5,7 +5,7 @@
 - The submission contains one highly polished deterministic lesson rather than an open-ended campaign.
 - Patch search uses a bounded catalog of semantically meaningful repairs for the Moonflower scenario.
 - The graph layout is authored for legibility instead of using a general automatic layout engine; players can rearrange runes and add validated typed edges, but arbitrary node creation and edge deletion remain outside this lesson.
-- State is local to the live page and resets with the lesson.
+- State is local to the live page. The latest unchanged agent patch has a one-step undo, and the entire lesson can always be reset.
 
 ## WebMCP availability
 

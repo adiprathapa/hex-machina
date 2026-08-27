@@ -17,7 +17,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, sacred-constraint handling, and patch preview.
-- `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter; TypeScript types are never treated as an agent-input security boundary.
+- `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter, including stale-safe one-use patch rollback; TypeScript types are never treated as an agent-input security boundary.
 - `tests/browser-journey.test.mjs`: boots the built production server in system Chrome and proves the full failure, diagnosis, sacred-constraint, minimal-repair, stable-recast, reset, mobile, and keyboard journey without console errors.
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.

@@ -19,7 +19,8 @@
     "mobile_no_horizontal_overflow",
     "mobile_44px_compact_targets",
     "keyboard_rune_nudge",
-    "automated_production_browser_journey"
+    "automated_production_browser_journey",
+    "reversible_patch_undo"
   ],
   "final_state": "Stable",
   "final_graph_version": 3,

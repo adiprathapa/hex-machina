@@ -26,7 +26,7 @@ The collaboration is consequential rather than cosmetic: protecting the ducks pr
 - Human-editable typed ports with visible compatibility and atomic versioned connections
 - Deterministic graph simulation and ordered event traces
 - Minimal responsible-subgraph diagnosis
-- Constraint-aware patch search with atomic, versioned writes
+- Constraint-aware patch search with atomic, versioned, one-step reversible writes
 - Narrow JSON schemas and honest read/write annotations
 - Visible tool activity and patch evidence
 - Keyboard-accessible controls, reduced-motion support, and responsive fallback

@@ -3,6 +3,18 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const templateRoot = new URL("../", import.meta.url);
+
+function relativeLuminance(hex) {
+  const channels = hex.match(/[a-f\d]{2}/gi).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = channels.map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function contrastRatio(foreground, background) {
+  const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 test("ships Hex Machina instead of the starter preview", async () => {
   const [page, layout, client, packageJson, css] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
@@ -32,6 +44,12 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /button:focus-visible/);
+  const cssColor = (name) => css.match(new RegExp(`--${name}:\\s*(#[a-f\\d]{6})`, "i"))?.[1];
+  const raisedPanel = cssColor("panel-raised");
+  assert.ok(contrastRatio(cssColor("ink"), raisedPanel) >= 4.5);
+  assert.ok(contrastRatio(cssColor("muted"), raisedPanel) >= 4.5);
+  assert.ok(contrastRatio(cssColor("subtle"), raisedPanel) >= 4.5);
+  assert.ok(contrastRatio("#12150b", cssColor("acid")) >= 4.5);
   const mobileStart = css.indexOf("@media (max-width: 760px)");
   const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)");
   assert.notEqual(mobileStart, -1);

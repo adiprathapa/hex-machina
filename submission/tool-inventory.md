@@ -8,7 +8,7 @@
 | `explain_side_effect` | Read | Explain the flood from its smallest responsible subgraph. | Structured explanation plus exact nodes and edges. |
 | `set_sacred_constraint` | Reversible write | Preserve or release the duck branch with a human-authored reason. | Before/after constraints and new graph version. |
 | `propose_spell_patch` | Read | Search valid repairs under current constraints. | Ranked patch operations, preserved intent, tradeoffs, and predicted outcome. |
-| `apply_spell_patch` | Reversible write | Apply a current versioned patch ID atomically. | Before/after graph summaries and verification cast. |
+| `apply_spell_patch` | Reversible write | Apply a current versioned patch ID atomically, or consume its one-use revert token while the graph is unchanged. | Before/after graph summaries, verification cast, and stale-safe rollback evidence. |
 
 ## Safety properties
 
@@ -19,4 +19,5 @@
 - Writes declare `readOnlyHint: false` and `destructiveHint: false`.
 - Agent-supplied graph operations are never accepted.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
+- Patch applications return one-use revert tokens; rollback fails closed after any intervening graph mutation and never discards the human's sacred constraint.
 - Registrations are abort-scoped so unmounts, navigation, and React Strict Mode remounts cannot leave duplicate tool names behind.
