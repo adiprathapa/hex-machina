@@ -10,6 +10,8 @@ test("moonflower fixture is valid and serializes deterministically", () => {
   const graph = createMoonflowerScenario();
   assert.deepEqual(validateSpellGraph(graph), []);
   assert.equal(serializeSpellGraph(graph), serializeSpellGraph(graph));
+  assert.equal(graph.nodes.length, 12);
+  assert.equal(graph.nodes.filter((node) => node.dormant).length, 6);
 });
 
 test("initial spell deterministically floods the room", () => {

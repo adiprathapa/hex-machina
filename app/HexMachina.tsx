@@ -14,6 +14,19 @@ interface Activity {
   nodeIds: string[];
 }
 
+interface NodePosition {
+  x: number;
+  y: number;
+}
+
+function initialPositions(graph: SpellGraph): Record<string, NodePosition> {
+  return Object.fromEntries(graph.nodes.map((node) => [node.id, { x: node.x, y: node.y }]));
+}
+
+function clampPosition(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
 const kindLabel: Record<RuneNode["kind"], string> = {
   source: "Source",
   verb: "Action",
@@ -31,8 +44,12 @@ export function HexMachina() {
   const [cast, setCast] = useState<CastResult | null>(null);
   const [patch, setPatch] = useState<SpellPatch | null>(null);
   const [selected, setSelected] = useState<string | null>("multiply");
+  const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
+  const [dragging, setDragging] = useState<string | null>(null);
   const [mcpReady, setMcpReady] = useState(false);
   const activityId = useRef(0);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef<string | null>(null);
 
   useEffect(() => {
     graphRef.current = graph;
@@ -100,7 +117,32 @@ export function HexMachina() {
     setPatch(null);
     setActivity([]);
     setSelected("multiply");
+    setPositions(initialPositions(next));
+    setDragging(null);
+    draggingRef.current = null;
   };
+
+  const moveNode = useCallback((nodeId: string, x: number, y: number) => {
+    setPositions((current) => ({
+      ...current,
+      [nodeId]: {
+        x: clampPosition(x, 7, 93),
+        y: clampPosition(y, 7, 90),
+      },
+    }));
+  }, []);
+
+  const moveNodeFromPointer = useCallback((clientX: number, clientY: number) => {
+    const nodeId = draggingRef.current;
+    const bounds = canvasRef.current?.getBoundingClientRect();
+    if (!nodeId || !bounds) return;
+    moveNode(nodeId, ((clientX - bounds.left) / bounds.width) * 100, ((clientY - bounds.top) / bounds.height) * 100);
+  }, [moveNode]);
+
+  const finishDragging = useCallback(() => {
+    draggingRef.current = null;
+    setDragging(null);
+  }, []);
 
   const selectedNode = graph.nodes.find((node) => node.id === selected);
   const highlightedIds = new Set(activity[0]?.nodeIds ?? []);
@@ -167,26 +209,55 @@ export function HexMachina() {
             </span>
           </div>
 
-          <div className="spell-canvas">
+          <div
+            className={`spell-canvas ${dragging ? "is-rearranging" : ""}`}
+            ref={canvasRef}
+            onPointerMove={(event) => moveNodeFromPointer(event.clientX, event.clientY)}
+            onPointerUp={finishDragging}
+            onPointerCancel={finishDragging}
+          >
             <svg className="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               {graph.edges.map((edge) => {
                 const from = graph.nodes.find((node) => node.id === edge.from)!;
                 const to = graph.nodes.find((node) => node.id === edge.to)!;
+                const fromPosition = positions[from.id] ?? from;
+                const toPosition = positions[to.id] ?? to;
                 const active = highlightedIds.has(from.id) && highlightedIds.has(to.id);
-                return <line key={edge.id} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className={`${edge.type} ${active ? "active" : ""}`} />;
+                return <line key={edge.id} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className={`${edge.type} ${active ? "active" : ""}`} />;
               })}
             </svg>
 
             {graph.nodes.map((node) => {
               const sacred = graph.constraints.some((item) => item.targetId === node.id);
               const highlighted = highlightedIds.has(node.id);
+              const position = positions[node.id] ?? node;
               return (
                 <button
                   key={node.id}
-                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${selected === node.id ? "selected" : ""}`}
-                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""}`}
+                  style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                  onPointerDown={(event) => {
+                    draggingRef.current = node.id;
+                    setDragging(node.id);
+                    setSelected(node.id);
+                    canvasRef.current?.setPointerCapture(event.pointerId);
+                  }}
+                  onKeyDown={(event) => {
+                    const delta = event.shiftKey ? 5 : 2;
+                    const offsets: Partial<Record<string, NodePosition>> = {
+                      ArrowLeft: { x: -delta, y: 0 },
+                      ArrowRight: { x: delta, y: 0 },
+                      ArrowUp: { x: 0, y: -delta },
+                      ArrowDown: { x: 0, y: delta },
+                    };
+                    const offset = offsets[event.key];
+                    if (!offset) return;
+                    event.preventDefault();
+                    moveNode(node.id, position.x + offset.x, position.y + offset.y);
+                  }}
                   onClick={() => setSelected(node.id)}
-                  aria-label={`${node.label}, ${kindLabel[node.kind]}`}
+                  aria-label={`${node.label}, ${kindLabel[node.kind]}. Drag to rearrange; arrow keys nudge.`}
+                  aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 >
                   <span className="rune-glyph" aria-hidden="true">{node.glyph}</span>
                   <span className="rune-copy"><strong>{node.label}</strong><small>{kindLabel[node.kind]}</small></span>
@@ -194,6 +265,8 @@ export function HexMachina() {
                 </button>
               );
             })}
+
+            <p className="canvas-hint"><span aria-hidden="true">✥</span> Drag runes to rearrange · Arrow keys nudge</p>
 
             <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
               {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "☂ ☂ ☂" : "◇ ◇ ◇ ◇"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}

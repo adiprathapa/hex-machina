@@ -372,6 +372,11 @@ kbd {
     radial-gradient(circle, rgba(255,255,255,.075) 1px, transparent 1px);
   background-size: auto, 18px 18px;
   overflow: hidden;
+  touch-action: none;
+}
+
+.spell-canvas.is-rearranging {
+  cursor: grabbing;
 }
 
 .edge-layer {
@@ -417,9 +422,18 @@ kbd {
   background: rgba(18,22,23,.94);
   color: var(--ink);
   text-align: left;
-  cursor: pointer;
+  cursor: grab;
+  user-select: none;
   box-shadow: 0 12px 28px rgba(0,0,0,.34);
   transition: border-color .2s, opacity .2s, transform .2s, box-shadow .2s;
+}
+
+.rune.dragging {
+  z-index: 5;
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.055);
+  border-color: var(--acid);
+  box-shadow: 0 0 0 1px rgba(215,255,79,.2), 0 18px 40px rgba(0,0,0,.48);
 }
 
 .rune:hover,
@@ -438,8 +452,26 @@ kbd {
 }
 
 .rune.dormant {
-  opacity: .25;
+  opacity: .34;
   border-style: dashed;
+}
+
+.canvas-hint {
+  position: absolute;
+  z-index: 1;
+  left: 14px;
+  bottom: 10px;
+  margin: 0;
+  color: #777d79;
+  font: 500 8px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.canvas-hint span {
+  margin-right: 5px;
+  color: var(--aqua);
 }
 
 .rune-glyph {

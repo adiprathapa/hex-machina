@@ -16,6 +16,8 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(layout, /Hex Machina — Cooperative Spell Debugging/);
   assert.match(client, /Water the moonflower/);
   assert.match(client, /The ducks are funny\. They stay\./);
+  assert.match(client, /Drag runes to rearrange/);
+  assert.match(client, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);

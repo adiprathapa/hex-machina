@@ -42,7 +42,8 @@ test("production shell exposes accessible controls and state regions", async () 
   const html = await response.text();
   assert.match(html, /<main/);
   assert.match(html, /aria-label="Investigation steps"/);
-  assert.match(html, /aria-label="Moonwell, Source"/);
+  assert.match(html, /aria-label="Moonwell, Source\. Drag to rearrange; arrow keys nudge\."/);
+  assert.match(html, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /rel="stylesheet"/);
 });
