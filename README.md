@@ -26,7 +26,7 @@ python3 prepare.py --quick
 npm run test:e2e
 ```
 
-The quick acceptance command runs product-contract checks, strict TypeScript validation, unit and integration tests, a production build, and linting. The E2E command exercises the built worker and its accessible production shell. GitHub Actions runs both on pushes and pull requests.
+The quick acceptance command runs product-contract checks, strict TypeScript validation, unit and integration tests, a production build, and linting. The E2E command exercises both the built worker and the complete production-browser journey in an installed Chrome or Chromium (`CHROME_PATH` can identify a non-standard location). GitHub Actions runs both on pushes and pull requests.
 
 For release verification, run:
 

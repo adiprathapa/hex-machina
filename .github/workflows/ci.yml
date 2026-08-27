@@ -31,9 +31,11 @@ jobs:
       - name: Install exact dependencies
         run: npm ci
 
+      - name: Audit high-severity dependency risks
+        run: npm audit --audit-level=high
+
       - name: Run repository acceptance gates
         run: python3 prepare.py --quick
 
-      - name: Run production-worker smoke tests
+      - name: Run production browser journey
         run: npm run test:e2e
-

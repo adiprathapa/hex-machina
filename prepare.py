@@ -182,6 +182,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "mobile_no_horizontal_overflow",
         "mobile_44px_compact_targets",
         "keyboard_rune_nudge",
+        "automated_production_browser_journey",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []
