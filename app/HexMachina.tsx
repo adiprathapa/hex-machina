@@ -117,7 +117,19 @@ export function HexMachina() {
   );
 
   useEffect(() => {
-    registerWebMCPTools(handlers).then(setMcpReady).catch(() => setMcpReady(false));
+    const registration = new AbortController();
+    let active = true;
+    registerWebMCPTools(handlers, registration.signal)
+      .then((supported) => {
+        if (active) setMcpReady(supported);
+      })
+      .catch(() => {
+        if (active) setMcpReady(false);
+      });
+    return () => {
+      active = false;
+      registration.abort();
+    };
   }, [handlers]);
 
   const castSpell = async () => {

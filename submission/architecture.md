@@ -17,8 +17,8 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, sacred-constraint handling, and patch preview.
-- `src/tools/handlers.ts`: validated semantic operations independent of the browser adapter.
-- `src/tools/webmcp.ts`: guarded WebMCP registration with narrow schemas and honest annotations.
+- `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter; TypeScript types are never treated as an agent-input security boundary.
+- `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
 - `app/HexMachina.tsx`: visual canvas, local fallback controls, visible constraints, patch review, and activity evidence.
 
@@ -40,7 +40,7 @@ The scenario contains a fixed seed, stable IDs, sorted serialization, and pure s
 
 ## Browser compatibility
 
-Registration is feature-detected through `document.modelContext?.registerTool`. When unavailable, the complete guided local console invokes the identical handlers. No OpenAI API key or embedded model call is needed.
+Registration is feature-detected through `document.modelContext?.registerTool`. Each page mount owns an `AbortController`, so React development remounts and real navigation unregister all seven names before another registration attempt. When WebMCP is unavailable, the complete guided local console invokes the identical handlers. No OpenAI API key or embedded model call is needed.
 
 ## Familiar experiment
 

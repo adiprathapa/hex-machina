@@ -275,6 +275,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         re.search(r"document\.modelContext\??\.registerTool|typeof\s+document\.modelContext", combined)
     )
     read_only_marker = "readOnlyHint" in combined
+    registration_lifecycle = all(
+        marker in combined
+        for marker in ("new AbortController()", "registration.signal", "registration.abort()")
+    )
     typed_editor = all(marker in combined for marker in ("connectRunes", "getValidEdgeTypes", "Typed edge category"))
     advisory_familiar = all(marker in combined for marker in ("inferFamiliar", "authoritative: false", "rounds: 2"))
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
@@ -316,6 +320,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "tool safety annotations",
             read_only_marker,
             "readOnlyHint detected" if read_only_marker else "readOnlyHint not detected",
+        ),
+        Check(
+            "WebMCP registration lifecycle",
+            registration_lifecycle,
+            "abort-scoped registration cleanup detected" if registration_lifecycle else "registration cleanup is not lifecycle-scoped",
         ),
         Check(
             "semantic graph editor",

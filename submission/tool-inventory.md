@@ -13,8 +13,10 @@
 ## Safety properties
 
 - All schemas set `additionalProperties: false`.
+- Every handler independently validates the runtime input object, allowed fields, primitive types, collection bounds, and known IDs; browser-side schema enforcement is not trusted.
 - Scenario IDs use explicit enums or narrow patterns.
 - Read tools declare `readOnlyHint: true`.
 - Writes declare `readOnlyHint: false` and `destructiveHint: false`.
 - Agent-supplied graph operations are never accepted.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
+- Registrations are abort-scoped so unmounts, navigation, and React Strict Mode remounts cannot leave duplicate tool names behind.

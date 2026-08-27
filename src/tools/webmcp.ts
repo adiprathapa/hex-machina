@@ -1,27 +1,56 @@
-import type { SpellToolHandlers } from "./handlers.ts";
+import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
+import { MAX_INSPECT_NODES, type SpellToolHandlers } from "./handlers.ts";
+
+interface WebMCPExecutionOptions {
+  signal: AbortSignal;
+}
+
+interface WebMCPRegistrationOptions {
+  signal?: AbortSignal;
+  exposedTo?: string[];
+}
 
 declare global {
   interface Document {
     modelContext?: {
       registerTool(definition: {
         name: string;
+        title?: string;
         description: string;
         inputSchema: Record<string, unknown>;
-        annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean };
-        execute(input: never): Promise<unknown>;
-      }): Promise<void> | void;
+        annotations?: {
+          readOnlyHint?: boolean;
+          destructiveHint?: boolean;
+          untrustedContentHint?: boolean;
+        };
+        execute(input: unknown, options?: WebMCPExecutionOptions): Promise<unknown>;
+      }, options?: WebMCPRegistrationOptions): Promise<void> | void;
     };
   }
 }
 
 const emptySchema = { type: "object", properties: {}, additionalProperties: false };
+const moonflowerRuneIds = createMoonflowerScenario().nodes.map((node) => node.id);
 
-export async function registerWebMCPTools(handlers: SpellToolHandlers) {
+export async function registerWebMCPTools(
+  handlers: SpellToolHandlers,
+  lifecycleSignal?: AbortSignal,
+) {
   if (typeof document.modelContext?.registerTool !== "function") return false;
+  const modelContext = document.modelContext;
+
+  const registration = new AbortController();
+  if (lifecycleSignal?.aborted) registration.abort(lifecycleSignal.reason);
+  lifecycleSignal?.addEventListener(
+    "abort",
+    () => registration.abort(lifecycleSignal.reason),
+    { once: true },
+  );
 
   const definitions = [
     {
       name: "inspect_spell",
+      title: "Inspect spell",
       description: "Inspect the current spell graph, its version, desired outcome, and sacred constraints.",
       inputSchema: {
         type: "object",
@@ -30,22 +59,9 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
             type: "array",
             items: {
               type: "string",
-              enum: [
-                "moonwell",
-                "moonrise",
-                "multiply",
-                "summon-ducks",
-                "umbrella",
-                "pour",
-                "room",
-                "moonflower",
-                "bloom",
-                "soften",
-                "mirror",
-                "release",
-              ],
+              enum: moonflowerRuneIds,
             },
-            maxItems: 12,
+            maxItems: MAX_INSPECT_NODES,
             uniqueItems: true,
           },
         },
@@ -56,6 +72,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "trace_effect",
+      title: "Trace spell effect",
       description: "Trace the bounded causal path responsible for a spell effect or current failure.",
       inputSchema: {
         type: "object",
@@ -67,6 +84,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "simulate_cast",
+      title: "Simulate cast",
       description: "Simulate the current spell without mutating editor state and return an ordered event trace.",
       inputSchema: emptySchema,
       annotations: { readOnlyHint: true },
@@ -74,6 +92,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "explain_side_effect",
+      title: "Explain side effect",
       description: "Explain a side effect from the smallest responsible spell subgraph.",
       inputSchema: {
         type: "object",
@@ -86,6 +105,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "set_sacred_constraint",
+      title: "Set sacred constraint",
       description: "Add, update, or remove a reversible human-authored preservation constraint.",
       inputSchema: {
         type: "object",
@@ -102,6 +122,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "propose_spell_patch",
+      title: "Propose spell patch",
       description: "Search for ranked spell repairs under the current sacred constraints without changing the graph.",
       inputSchema: emptySchema,
       annotations: { readOnlyHint: true },
@@ -109,6 +130,7 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
     {
       name: "apply_spell_patch",
+      title: "Apply spell patch",
       description: "Atomically apply a versioned spell patch and return before/after evidence plus a verification cast.",
       inputSchema: {
         type: "object",
@@ -126,8 +148,16 @@ export async function registerWebMCPTools(handlers: SpellToolHandlers) {
     },
   ];
 
-  await Promise.all(
-    definitions.map((definition) => document.modelContext?.registerTool(definition as never)),
-  );
-  return true;
+  try {
+    await Promise.all(
+      definitions.map((definition) => modelContext.registerTool(
+        definition,
+        { signal: registration.signal },
+      )),
+    );
+    return true;
+  } catch (error) {
+    registration.abort();
+    throw error;
+  }
 }
