@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { RuneNode, SpellGraph, SpellPatch } from "@/src/domain/spell";
+import {
+  connectRunes,
+  getValidEdgeTypes,
+  type RuneNode,
+  type SpellEdgeType,
+  type SpellGraph,
+  type SpellPatch,
+} from "@/src/domain/spell";
 import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
@@ -18,6 +25,13 @@ interface Activity {
 interface NodePosition {
   x: number;
   y: number;
+}
+
+interface ConnectionDraft {
+  fromId: string;
+  toId: string;
+  edgeType: SpellEdgeType;
+  validTypes: SpellEdgeType[];
 }
 
 type ConsoleTool =
@@ -69,6 +83,9 @@ export function HexMachina() {
   const [mcpReady, setMcpReady] = useState(false);
   const [consoleOutput, setConsoleOutput] = useState("Select a tool to inspect its structured result.");
   const [consoleBusy, setConsoleBusy] = useState<ConsoleTool | null>(null);
+  const [connectFrom, setConnectFrom] = useState<string | null>(null);
+  const [connectionDraft, setConnectionDraft] = useState<ConnectionDraft | null>(null);
+  const [connectionMessage, setConnectionMessage] = useState("Select a rune, then start a typed link.");
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef<string | null>(null);
@@ -91,6 +108,8 @@ export function HexMachina() {
       setGraph: (next) => {
         graphRef.current = next;
         setGraph(next);
+        setConnectFrom(null);
+        setConnectionDraft(null);
       },
       recordActivity,
     }),
@@ -144,6 +163,9 @@ export function HexMachina() {
     draggingRef.current = null;
     setConsoleOutput("Lesson reset. Select a tool to inspect graph v1.");
     setConsoleBusy(null);
+    setConnectFrom(null);
+    setConnectionDraft(null);
+    setConnectionMessage("Select a rune, then start a typed link.");
   };
 
   const moveNode = useCallback((nodeId: string, x: number, y: number) => {
@@ -167,6 +189,58 @@ export function HexMachina() {
     draggingRef.current = null;
     setDragging(null);
   }, []);
+
+  const chooseRune = (nodeId: string) => {
+    setSelected(nodeId);
+    if (!connectFrom || nodeId === connectFrom) return;
+    const source = graph.nodes.find((node) => node.id === connectFrom);
+    const target = graph.nodes.find((node) => node.id === nodeId);
+    if (!source || !target) return;
+    const validTypes = getValidEdgeTypes(source.kind, target.kind);
+    if (!validTypes.length) {
+      setConnectionDraft(null);
+      setConnectionMessage(`${source.label} cannot feed ${target.label}; ${source.kind} → ${target.kind} has no valid port.`);
+      return;
+    }
+    setConnectionDraft({ fromId: source.id, toId: target.id, edgeType: validTypes[0], validTypes });
+    setConnectionMessage(`${source.label} → ${target.label} supports ${validTypes.join(" or ")}.`);
+  };
+
+  const startConnection = () => {
+    if (!selectedNode) return;
+    setConnectFrom(selectedNode.id);
+    setConnectionDraft(null);
+    setConnectionMessage(`Linking from ${selectedNode.label}. Choose a glowing compatible rune.`);
+  };
+
+  const cancelConnection = () => {
+    setConnectFrom(null);
+    setConnectionDraft(null);
+    setConnectionMessage("Typed link cancelled. The spell was not changed.");
+  };
+
+  const confirmConnection = () => {
+    if (!connectionDraft) return;
+    try {
+      const next = connectRunes(
+        graphRef.current,
+        connectionDraft.fromId,
+        connectionDraft.toId,
+        connectionDraft.edgeType,
+      );
+      const from = next.nodes.find((node) => node.id === connectionDraft.fromId);
+      const to = next.nodes.find((node) => node.id === connectionDraft.toId);
+      graphRef.current = next;
+      setGraph(next);
+      setCast(null);
+      setPatch(null);
+      setConnectFrom(null);
+      setConnectionDraft(null);
+      setConnectionMessage(`Added ${connectionDraft.edgeType}: ${from?.label} → ${to?.label}. Spell advanced to v${next.version}.`);
+    } catch (error) {
+      setConnectionMessage(error instanceof Error ? error.message : "The typed connection was rejected.");
+    }
+  };
 
   const runConsoleTool = async (tool: ConsoleTool) => {
     setConsoleBusy(tool);
@@ -211,6 +285,7 @@ export function HexMachina() {
   };
 
   const selectedNode = graph.nodes.find((node) => node.id === selected);
+  const connectSource = graph.nodes.find((node) => node.id === connectFrom);
   const highlightedIds = new Set(activity[0]?.nodeIds ?? []);
   const isSacred = graph.constraints.some((item) => item.targetId === "summon-ducks");
   const familiarPrediction = useMemo(
@@ -280,7 +355,7 @@ export function HexMachina() {
           </div>
 
           <div
-            className={`spell-canvas ${dragging ? "is-rearranging" : ""}`}
+            className={`spell-canvas ${dragging ? "is-rearranging" : ""} ${connectSource ? "is-connecting" : ""}`}
             ref={canvasRef}
             onPointerMove={(event) => moveNodeFromPointer(event.clientX, event.clientY)}
             onPointerUp={finishDragging}
@@ -301,12 +376,23 @@ export function HexMachina() {
               const sacred = graph.constraints.some((item) => item.targetId === node.id);
               const highlighted = highlightedIds.has(node.id);
               const position = positions[node.id] ?? node;
+              const validPortTypes = connectSource && node.id !== connectSource.id
+                ? getValidEdgeTypes(connectSource.kind, node.kind)
+                : [];
+              const connectionClass = !connectSource
+                ? ""
+                : node.id === connectSource.id
+                  ? "connect-source"
+                  : validPortTypes.length
+                    ? "connect-compatible"
+                    : "connect-incompatible";
               return (
                 <button
                   key={node.id}
-                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""}`}
+                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""} ${connectionClass}`}
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
                   onPointerDown={(event) => {
+                    if (connectSource) return;
                     draggingRef.current = node.id;
                     setDragging(node.id);
                     setSelected(node.id);
@@ -325,13 +411,18 @@ export function HexMachina() {
                     event.preventDefault();
                     moveNode(node.id, position.x + offset.x, position.y + offset.y);
                   }}
-                  onClick={() => setSelected(node.id)}
-                  aria-label={`${node.label}, ${kindLabel[node.kind]}. Drag to rearrange; arrow keys nudge.`}
+                  onClick={() => chooseRune(node.id)}
+                  aria-label={`${node.label}, ${kindLabel[node.kind]}. ${connectSource ? node.id === connectSource.id ? "Connection source." : validPortTypes.length ? `Compatible ${validPortTypes.join(" or ")} port.` : "Incompatible port." : "Drag to rearrange; arrow keys nudge."}`}
                   aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 >
                   <span className="rune-glyph" aria-hidden="true">{node.glyph}</span>
                   <span className="rune-copy"><strong>{node.label}</strong><small>{kindLabel[node.kind]}</small></span>
                   {sacred && <span className="sacred-pin" title="Sacred constraint">◆</span>}
+                  {connectSource && (
+                    <span className={`typed-port ${validPortTypes.length ? "valid" : ""}`} aria-hidden="true">
+                      {node.id === connectSource.id ? "From" : validPortTypes[0]?.replace("_", " ") ?? "×"}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -343,10 +434,36 @@ export function HexMachina() {
             </div>
           </div>
 
-          <footer className="node-inspector">
+          <footer className={`node-inspector ${connectSource ? "connection-active" : ""}`}>
             <span className="inspector-glyph">{selectedNode?.glyph ?? "·"}</span>
             <div><small>{selectedNode ? kindLabel[selectedNode.kind] : "Rune"}</small><strong>{selectedNode?.label ?? "Select a rune"}</strong></div>
             <p>{selectedNode?.description}</p>
+            <div className="connection-editor" aria-live="polite">
+              {connectionDraft ? (
+                <>
+                  <label>
+                    <span>Edge type</span>
+                    <select
+                      aria-label="Typed edge category"
+                      value={connectionDraft.edgeType}
+                      onChange={(event) => setConnectionDraft({ ...connectionDraft, edgeType: event.target.value as SpellEdgeType })}
+                    >
+                      {connectionDraft.validTypes.map((edgeType) => <option key={edgeType} value={edgeType}>{edgeType.replace("_", " ")}</option>)}
+                    </select>
+                  </label>
+                  <button type="button" className="confirm-link" onClick={confirmConnection}>Add edge</button>
+                  <button type="button" className="cancel-link" onClick={cancelConnection}>Cancel</button>
+                </>
+              ) : connectSource ? (
+                <>
+                  <span className="connection-prompt">Choose a compatible target</span>
+                  <button type="button" className="cancel-link" onClick={cancelConnection}>Cancel</button>
+                </>
+              ) : (
+                <button type="button" className="start-link" onClick={startConnection} disabled={!selectedNode}>Link from rune</button>
+              )}
+              <small>{connectionMessage}</small>
+            </div>
           </footer>
         </section>
 

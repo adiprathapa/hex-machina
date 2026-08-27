@@ -23,6 +23,7 @@ The collaboration is consequential rather than cosmetic: protecting the ducks pr
 ## Technical highlights
 
 - Typed directed multigraph with seven rune and seven edge categories
+- Human-editable typed ports with visible compatibility and atomic versioned connections
 - Deterministic graph simulation and ordered event traces
 - Minimal responsible-subgraph diagnosis
 - Constraint-aware patch search with atomic, versioned writes

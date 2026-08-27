@@ -59,6 +59,8 @@ Every visible action is also available through a narrow semantic tool. In unsupp
 
 The browser application remains the source of truth. WebMCP handlers call the same domain functions used by the local interface; the agent never owns graph state or invariant enforcement.
 
+The canvas is semantically editable as well as draggable. Select a rune, choose **Link from rune**, then select one of the glowing compatible targets. The editor exposes the valid edge category, rejects invalid or duplicate connections, activates linked workshop runes, and advances the graph version atomically. Reset restores the canonical judge scenario.
+
 ## Site tools
 
 - `inspect_spell`

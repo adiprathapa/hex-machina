@@ -203,6 +203,8 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         re.search(r"document\.modelContext\??\.registerTool|typeof\s+document\.modelContext", combined)
     )
     read_only_marker = "readOnlyHint" in combined
+    typed_editor = all(marker in combined for marker in ("connectRunes", "getValidEdgeTypes", "Typed edge category"))
+    advisory_familiar = all(marker in combined for marker in ("inferFamiliar", "authoritative: false", "rounds: 2"))
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -242,6 +244,16 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "tool safety annotations",
             read_only_marker,
             "readOnlyHint detected" if read_only_marker else "readOnlyHint not detected",
+        ),
+        Check(
+            "semantic graph editor",
+            typed_editor,
+            "typed compatibility and validated connection surface detected" if typed_editor else "manual typed-connection surface missing",
+        ),
+        Check(
+            "advisory Familiar boundary",
+            advisory_familiar,
+            "two-round advisory model is explicitly non-authoritative" if advisory_familiar else "Familiar advisory boundary missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

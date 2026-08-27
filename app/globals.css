@@ -379,6 +379,10 @@ kbd {
   cursor: grabbing;
 }
 
+.spell-canvas.is-connecting {
+  cursor: crosshair;
+}
+
 .edge-layer {
   position: absolute;
   inset: 0;
@@ -454,6 +458,50 @@ kbd {
 .rune.dormant {
   opacity: .34;
   border-style: dashed;
+}
+
+.rune.connect-source {
+  opacity: 1;
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 1px rgba(181,161,255,.18), 0 0 30px rgba(181,161,255,.13);
+}
+
+.rune.connect-compatible {
+  opacity: 1;
+  border-color: var(--aqua);
+  border-style: solid;
+  box-shadow: 0 0 0 1px rgba(114,223,205,.13), 0 0 28px rgba(114,223,205,.1);
+}
+
+.rune.connect-incompatible {
+  opacity: .12;
+  filter: grayscale(.7);
+}
+
+.typed-port {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  min-width: 34px;
+  max-width: 96px;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 1px solid rgba(181,161,255,.4);
+  border-radius: 999px;
+  background: #111516;
+  color: var(--lilac);
+  font: 600 6px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .06em;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.typed-port.valid {
+  border-color: rgba(114,223,205,.48);
+  color: var(--aqua);
 }
 
 .canvas-hint {
@@ -582,12 +630,16 @@ kbd {
 .node-inspector {
   min-height: 62px;
   display: grid;
-  grid-template-columns: 36px 120px 1fr;
+  grid-template-columns: 36px 105px minmax(120px, 1fr) minmax(205px, auto);
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
   border-top: 1px solid var(--line);
   background: rgba(255,255,255,.018);
+}
+
+.node-inspector.connection-active {
+  background: rgba(181,161,255,.035);
 }
 
 .inspector-glyph {
@@ -622,6 +674,77 @@ kbd {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.4;
+}
+
+.connection-editor {
+  min-width: 205px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.connection-editor > small {
+  flex-basis: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.25;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-editor button,
+.connection-editor select {
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 8px;
+}
+
+.connection-editor button {
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.connection-editor button:disabled {
+  cursor: not-allowed;
+  opacity: .35;
+}
+
+.start-link,
+.cancel-link {
+  background: transparent;
+  color: var(--muted);
+}
+
+.confirm-link {
+  border-color: var(--aqua) !important;
+  background: var(--aqua);
+  color: #0b1514;
+  font-weight: 700;
+}
+
+.connection-editor label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font: 600 7px/1 var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+}
+
+.connection-editor select {
+  padding: 0 6px;
+  background: #121617;
+  color: var(--ink);
+}
+
+.connection-prompt {
+  color: var(--aqua);
+  font-size: 8px;
 }
 
 .familiar-panel {
@@ -988,6 +1111,9 @@ kbd {
   .activity-list { grid-template-columns: repeat(3, 1fr); }
   .tool-console-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .spell-canvas { min-height: 500px; }
+  .node-inspector { grid-template-columns: 34px 92px 1fr; }
+  .connection-editor { grid-column: 1 / -1; justify-content: flex-start; min-width: 0; }
+  .connection-editor > small { text-align: left; }
 }
 
 @media (max-width: 760px) {
@@ -1005,7 +1131,7 @@ kbd {
   .rune-copy strong { font-size: 9px; }
   .activity-list { grid-template-columns: 1fr; }
   .tool-console-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .node-inspector { grid-template-columns: 34px 100px 1fr; }
+  .node-inspector { grid-template-columns: 34px 92px 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

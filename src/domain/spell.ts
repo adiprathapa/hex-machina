@@ -103,6 +103,14 @@ const validConnections: Record<SpellEdgeType, Array<[RuneKind, RuneKind]>> = {
   ],
 };
 
+export function getValidEdgeTypes(fromKind: RuneKind, toKind: RuneKind): SpellEdgeType[] {
+  return (Object.keys(validConnections) as SpellEdgeType[]).filter((edgeType) =>
+    validConnections[edgeType].some(
+      ([allowedFrom, allowedTo]) => fromKind === allowedFrom && toKind === allowedTo,
+    ),
+  );
+}
+
 export function validateSpellGraph(graph: SpellGraph): string[] {
   const problems: string[] = [];
   const nodeIds = new Set<string>();
@@ -146,6 +154,45 @@ export function validateSpellGraph(graph: SpellGraph): string[] {
 
 export function cloneGraph(graph: SpellGraph): SpellGraph {
   return JSON.parse(JSON.stringify(graph)) as SpellGraph;
+}
+
+export function connectRunes(
+  graph: SpellGraph,
+  fromId: string,
+  toId: string,
+  edgeType: SpellEdgeType,
+): SpellGraph {
+  if (fromId === toId) throw new Error("A rune cannot connect to itself");
+  const from = graph.nodes.find((node) => node.id === fromId);
+  const to = graph.nodes.find((node) => node.id === toId);
+  if (!from) throw new Error(`Cannot connect missing rune: ${fromId}`);
+  if (!to) throw new Error(`Cannot connect missing rune: ${toId}`);
+
+  const validTypes = getValidEdgeTypes(from.kind, to.kind);
+  if (!validTypes.includes(edgeType)) {
+    throw new Error(`Invalid ${edgeType} connection: ${from.kind} -> ${to.kind}`);
+  }
+  if (graph.edges.some((edge) => edge.from === fromId && edge.to === toId && edge.type === edgeType)) {
+    throw new Error(`${from.label} is already connected to ${to.label} with ${edgeType}`);
+  }
+
+  const next = cloneGraph(graph);
+  const edge: SpellEdge = {
+    id: `e-manual-v${graph.version}-${fromId}-${edgeType}-${toId}`,
+    from: fromId,
+    to: toId,
+    type: edgeType,
+  };
+  next.edges.push(edge);
+  for (const nodeId of [fromId, toId]) {
+    const node = next.nodes.find((candidate) => candidate.id === nodeId);
+    if (node) node.dormant = false;
+  }
+  next.version += 1;
+
+  const problems = validateSpellGraph(next);
+  if (problems.length) throw new Error(`Invalid manual edit: ${problems.join("; ")}`);
+  return next;
 }
 
 export function serializeSpellGraph(graph: SpellGraph): string {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { applyPatch, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
+import { applyPatch, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { proposePatches } from "../src/solver/repair.ts";
@@ -66,4 +66,31 @@ test("patches reject stale graph versions", () => {
   const patch = proposePatches(graph)[0];
   graph.version += 1;
   assert.throws(() => applyPatch(graph, patch), /Stale patch/);
+});
+
+test("manual editing exposes typed compatibility and applies a validated connection", () => {
+  const graph = createMoonflowerScenario();
+  assert.deepEqual(getValidEdgeTypes("verb", "target"), ["targets"]);
+  assert.deepEqual(getValidEdgeTypes("source", "target"), []);
+
+  const edited = connectRunes(graph, "pour", "moonflower", "targets");
+  assert.equal(edited.version, graph.version + 1);
+  assert.equal(edited.edges.some((edge) => edge.from === "pour" && edge.to === "moonflower" && edge.type === "targets"), true);
+  assert.deepEqual(validateSpellGraph(edited), []);
+  assert.equal(graph.edges.some((edge) => edge.from === "pour" && edge.to === "moonflower"), false);
+});
+
+test("manual editing rejects invalid and duplicate connections without mutation", () => {
+  const graph = createMoonflowerScenario();
+  assert.throws(() => connectRunes(graph, "moonwell", "room", "targets"), /Invalid targets connection/);
+  assert.throws(() => connectRunes(graph, "pour", "room", "targets"), /already connected/);
+  assert.equal(graph.version, 1);
+  assert.equal(graph.edges.length, 4);
+});
+
+test("connecting a dormant workshop rune activates it atomically", () => {
+  const graph = createMoonflowerScenario();
+  const edited = connectRunes(graph, "summon-ducks", "umbrella", "flows_to");
+  assert.equal(edited.nodes.find((node) => node.id === "umbrella")?.dormant, false);
+  assert.equal(graph.nodes.find((node) => node.id === "umbrella")?.dormant, true);
 });

@@ -32,6 +32,8 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 6. The selected patch applies to a clone and must pass graph validation.
 7. The application commits the new graph atomically and immediately runs a verification simulation.
 
+Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
+
 ## Determinism
 
 The scenario contains a fixed seed, stable IDs, sorted serialization, and pure simulation. Repeated casts of the same graph produce deeply equal results. This keeps tool evidence reproducible and makes demo failure modes debuggable.

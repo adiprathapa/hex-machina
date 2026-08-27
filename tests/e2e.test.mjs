@@ -46,6 +46,7 @@ test("production shell exposes accessible controls and state regions", async () 
   assert.match(html, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.match(html, /Local tool console/);
   assert.match(html, /aria-label="Semantic tool console"/);
+  assert.match(html, /Link from rune/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /rel="stylesheet"/);
 });
