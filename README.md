@@ -89,6 +89,10 @@ The tool adapter registers only when `document.modelContext.registerTool` is ava
 Registrations are scoped to the page lifecycle with abort cleanup, and the shared handlers revalidate every runtime argument rather than assuming that a browser or TypeScript has enforced the JSON schema.
 The targeted experimental API surface and evidence are recorded in the dated [`submission/webmcp-conformance.md`](submission/webmcp-conformance.md) snapshot.
 
+## Security and privacy
+
+Hex Machina has no accounts, analytics, cookies, browser persistence, external APIs, or runtime third-party requests. The worker emits a tested Content Security Policy and browser capability, referrer, framing, MIME, and cross-origin protections. The complete posture and its deliberate framework compatibility exception are documented in [`submission/security.md`](submission/security.md).
+
 ## Experimental Familiar
 
 After a failed cast, Moth runs two rounds of frozen-weight message passing over active runes and ranks three likely inspection targets. It is an advisory visualization—not a source of causal truth—and never mutates the graph. Disable it at build time with `NEXT_PUBLIC_FAMILIAR_GNN=off`.

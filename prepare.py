@@ -185,6 +185,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "automated_production_browser_journey",
         "reversible_patch_undo",
         "registered_tools_drive_visible_ui",
+        "same_origin_runtime_requests",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []
@@ -291,6 +292,15 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
     execution_cancellation = all(
         marker in combined for marker in ("WebMCPExecutionOptions", "signal.aborted", "AbortError")
     )
+    response_security = all(
+        marker in combined
+        for marker in (
+            "Content-Security-Policy",
+            "Permissions-Policy",
+            "Referrer-Policy",
+            "X-Content-Type-Options",
+        )
+    )
     registration_lifecycle = all(
         marker in combined
         for marker in ("new AbortController()", "registration.signal", "registration.abort()")
@@ -343,6 +353,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "pre-cancelled calls fail before handler execution" if execution_cancellation else "execution AbortSignal is not guarded",
         ),
         Check(
+            "production response security",
+            response_security,
+            "CSP, permissions, referrer, and MIME protections detected" if response_security else "worker security headers are incomplete",
+        ),
+        Check(
             "WebMCP registration lifecycle",
             registration_lifecycle,
             "abort-scoped registration cleanup detected" if registration_lifecycle else "registration cleanup is not lifecycle-scoped",
@@ -386,6 +401,7 @@ def main() -> int:
         "submission/architecture.md",
         "submission/acceptance-matrix.md",
         "submission/webmcp-conformance.md",
+        "submission/security.md",
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",

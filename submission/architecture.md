@@ -23,6 +23,9 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
 - `app/HexMachina.tsx`: visual canvas, local fallback controls, visible constraints, patch review, and activity evidence.
+- `worker/index.ts`: Cloudflare-compatible request boundary adding same-origin content, capability, referrer, framing, and MIME security policies to built responses.
+
+The application has no database, object-storage binding, account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin.
 
 ## Mutation protocol
 

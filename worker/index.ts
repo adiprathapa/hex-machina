@@ -22,6 +22,39 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'none'",
+  "object-src 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "connect-src 'self'",
+  "manifest-src 'self'",
+].join("; ");
+
+function secureResponse(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  headers.set("Permissions-Policy", "camera=(), geolocation=(), microphone=(), payment=(), usb=()");
+  headers.set("Referrer-Policy", "no-referrer");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Frame-Options", "SAMEORIGIN");
+  headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  if (headers.get("content-type")?.toLowerCase().startsWith("text/html")) {
+    headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
 // To route SVGs through the optimizer (with security headers), set
@@ -34,16 +67,17 @@ const worker = {
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      return handleImageOptimization(request, {
+      const response = await handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
         transformImage: async (body, { width, format, quality }) => {
           const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
           return result.response();
         },
       }, allowedWidths);
+      return secureResponse(response);
     }
 
-    return handler.fetch(request, env, ctx);
+    return secureResponse(await handler.fetch(request, env, ctx));
   },
 };
 

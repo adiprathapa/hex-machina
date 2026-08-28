@@ -129,10 +129,16 @@ test("production browser completes the constraint-preserving spell journey", { t
     });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     const browserErrors = [];
+    const externalRequests = [];
     page.on("console", (message) => {
       if (message.type() === "error") browserErrors.push(`console: ${message.text()}`);
     });
     page.on("pageerror", (error) => browserErrors.push(`page: ${error.message}`));
+    page.on("request", (request) => {
+      if (new URL(request.url()).origin !== new URL(server.url).origin) {
+        externalRequests.push(request.url());
+      }
+    });
     await page.addInitScript(() => {
       const tools = new Map();
       Object.defineProperty(window, "__hexWebMCPTools", { value: tools, configurable: true });
@@ -250,6 +256,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(await page.locator(".rune.sacred").count(), 1, "agent rollback preserves sacred intent");
 
     assert.deepEqual(browserErrors, [], `production browser emitted errors:\n${browserErrors.join("\n")}`);
+    assert.deepEqual(externalRequests, [], `production journey contacted external origins:\n${externalRequests.join("\n")}`);
   } catch (error) {
     const serverOutput = server.output();
     if (serverOutput) error.message += `\nProduction server output:\n${serverOutput}`;
