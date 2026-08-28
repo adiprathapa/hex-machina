@@ -180,6 +180,11 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(await page.locator(".edge-layer line.patch-remove").count(), 2, "removed connections are previewed on the graph");
     assert.equal(await page.locator(".edge-layer line.patch-add").count(), 4, "new connections are previewed on the graph");
     assert.equal(await page.locator(".rune.patch-activate").count(), 2, "dormant runes to awaken are previewed on the graph");
+    await page.getByRole("button", { name: "Simulate patch safely", exact: true }).click();
+    await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "a human can safely test the repair before approval");
+    await assertVisible(page.locator(".preview-verdict"), "the unapplied prediction is visibly distinguished from editor state");
+    assert.match(await page.locator(".preview-verdict").innerText(), /Predicted\s+Stable[\s\S]*Editor remains at graph v2/i);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/, "preview simulation does not advance the graph");
     await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
     await assertVisible(page.getByText("Stable", { exact: true }), "successful cast is stable");
     await assertVisible(page.getByText("The moonflower blooms", { exact: true }), "successful outcome is visible");
@@ -259,11 +264,21 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(agentProposal.patches[0].searchEvidence.editCount, 8);
     assert.equal(agentProposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
     assert.equal(await page.locator(".patch-ledger li").count(), 8, "agent proposals use the same complete human-review ledger");
+    const agentPreview = await invokeTool("simulate_cast", { patchId: agentProposal.patches[0].id });
+    assert.equal(agentPreview.success, true);
+    assert.equal(agentPreview.preview.editorMutated, false);
+    assert.equal(agentPreview.preview.baseGraphVersion, 2);
+    assert.equal(agentPreview.preview.simulatedGraphVersion, 3);
+    await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "agent patch simulations remain visibly pending");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/, "agent preview does not advance the live graph");
     const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
     await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
     assert.equal(agentApply.verification.success, true);
     assert.equal(agentApply.verification.assertions.duckCount, 12);
-    assert.match(await page.locator(".activity-list").innerText(), /inspect_spell[\s\S]*simulate_cast|simulate_cast[\s\S]*inspect_spell/);
+    const recentAgentActivity = await page.locator(".activity-list").innerText();
+    assert.match(recentAgentActivity, /apply_spell_patch/);
+    assert.match(recentAgentActivity, /simulate_cast/);
+    assert.match(recentAgentActivity, /propose_spell_patch/);
 
     await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "agent rollback restores visible failure state");

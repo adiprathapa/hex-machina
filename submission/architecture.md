@@ -42,6 +42,8 @@ The canonical search evaluates two semantically distinct graph rewrites. Without
 
 Before a write is approved, the UI converts the exact application-generated operations into a stable ledger. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. The preview is derived from the same patch object accepted by `apply_spell_patch`, so the explanation cannot drift from the mutation.
 
+`simulate_cast` can take that current patch ID and execute it against a cloned graph. The result returns the base version, simulated version, and an explicit `editorMutated: false` receipt. The UI preserves the failed live cast, labels the prediction **Unapplied simulation**, and keeps the canvas header at the base graph version until the separate write tool is invoked.
+
 Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
 
 ## Determinism

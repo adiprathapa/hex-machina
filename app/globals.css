@@ -816,6 +816,38 @@ kbd {
   letter-spacing: -.02em;
 }
 
+.preview-verdict {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid rgba(114,223,205,.28);
+  border-radius: 6px;
+  background: rgba(114,223,205,.055);
+}
+
+.preview-verdict span,
+.preview-verdict small {
+  color: var(--muted);
+  font: 600 7px/1.2 var(--font-geist-mono), monospace;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.preview-verdict strong {
+  justify-self: end;
+  color: var(--aqua);
+  font-size: 10px;
+}
+
+.preview-verdict small {
+  grid-column: 1 / -1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .patch-card dl {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

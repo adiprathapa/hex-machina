@@ -60,6 +60,9 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.equal(inspectNodeIds.maxItems, 12);
   assert.equal(typeof inspectNodeIds.description, "string");
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
+  const simulateTool = definitions.find((item) => item.name === "simulate_cast");
+  assert.equal(simulateTool.inputSchema.properties.patchId.type, "string");
+  assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|direct)-v[0-9]+$");
   assert.equal(
     definitions.flatMap((item) => Object.values(item.inputSchema.properties)).every(
       (property) => typeof property.description === "string" && property.description.length > 0,
@@ -138,6 +141,16 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(proposal.patches[0].preserves.includes("summon-ducks"), true);
   assert.equal(proposal.patches[0].searchEvidence.editCount, 8);
   assert.equal(proposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
+  const graphBeforePreview = JSON.stringify(graph);
+  const preview = await handlers.simulate_cast({ patchId: proposal.patches[0].id });
+  assert.equal(preview.success, true);
+  assert.deepEqual(preview.preview, {
+    patchId: proposal.patches[0].id,
+    baseGraphVersion: 2,
+    simulatedGraphVersion: 3,
+    editorMutated: false,
+  });
+  assert.equal(JSON.stringify(graph), graphBeforePreview, "a patch simulation must not mutate editor state");
   const result = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
   assert.equal(result.action, "apply");
   assert.equal(result.verification.success, true);
@@ -163,6 +176,7 @@ test("tool handlers preserve human intent through a verified write", async () =>
       "explain_side_effect",
       "set_sacred_constraint",
       "propose_spell_patch",
+      "simulate_cast",
       "apply_spell_patch",
     ]),
   );
@@ -173,6 +187,7 @@ test("tool handlers preserve human intent through a verified write", async () =>
       "simulate_cast",
       "set_sacred_constraint",
       "propose_spell_patch",
+      "simulate_cast",
       "apply_spell_patch",
       "apply_spell_patch",
     ],
@@ -215,6 +230,11 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
   );
   await assert.rejects(handlers.inspect_spell(null), /input must be an object/);
   await assert.rejects(handlers.simulate_cast({ seed: 99 }), /unknown field: seed/);
+  await assert.rejects(handlers.simulate_cast({ patchId: "anything" }), /Invalid patch ID/);
+  await assert.rejects(
+    handlers.simulate_cast({ patchId: "patch-umbrella-v999" }),
+    /unavailable or stale/,
+  );
   await assert.rejects(handlers.propose_spell_patch({ limit: 99 }), /unknown field: limit/);
   await assert.rejects(
     handlers.apply_spell_patch({ patchId: "anything", force: true }),

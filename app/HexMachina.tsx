@@ -77,6 +77,7 @@ export function HexMachina() {
   const graphRef = useRef(graph);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [cast, setCast] = useState<CastResult | null>(null);
+  const [previewCast, setPreviewCast] = useState<CastResult | null>(null);
   const [patch, setPatch] = useState<SpellPatch | null>(null);
   const [revertToken, setRevertToken] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>("multiply");
@@ -104,15 +105,24 @@ export function HexMachina() {
 
   const presentToolResult = useCallback((event: SpellToolPresentation) => {
     if (event.tool === "simulate_cast") {
-      setCast(event.simulation);
-      setPatch(null);
+      if (event.previewPatch) {
+        setPatch(event.previewPatch);
+        setPreviewCast(event.simulation);
+      } else {
+        setCast(event.simulation);
+        setPatch(null);
+        setPreviewCast(null);
+      }
     } else if (event.tool === "set_sacred_constraint") {
       setPatch(null);
+      setPreviewCast(null);
     } else if (event.tool === "propose_spell_patch") {
       setPatch(event.patches[0] ?? null);
+      setPreviewCast(null);
     } else {
       setCast(event.verification);
       setPatch(null);
+      setPreviewCast(null);
       setRevertToken(event.revertToken ?? null);
     }
   }, []);
@@ -178,6 +188,11 @@ export function HexMachina() {
     await handlers.apply_spell_patch({ patchId: patch.id });
   };
 
+  const previewRepair = async () => {
+    if (!patch) return;
+    await handlers.simulate_cast({ patchId: patch.id });
+  };
+
   const undoRepair = async () => {
     if (!revertToken) return;
     const result = await handlers.apply_spell_patch({ revertToken });
@@ -189,6 +204,7 @@ export function HexMachina() {
     graphRef.current = next;
     setGraph(next);
     setCast(null);
+    setPreviewCast(null);
     setPatch(null);
     setRevertToken(null);
     setActivity([]);
@@ -268,6 +284,7 @@ export function HexMachina() {
       graphRef.current = next;
       setGraph(next);
       setCast(null);
+      setPreviewCast(null);
       setPatch(null);
       setRevertToken(null);
       setConnectFrom(null);
@@ -375,6 +392,7 @@ export function HexMachina() {
             {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectDucks}>Protect the ducks</button>}
             {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
             {patch && <button className="primary" onClick={applyRepair}>Apply patch & recast</button>}
+            {patch && !previewCast && <button className="quiet" onClick={previewRepair}>Simulate patch safely</button>}
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
@@ -519,9 +537,16 @@ export function HexMachina() {
 
           {patch ? (
             <article className="patch-card">
-              <p className="section-kicker">Proposed patch</p>
+              <p className="section-kicker">{previewCast ? "Unapplied simulation" : "Proposed patch"}</p>
               <h3>{patch.title}</h3>
               <p>{patch.rationale}</p>
+              {previewCast && (
+                <div className="preview-verdict" role="status">
+                  <span>Predicted</span>
+                  <strong>{previewCast.success ? "Stable" : "Unstable"}</strong>
+                  <small>Editor remains at graph v{graph.version}</small>
+                </div>
+              )}
               <dl><div><dt>Rank</dt><dd>#{patch.searchEvidence.rank}</dd></div><div><dt>Edits</dt><dd>{patch.searchEvidence.editCount}</dd></div><div><dt>Eligible</dt><dd>{patch.searchEvidence.eligibleCandidateCount}/{patch.searchEvidence.candidateCount}</dd></div></dl>
               <details className="patch-ledger" open>
                 <summary>Review {patchPreview.length} graph edits</summary>

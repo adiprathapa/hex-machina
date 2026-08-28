@@ -41,7 +41,7 @@ export interface SpellToolContext {
 }
 
 export type SpellToolPresentation =
-  | { tool: "simulate_cast"; simulation: CastResult }
+  | { tool: "simulate_cast"; simulation: CastResult; previewPatch?: SpellPatch }
   | { tool: "set_sacred_constraint" }
   | { tool: "propose_spell_patch"; patches: SpellPatch[] }
   | {
@@ -109,8 +109,43 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       return explanation;
     },
     simulate_cast: async (input: unknown = {}) => {
-      requireToolInput(input, "simulate_cast", []);
-      const result = simulateCast(context.getGraph());
+      const parsed = requireToolInput(input, "simulate_cast", ["patchId"]);
+      const graph = context.getGraph();
+      if (parsed.patchId !== undefined) {
+        const patchId = requireString(parsed.patchId, "patchId");
+        if (!/^patch-(umbrella|direct)-v[0-9]+$/.test(patchId)) {
+          throw new Error(`Invalid patch ID: ${patchId}`);
+        }
+        const patch = proposePatches(graph).find((candidate) => candidate.id === patchId);
+        if (!patch) {
+          throw new Error(`Patch ${patchId} is unavailable or stale for graph v${graph.version}`);
+        }
+        const result = previewPatch(graph, patch).simulation;
+        const nodeIds = patch.operations.flatMap((operation) =>
+          operation.op === "add_edge"
+            ? [operation.edge.from, operation.edge.to]
+            : operation.op === "activate_node"
+              ? [operation.nodeId]
+              : [],
+        );
+        context.recordActivity(
+          "simulate_cast",
+          `Previewed ${patch.title} without changing graph v${graph.version}. ${result.summary}`,
+          nodeIds,
+        );
+        context.presentResult?.({ tool: "simulate_cast", simulation: result, previewPatch: patch });
+        return {
+          ...result,
+          preview: {
+            patchId: patch.id,
+            baseGraphVersion: graph.version,
+            simulatedGraphVersion: result.graphVersion,
+            editorMutated: false,
+          },
+        };
+      }
+
+      const result = simulateCast(graph);
       context.recordActivity("simulate_cast", result.summary, result.events.map((event) => event.nodeId));
       context.presentResult?.({ tool: "simulate_cast", simulation: result });
       return result;

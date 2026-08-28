@@ -24,6 +24,7 @@
     "registered_tools_drive_visible_ui",
     "same_origin_runtime_requests",
     "ranked_repair_evidence",
+    "nonmutating_patch_preview",
     "twelve_ducks_preserved"
   ],
   "final_state": "Stable",
@@ -41,6 +42,6 @@
   },
   "site_tools_api_available": false,
   "registered_tool_contract_harness": true,
-  "automated_harness_verified_at": "2026-08-27T20:32:08-04:00",
+  "automated_harness_verified_at": "2026-08-28T09:10:07-04:00",
   "site_tools_note": "The local production page did not expose document.modelContext in this controlled browser session. Abort-scoped registration, runtime validation, and the shared fallback flow are verified; deployed live discovery remains pending."
 }

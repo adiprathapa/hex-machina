@@ -187,6 +187,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "registered_tools_drive_visible_ui",
         "same_origin_runtime_requests",
         "ranked_repair_evidence",
+        "nonmutating_patch_preview",
         "twelve_ducks_preserved",
     }
     completed = set(evidence.get("completed_steps", []))
@@ -382,6 +383,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("searchEvidence", "eligibleCandidateCount", "constraintsSatisfied")
     )
+    nonmutating_patch_preview = all(
+        marker in combined
+        for marker in ("previewPatch", "baseGraphVersion", "simulatedGraphVersion", "editorMutated: false")
+    )
     sacred_reachability = all(
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
@@ -455,6 +460,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "constraint-ranked graph repair",
             constrained_search,
             "rank, edit cost, eligibility, and satisfied constraints detected" if constrained_search else "bounded repair ranking evidence missing",
+        ),
+        Check(
+            "non-mutating patch simulation",
+            nonmutating_patch_preview,
+            "current patch IDs return explicit base/simulated version evidence without editor mutation" if nonmutating_patch_preview else "bounded patch-preview simulation evidence missing",
         ),
         Check(
             "sacred reachability invariant",

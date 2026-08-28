@@ -104,8 +104,18 @@ export async function registerWebMCPTools(
     {
       name: "simulate_cast",
       title: "Simulate cast",
-      description: "Simulate the current spell without mutating editor state and return an ordered event trace.",
-      inputSchema: emptySchema,
+      description: "Simulate the current spell or a current proposed patch without mutating editor state, and return an ordered event trace.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          patchId: {
+            type: "string",
+            description: "Optional current patch ID from propose_spell_patch to simulate as an unapplied preview.",
+            pattern: "^patch-(umbrella|direct)-v[0-9]+$",
+          },
+        },
+        additionalProperties: false,
+      },
       annotations: trustedReadAnnotations,
       execute: withExecutionSignal(handlers.simulate_cast),
     },
