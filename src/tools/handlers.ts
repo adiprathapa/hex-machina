@@ -230,7 +230,13 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         throw new Error(`Unknown side effect: ${sideEffectId}`);
       }
       const explanation = explainFlood(context.getGraph());
-      context.recordActivity("explain_side_effect", explanation.explanation, explanation.nodeIds);
+      context.recordActivity(
+        "explain_side_effect",
+        explanation.present
+          ? `Proved a ${explanation.subgraph.edges.length}-edge minimal causal subgraph for the flood.`
+          : explanation.explanation,
+        explanation.nodeIds,
+      );
       return { requestedId: sideEffectId, ...explanation };
     },
     set_sacred_constraint: async (input: unknown = {}) => {

@@ -146,7 +146,7 @@ export async function registerWebMCPTools(
     {
       name: "explain_side_effect",
       title: "Explain side effect",
-      description: "Explain a side effect from the smallest responsible spell subgraph.",
+      description: "Return the smallest typed responsible subgraph, ordered causal steps, simulator-rule premises, and an edge-necessity proof for a side effect.",
       inputSchema: {
         type: "object",
         properties: {

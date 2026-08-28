@@ -398,6 +398,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("scenarioState", "boundaryEdges", "omittedNodeCount", "internalEdgeCount")
     )
+    minimal_side_effect_proof = all(
+        marker in combined
+        for marker in ("causalSteps", "ruleEvidence", "necessityChecks", "everyResponsibleEdgeNecessary", "no-protective-umbrella-route")
+    )
     validated_patch_preconditions = all(
         marker in combined
         for marker in ("expectedGraphVersion", "requiredEdgeIds", "requiredDormantNodeIds", "requiredConstraintIds", "validatedPreconditions")
@@ -490,6 +494,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "coherent filtered inspection",
             coherent_filtered_inspection,
             "focused inspections partition internal and boundary edges and include current scenario state" if coherent_filtered_inspection else "coherent filtered inspection evidence missing",
+        ),
+        Check(
+            "minimal side-effect proof",
+            minimal_side_effect_proof,
+            "typed causal subgraph includes rule premises and counterfactual edge-necessity checks" if minimal_side_effect_proof else "structured minimal side-effect evidence missing",
         ),
         Check(
             "validated patch preconditions",

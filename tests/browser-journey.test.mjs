@@ -278,7 +278,14 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(boundedSourceTrace.truncated, true);
     assert.deepEqual(boundedSourceTrace.bounds, { maxDepth: 2, maxPaths: 1 });
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "read-only traces do not advance the graph");
-    await invokeTool("explain_side_effect", { sideEffectId: "flooded-observatory" });
+    const agentExplanation = await invokeTool("explain_side_effect", { sideEffectId: "flooded-observatory" });
+    assert.deepEqual(agentExplanation.subgraph.nodes.map((node) => node.id), ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
+    assert.deepEqual(agentExplanation.subgraph.edges.map((edge) => edge.id), ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+    assert.equal(agentExplanation.causalSteps.length, 4);
+    assert.equal(agentExplanation.ruleEvidence.allPremisesSatisfied, true);
+    assert.equal(agentExplanation.minimality.everyResponsibleEdgeNecessary, true);
+    assert.equal(agentExplanation.minimality.necessityChecks.every((check) => !check.sideEffectStillPresent), true);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "side-effect proof does not advance the graph");
     await invokeTool("set_sacred_constraint", {
       targetId: "summon-ducks",
       reason: "The ducks are funny. They must remain in the final spell.",

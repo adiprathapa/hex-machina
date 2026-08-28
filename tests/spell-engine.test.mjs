@@ -5,7 +5,7 @@ import { buildPatchPreview } from "../src/domain/patch-preview.ts";
 import { applyPatch, cloneGraph, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
-import { proposePatches } from "../src/solver/repair.ts";
+import { explainFlood, proposePatches } from "../src/solver/repair.ts";
 import { traceSpellGraph } from "../src/solver/trace.ts";
 
 test("moonflower fixture is valid and serializes deterministically", () => {
@@ -27,6 +27,41 @@ test("initial spell deterministically floods the room", () => {
   assert.equal(first.sideEffects[0].id, "flooded-observatory");
   assert.deepEqual(first.sideEffects[0].responsibleNodeIds, ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
   assert.deepEqual(first.sideEffects[0].responsibleEdgeIds, ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+});
+
+test("side-effect explanation proves a typed edge-minimal causal subgraph", () => {
+  const graph = createMoonflowerScenario();
+  const before = JSON.stringify(graph);
+  const explanation = explainFlood(graph);
+
+  assert.equal(explanation.present, true);
+  assert.deepEqual(explanation.subgraph.nodes.map((node) => node.id), [
+    "moonwell", "multiply", "summon-ducks", "pour", "room",
+  ]);
+  assert.deepEqual(explanation.subgraph.edges.map((edge) => edge.id), [
+    "e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room",
+  ]);
+  assert.deepEqual(explanation.causalSteps.map((step) => [step.from.nodeId, step.to.nodeId]), [
+    ["moonwell", "multiply"],
+    ["multiply", "summon-ducks"],
+    ["summon-ducks", "pour"],
+    ["pour", "room"],
+  ]);
+  assert.equal(explanation.ruleEvidence.allPremisesSatisfied, true);
+  assert.equal(explanation.ruleEvidence.premises.length, 5);
+  assert.equal(explanation.ruleEvidence.premises.at(-1).id, "no-protective-umbrella-route");
+  assert.equal(explanation.ruleEvidence.premises.at(-1).satisfied, true);
+  assert.equal(explanation.minimality.complete, true);
+  assert.equal(explanation.minimality.everyResponsibleEdgeNecessary, true);
+  assert.equal(explanation.minimality.necessityChecks.length, 4);
+  assert.equal(explanation.minimality.necessityChecks.every((check) => !check.sideEffectStillPresent), true);
+  assert.equal(JSON.stringify(graph), before, "explanation and counterfactual checks must not mutate the graph");
+
+  const repaired = applyPatch(graph, proposePatches(graph)[0]);
+  const absent = explainFlood(repaired);
+  assert.equal(absent.present, false);
+  assert.deepEqual(absent.subgraph, { graphVersion: 2, nodes: [], edges: [] });
+  assert.equal(absent.minimality.applicable, false);
 });
 
 test("effect tracing returns a bounded ordered causal path with complete graph evidence", () => {

@@ -1,5 +1,6 @@
 import {
   applyPatch,
+  cloneGraph,
   type SpellGraph,
   type SpellPatch,
 } from "../domain/spell.ts";
@@ -15,8 +16,104 @@ export function explainFlood(graph: SpellGraph) {
       explanation: "The current graph does not produce the observatory flood.",
       nodeIds: [],
       edgeIds: [],
+      subgraph: { graphVersion: graph.version, nodes: [], edges: [] },
+      causalSteps: [],
+      ruleEvidence: {
+        ruleId: "unshielded-water-route-targets-room",
+        conclusion: { sideEffectId: "flooded-observatory", observed: false },
+        premises: [],
+        allPremisesSatisfied: false,
+      },
+      minimality: {
+        applicable: false,
+        complete: true,
+        everyResponsibleEdgeNecessary: false,
+        necessityChecks: [],
+      },
     };
   }
+
+  const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edgesById = new Map(graph.edges.map((edge) => [edge.id, edge]));
+  const responsibleNodes = effect.responsibleNodeIds.flatMap((id) => {
+    const node = nodesById.get(id);
+    return node ? [node] : [];
+  });
+  const responsibleEdges = effect.responsibleEdgeIds.flatMap((id) => {
+    const edge = edgesById.get(id);
+    return edge ? [edge] : [];
+  });
+  const complete = responsibleNodes.length === effect.responsibleNodeIds.length &&
+    responsibleEdges.length === effect.responsibleEdgeIds.length;
+  const causalSteps = responsibleEdges.map((edge, index) => {
+    const from = nodesById.get(edge.from);
+    const to = nodesById.get(edge.to);
+    return {
+      order: index + 1,
+      edgeId: edge.id,
+      edgeType: edge.type,
+      from: { nodeId: edge.from, label: from?.label ?? edge.from },
+      to: { nodeId: edge.to, label: to?.label ?? edge.to },
+      statement: `${from?.label ?? edge.from} ${edge.type.replace("_", " ")} ${to?.label ?? edge.to}.`,
+    };
+  });
+  const premiseSpecs = [
+    {
+      id: "water-enters-multiplier",
+      nodeIds: ["moonwell", "multiply"],
+      edgeIds: ["e-water-multiply"],
+    },
+    {
+      id: "multiplier-creates-twelve-ducks",
+      nodeIds: ["multiply", "summon-ducks"],
+      edgeIds: ["e-multiply-ducks"],
+    },
+    {
+      id: "ducks-carry-water-to-pour",
+      nodeIds: ["summon-ducks", "pour"],
+      edgeIds: ["e-ducks-pour"],
+    },
+    {
+      id: "unshielded-pour-targets-room",
+      nodeIds: ["pour", "room"],
+      edgeIds: ["e-pour-room"],
+    },
+  ];
+  const positivePremises = premiseSpecs.map((premise) => ({
+    ...premise,
+    satisfied: premise.nodeIds.every((id) => nodesById.has(id)) &&
+      premise.edgeIds.every((id) => edgesById.has(id)),
+  }));
+  const hasConnection = (from: string, to: string) =>
+    graph.edges.some((edge) => edge.from === from && edge.to === to);
+  const premises = [
+    ...positivePremises,
+    {
+      id: "no-protective-umbrella-route",
+      nodeIds: ["umbrella"],
+      edgeIds: [],
+      absentConnections: [
+        ["summon-ducks", "umbrella"],
+        ["moonwell", "umbrella"],
+        ["umbrella", "pour"],
+      ],
+      satisfied: !(
+        (hasConnection("summon-ducks", "umbrella") || hasConnection("moonwell", "umbrella")) &&
+        hasConnection("umbrella", "pour")
+      ),
+    },
+  ];
+  const necessityChecks = effect.responsibleEdgeIds.map((edgeId) => {
+    const candidate = cloneGraph(graph);
+    candidate.edges = candidate.edges.filter((edge) => edge.id !== edgeId);
+    return {
+      removedEdgeId: edgeId,
+      sideEffectStillPresent: simulateCast(candidate).sideEffects.some((item) => item.id === effect.id),
+    };
+  });
+  const everyResponsibleEdgeNecessary = complete &&
+    necessityChecks.every((check) => !check.sideEffectStillPresent);
+
   return {
     sideEffectId: effect.id,
     present: true,
@@ -24,6 +121,28 @@ export function explainFlood(graph: SpellGraph) {
       "Multiply executes before a target is bounded. It amplifies Summon ducks, and Pour still targets the entire room.",
     nodeIds: effect.responsibleNodeIds,
     edgeIds: effect.responsibleEdgeIds,
+    subgraph: {
+      graphVersion: graph.version,
+      nodes: responsibleNodes,
+      edges: responsibleEdges,
+    },
+    causalSteps,
+    ruleEvidence: {
+      ruleId: "unshielded-water-route-targets-room",
+      conclusion: { sideEffectId: effect.id, observed: true },
+      premises,
+      allPremisesSatisfied: premises.every((premise) => premise.satisfied),
+    },
+    minimality: {
+      applicable: true,
+      complete,
+      nodeCount: responsibleNodes.length,
+      edgeCount: responsibleEdges.length,
+      omittedNodeCount: graph.nodes.length - responsibleNodes.length,
+      omittedEdgeCount: graph.edges.length - responsibleEdges.length,
+      everyResponsibleEdgeNecessary,
+      necessityChecks,
+    },
   };
 }
 

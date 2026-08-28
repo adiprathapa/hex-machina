@@ -171,6 +171,11 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(sourceTrace.paths[0].depth, 2);
   const explanation = await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
   assert.equal(explanation.requestedId, "flooded-observatory");
+  assert.deepEqual(explanation.subgraph.nodes.map((node) => node.id), ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
+  assert.deepEqual(explanation.subgraph.edges.map((edge) => edge.id), ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+  assert.equal(explanation.causalSteps.length, 4);
+  assert.equal(explanation.ruleEvidence.allPremisesSatisfied, true);
+  assert.equal(explanation.minimality.everyResponsibleEdgeNecessary, true);
   await handlers.set_sacred_constraint({
     targetId: "summon-ducks",
     reason: "They are funny.",
