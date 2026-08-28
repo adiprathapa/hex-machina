@@ -75,6 +75,7 @@ export async function registerWebMCPTools(
               type: "string",
               enum: moonflowerRuneIds,
             },
+            minItems: 1,
             maxItems: MAX_INSPECT_NODES,
             uniqueItems: true,
           },

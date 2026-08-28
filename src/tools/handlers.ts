@@ -89,6 +89,9 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           throw new Error("nodeIds must be an array of rune IDs");
         }
         nodeIds = parsed.nodeIds as string[];
+        if (nodeIds.length === 0) {
+          throw new Error("inspect_spell nodeIds cannot be empty; omit nodeIds to inspect the complete spell");
+        }
         if (nodeIds.length > MAX_INSPECT_NODES) {
           throw new Error(`inspect_spell accepts at most ${MAX_INSPECT_NODES} node IDs`);
         }
@@ -98,11 +101,48 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
       const graph = cloneGraph(context.getGraph());
       nodeIds?.forEach((nodeId) => requireNode(graph, nodeId));
-      const selected = nodeIds?.length
+      const selected = nodeIds
         ? graph.nodes.filter((node) => nodeIds.includes(node.id))
         : graph.nodes;
-      context.recordActivity("inspect_spell", `Inspected spell v${graph.version}.`, selected.map((node) => node.id));
-      return { ...graph, nodes: selected };
+      const selectedIds = new Set(selected.map((node) => node.id));
+      const edges = nodeIds
+        ? graph.edges.filter((edge) => selectedIds.has(edge.from) && selectedIds.has(edge.to))
+        : graph.edges;
+      const boundaryEdges = nodeIds
+        ? graph.edges.filter((edge) => selectedIds.has(edge.from) !== selectedIds.has(edge.to))
+        : [];
+      const simulation = simulateCast(graph);
+      const scenarioState = {
+        status: simulation.success ? "stable" as const : simulation.sideEffects.length ? "unstable" as const : "incomplete" as const,
+        success: simulation.success,
+        seed: simulation.seed,
+        summary: simulation.summary,
+        assertions: simulation.assertions,
+        activeSideEffectIds: simulation.sideEffects.map((effect) => effect.id),
+        eventCount: simulation.events.length,
+      };
+      const filter = {
+        applied: Boolean(nodeIds),
+        requestedNodeIds: nodeIds ?? [],
+        returnedNodeCount: selected.length,
+        omittedNodeCount: graph.nodes.length - selected.length,
+        internalEdgeCount: edges.length,
+        boundaryEdgeCount: boundaryEdges.length,
+      };
+      context.recordActivity(
+        "inspect_spell",
+        `Inspected ${selected.length}/${graph.nodes.length} runes in spell v${graph.version}; scenario is ${scenarioState.status}.`,
+        selected.map((node) => node.id),
+      );
+      return {
+        ...graph,
+        graphVersion: graph.version,
+        nodes: selected,
+        edges,
+        boundaryEdges,
+        filter,
+        scenarioState,
+      };
     },
     trace_effect: async (input: unknown = {}) => {
       const parsed = requireToolInput(input, "trace_effect", ["effectId", "sourceId", "maxDepth", "maxPaths"]);

@@ -248,7 +248,20 @@ test("production browser completes the constraint-preserving spell journey", { t
       { toolName: name, toolInput: input },
     );
 
-    await invokeTool("inspect_spell");
+    const completeInspection = await invokeTool("inspect_spell");
+    assert.equal(completeInspection.graphVersion, 1);
+    assert.equal(completeInspection.nodes.length, 12);
+    assert.equal(completeInspection.edges.length, 4);
+    assert.deepEqual(completeInspection.boundaryEdges, []);
+    assert.equal(completeInspection.filter.applied, false);
+    assert.equal(completeInspection.scenarioState.status, "unstable");
+    assert.equal(completeInspection.scenarioState.assertions.duckCount, 12);
+    assert.deepEqual(completeInspection.scenarioState.activeSideEffectIds, ["flooded-observatory"]);
+    const focusedInspection = await invokeTool("inspect_spell", { nodeIds: ["multiply", "summon-ducks"] });
+    assert.deepEqual(focusedInspection.edges.map((edge) => edge.id), ["e-multiply-ducks"]);
+    assert.deepEqual(focusedInspection.boundaryEdges.map((edge) => edge.id), ["e-water-multiply", "e-ducks-pour"]);
+    assert.equal(focusedInspection.filter.omittedNodeCount, 10);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "inspection does not advance the graph");
     const agentFailure = await invokeTool("simulate_cast");
     assert.equal(agentFailure.success, false);
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "agent simulation drives the visible failure");

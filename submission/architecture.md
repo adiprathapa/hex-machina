@@ -47,6 +47,8 @@ Before a write is approved, the UI converts the exact application-generated oper
 
 `trace_effect` walks active typed edges in stable ID order. It can trace the known outcome backward through its responsible subgraph or trace forward from a known source, stopping at caller-supplied bounds capped at depth 12 and five paths. Every response carries ordered node and edge sequences, terminal and completeness state, deduplicated responsible IDs, cycle evidence, graph validation errors, the applied bounds, and a truncation flag.
 
+`inspect_spell` derives current scenario state through the same pure simulator used by casting. Complete inspection returns all twelve runes and all edges. A focused inspection returns only edges whose endpoints are both present, puts incident cross-boundary connections in a separate `boundaryEdges` collection, and reports requested, returned, omitted, internal-edge, and boundary-edge counts. This prevents an agent from receiving dangling edge references while preserving enough context to expand its inspection deliberately.
+
 Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
 
 ## Determinism

@@ -58,6 +58,7 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   const inspectTool = definitions.find((item) => item.name === "inspect_spell");
   const inspectNodeIds = inspectTool.inputSchema.properties.nodeIds;
   assert.equal(inspectNodeIds.maxItems, 12);
+  assert.equal(inspectNodeIds.minItems, 1);
   assert.equal(typeof inspectNodeIds.description, "string");
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
   const simulateTool = definitions.find((item) => item.name === "simulate_cast");
@@ -130,8 +131,32 @@ test("tool handlers preserve human intent through a verified write", async () =>
     presentResult(event) { presentations.push(event); },
   });
 
+  const graphBeforeInspection = JSON.stringify(graph);
   const inspection = await handlers.inspect_spell({ nodeIds: ["multiply", "summon-ducks"] });
   assert.deepEqual(inspection.nodes.map((node) => node.id), ["multiply", "summon-ducks"]);
+  assert.equal(inspection.graphVersion, 1);
+  assert.deepEqual(inspection.edges.map((edge) => edge.id), ["e-multiply-ducks"]);
+  assert.deepEqual(inspection.boundaryEdges.map((edge) => edge.id), ["e-water-multiply", "e-ducks-pour"]);
+  assert.deepEqual(inspection.filter, {
+    applied: true,
+    requestedNodeIds: ["multiply", "summon-ducks"],
+    returnedNodeCount: 2,
+    omittedNodeCount: 10,
+    internalEdgeCount: 1,
+    boundaryEdgeCount: 2,
+  });
+  assert.equal(inspection.scenarioState.status, "unstable");
+  assert.equal(inspection.scenarioState.success, false);
+  assert.deepEqual(inspection.scenarioState.activeSideEffectIds, ["flooded-observatory"]);
+  assert.deepEqual(inspection.scenarioState.assertions, {
+    ducksPresent: true,
+    duckCount: 12,
+    roomFlooded: true,
+    flowerWatered: false,
+    flowerBloomed: false,
+  });
+  assert.equal(inspection.scenarioState.eventCount, 3);
+  assert.equal(JSON.stringify(graph), graphBeforeInspection, "inspection and derived scenario state must not mutate the graph");
   const failed = await handlers.simulate_cast();
   assert.equal(failed.success, false);
   const trace = await handlers.trace_effect({ effectId: "flooded-observatory" });
@@ -248,6 +273,7 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
     handlers.inspect_spell({ nodeIds: ["moonwell", "moonwell"] }),
     /must be unique/,
   );
+  await assert.rejects(handlers.inspect_spell({ nodeIds: [] }), /cannot be empty/);
   await assert.rejects(handlers.inspect_spell(null), /input must be an object/);
   await assert.rejects(handlers.simulate_cast({ seed: 99 }), /unknown field: seed/);
   await assert.rejects(handlers.simulate_cast({ patchId: "anything" }), /Invalid patch ID/);

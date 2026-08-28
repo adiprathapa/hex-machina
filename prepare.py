@@ -189,6 +189,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "ranked_repair_evidence",
         "nonmutating_patch_preview",
         "bounded_causal_trace",
+        "coherent_filtered_inspection",
         "twelve_ducks_preserved",
     }
     completed = set(evidence.get("completed_steps", []))
@@ -392,6 +393,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("MAX_TRACE_DEPTH", "MAX_TRACE_PATHS", "typeViolations", "cycles", "responsibleEdgeIds")
     )
+    coherent_filtered_inspection = all(
+        marker in combined
+        for marker in ("scenarioState", "boundaryEdges", "omittedNodeCount", "internalEdgeCount")
+    )
     sacred_reachability = all(
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
@@ -475,6 +480,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "bounded causal tracing",
             bounded_causal_trace,
             "ordered paths expose responsible edges, cycles, type violations, and hard bounds" if bounded_causal_trace else "bounded causal-path evidence missing",
+        ),
+        Check(
+            "coherent filtered inspection",
+            coherent_filtered_inspection,
+            "focused inspections partition internal and boundary edges and include current scenario state" if coherent_filtered_inspection else "coherent filtered inspection evidence missing",
         ),
         Check(
             "sacred reachability invariant",

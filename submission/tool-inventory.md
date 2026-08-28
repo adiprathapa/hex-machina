@@ -2,7 +2,7 @@
 
 | Tool | Mode | Purpose | Verification evidence |
 |---|---|---|---|
-| `inspect_spell` | Read | Inspect current graph, version, outcome, and constraints, optionally filtered to known node IDs. | Stable IDs and bounded node list. |
+| `inspect_spell` | Read | Inspect the complete graph or a non-empty bounded node selection. Focused results contain only internal edges and separately identify boundary edges. | Graph version, stable IDs, constraints, desired outcome, filter counts, closed subgraph, boundary edges, and deterministic scenario status/assertions. |
 | `trace_effect` | Read | Trace deterministic directed paths forward from a known source or into the active failure, with hard depth and path-count bounds. | Ordered node/edge paths, responsible IDs, completeness, cycles, type violations, bounds, and truncation state. |
 | `simulate_cast` | Read | Simulate the live graph or an optional current application-generated patch ID without changing editor state. | Seed, ordered events, duck count, assertions, side effects, success, base and simulated graph versions, and `editorMutated: false` for previews. |
 | `explain_side_effect` | Read | Explain the flood from its smallest responsible subgraph. | Structured explanation plus exact nodes and edges. |
@@ -13,6 +13,7 @@
 ## Safety properties
 
 - All schemas set `additionalProperties: false`.
+- `inspect_spell` accepts one to twelve unique known rune IDs; omission means the complete graph, while an empty ambiguous selection is rejected.
 - Every handler independently validates the runtime input object, allowed fields, primitive types, collection bounds, and known IDs; browser-side schema enforcement is not trusted.
 - Scenario IDs use explicit enums or narrow patterns.
 - Causal traversal defaults to depth 8 and three paths, cannot exceed depth 12 or five paths, and reports when evidence was truncated.
