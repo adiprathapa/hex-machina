@@ -9,6 +9,7 @@ import {
   type SpellGraph,
   type SpellPatch,
 } from "@/src/domain/spell";
+import { buildPatchPreview } from "@/src/domain/patch-preview";
 import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
@@ -318,6 +319,17 @@ export function HexMachina() {
     () => FAMILIAR_GNN_ENABLED && cast && !cast.success ? inferFamiliar(graph, cast) : null,
     [cast, graph],
   );
+  const patchPreview = useMemo(() => patch ? buildPatchPreview(graph, patch) : [], [graph, patch]);
+  const removedPatchEdgeIds = new Set(
+    patchPreview.filter((entry) => entry.kind === "disconnect" && entry.edgeId).map((entry) => entry.edgeId!),
+  );
+  const activatedPatchNodeIds = new Set(
+    patchPreview.filter((entry) => entry.kind === "awaken").flatMap((entry) => entry.nodeIds),
+  );
+  const addedPatchEdges = patchPreview.filter(
+    (entry): entry is typeof entry & { fromId: string; toId: string } =>
+      entry.kind === "connect" && Boolean(entry.fromId && entry.toId),
+  );
   const stage = cast?.success ? "stable" : patch ? "patch" : isSacred ? "constraint" : cast ? "failure" : "ready";
 
   return (
@@ -395,7 +407,15 @@ export function HexMachina() {
                 const fromPosition = positions[from.id] ?? from;
                 const toPosition = positions[to.id] ?? to;
                 const active = highlightedIds.has(from.id) && highlightedIds.has(to.id);
-                return <line key={edge.id} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className={`${edge.type} ${active ? "active" : ""}`} />;
+                const pendingRemoval = removedPatchEdgeIds.has(edge.id);
+                return <line key={edge.id} data-edge-id={edge.id} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className={`${edge.type} ${active ? "active" : ""} ${pendingRemoval ? "patch-remove" : ""}`} />;
+              })}
+              {addedPatchEdges.map((entry) => {
+                const from = graph.nodes.find((node) => node.id === entry.fromId)!;
+                const to = graph.nodes.find((node) => node.id === entry.toId)!;
+                const fromPosition = positions[from.id] ?? from;
+                const toPosition = positions[to.id] ?? to;
+                return <line key={`preview-${entry.edgeId}`} data-preview-edge-id={entry.edgeId} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className="patch-add" />;
               })}
             </svg>
 
@@ -416,7 +436,7 @@ export function HexMachina() {
               return (
                 <button
                   key={node.id}
-                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""} ${connectionClass}`}
+                  className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${activatedPatchNodeIds.has(node.id) ? "patch-activate" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""} ${connectionClass}`}
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
                   onPointerDown={(event) => {
                     if (connectSource) return;
@@ -503,6 +523,17 @@ export function HexMachina() {
               <h3>{patch.title}</h3>
               <p>{patch.rationale}</p>
               <dl><div><dt>Rank</dt><dd>#{patch.searchEvidence.rank}</dd></div><div><dt>Edits</dt><dd>{patch.searchEvidence.editCount}</dd></div><div><dt>Eligible</dt><dd>{patch.searchEvidence.eligibleCandidateCount}/{patch.searchEvidence.candidateCount}</dd></div></dl>
+              <details className="patch-ledger" open>
+                <summary>Review {patchPreview.length} graph edits</summary>
+                <ol>
+                  {patchPreview.map((entry) => (
+                    <li key={entry.key} data-patch-kind={entry.kind}>
+                      <span aria-hidden="true">{entry.kind === "connect" ? "+" : entry.kind === "disconnect" ? "−" : "✦"}</span>
+                      <p>{entry.label}</p>
+                    </li>
+                  ))}
+                </ol>
+              </details>
               <div className="preserves">◆ Ducks remain sacred</div>
             </article>
           ) : (

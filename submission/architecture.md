@@ -14,6 +14,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 ## Modules
 
 - `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, and atomic patch application.
+- `src/domain/patch-preview.ts`: deterministic translation from structural operations to the human-review ledger and canvas overlay.
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
@@ -22,7 +23,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements—but does not replace—the pending live deployment discovery test.
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
-- `app/HexMachina.tsx`: visual canvas, local fallback controls, visible constraints, patch review, and activity evidence.
+- `app/HexMachina.tsx`: visual canvas, local fallback controls, visible constraints, per-operation patch review, and activity evidence.
 - `worker/index.ts`: Cloudflare-compatible request boundary adding same-origin content, capability, referrer, framing, and MIME security policies to built responses.
 
 The application has no database, object-storage binding, account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin.
@@ -38,6 +39,8 @@ The application has no database, object-storage binding, account surface, analyt
 7. The application commits the new graph atomically and immediately runs a verification simulation.
 
 The canonical search evaluates two semantically distinct graph rewrites. Without a sacred constraint, a six-edit direct route ranks first. Protecting the ducks removes that candidate from eligibility, so an eight-edit Umbrella route ranks first and preserves the complete twelve-duck branch. The structured proposal reports rank, edit count, total candidates, eligible candidates, and satisfied constraints.
+
+Before a write is approved, the UI converts the exact application-generated operations into a stable ledger. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. The preview is derived from the same patch object accepted by `apply_spell_patch`, so the explanation cannot drift from the mutation.
 
 Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
 

@@ -20,7 +20,7 @@ Seven narrow WebMCP tools let the agent inspect the exact graph, trace a side ef
 
 ## How it creates a better user experience
 
-The agent does not disappear into a chat transcript. Its work is visible on the shared canvas: inspected runes select, causal paths glow, constraints become physical pins, proposed edits appear in a review card, mutations advance the graph version, and verification casts animate the outcome. The same shared handlers power WebMCP, human controls, and a local fallback console, so the experience remains understandable in an ordinary browser.
+The agent does not disappear into a chat transcript. Its work is visible on the shared canvas: inspected runes select, causal paths glow, constraints become physical pins, and every proposed connection, disconnection, and rune activation appears both in an eight-step review ledger and as a pending graph overlay before approval. Mutations advance the graph version, and verification casts animate the outcome. The same shared handlers power WebMCP, human controls, and a local fallback console, so the experience remains understandable in an ordinary browser.
 
 Every write is bounded and reversible. The agent can apply only a current application-generated patch ID—not arbitrary graph operations—and the human can undo the latest unchanged patch without losing their sacred constraint.
 
@@ -69,7 +69,7 @@ The app turns graph debugging into magical comedy without reducing WebMCP to a n
 Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The ducks are funny, so preserve them as a sacred constraint. Find the smallest repair that waters the moonflower without flooding the room, show me the proposed patch, apply it, and cast the spell again.
 ```
 
-Expected result: seven tools are discoverable; the initial cast floods the room with twelve ducks; the agent pins the duck constraint, proposes the rank-one eight-edit Umbrella patch, applies it, and reaches **Stable** at graph v3 with all twelve ducks preserved.
+Expected result: seven tools are discoverable; the initial cast floods the room with twelve ducks; the agent pins the duck constraint, proposes the rank-one eight-edit Umbrella patch with a complete visual operation ledger, applies it, and reaches **Stable** at graph v3 with all twelve ducks preserved.
 
 ## Build provenance
 

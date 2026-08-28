@@ -171,6 +171,15 @@ test("production browser completes the constraint-preserving spell journey", { t
     await page.getByRole("button", { name: "Find a repair", exact: true }).click();
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "constraint-aware patch is previewed");
     assert.match(await page.locator(".patch-card").innerText(), /RANK\s+#1[\s\S]*EDITS\s+8[\s\S]*ELIGIBLE\s+1\/2/i);
+    const patchLedger = page.locator(".patch-ledger");
+    await assertVisible(patchLedger, "the human can inspect every proposed structural mutation before approval");
+    assert.equal(await patchLedger.locator("li").count(), 8, "the ledger accounts for all eight graph edits");
+    assert.match(await patchLedger.innerText(), /Disconnect Summon ducks → Pour · flows to/);
+    assert.match(await patchLedger.innerText(), /Connect Pour → Moonflower · targets/);
+    assert.match(await patchLedger.innerText(), /Awaken Umbrella/);
+    assert.equal(await page.locator(".edge-layer line.patch-remove").count(), 2, "removed connections are previewed on the graph");
+    assert.equal(await page.locator(".edge-layer line.patch-add").count(), 4, "new connections are previewed on the graph");
+    assert.equal(await page.locator(".rune.patch-activate").count(), 2, "dormant runes to awaken are previewed on the graph");
     await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
     await assertVisible(page.getByText("Stable", { exact: true }), "successful cast is stable");
     await assertVisible(page.getByText("The moonflower blooms", { exact: true }), "successful outcome is visible");
@@ -249,6 +258,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "agent proposal drives the patch preview");
     assert.equal(agentProposal.patches[0].searchEvidence.editCount, 8);
     assert.equal(agentProposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
+    assert.equal(await page.locator(".patch-ledger li").count(), 8, "agent proposals use the same complete human-review ledger");
     const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
     await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
     assert.equal(agentApply.verification.success, true);

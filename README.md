@@ -43,12 +43,12 @@ The exact Sites bundle and authorization-aware release handoff are recorded in [
 1. Cast the faulty graph: twelve lunar ducks flood the observatory.
 2. Trace the responsible path from `Multiply` through `Pour` to `The room`.
 3. Mark the ducks sacred—the repair is now constrained by human taste.
-4. Preview the ranked eight-edit repair; the cheaper direct route is ineligible because it violates the sacred constraint.
+4. Review all eight graph edits in a typed change ledger and as added, removed, or awakened elements on the canvas; the cheaper direct route is ineligible because it violates the sacred constraint.
 5. Recast: all twelve umbrella-equipped ducks water the Moonflower while the room stays dry.
 
 Every visible action is also available through a narrow semantic tool. Tool results flow through one shared presentation channel, so calls from a browser agent visibly drive the same cast spectacle, causal highlights, constraint pins, patch preview, and verification state as local controls. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
 Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
-Patch proposals include a compact minimality certificate—rank, edit count, candidate count, eligibility count, and satisfied constraints—and atomic application separately proves that sacred graph elements remain reachable from an active source.
+Patch proposals include a compact minimality certificate—rank, edit count, candidate count, eligibility count, and satisfied constraints—plus a complete human-readable operation ledger. Before approval, the canvas ghosts proposed connections, strikes outgoing ones, and marks dormant runes that will awaken. Atomic application separately proves that sacred graph elements remain reachable from an active source.
 
 ## Judge journey
 

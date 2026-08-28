@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { buildPatchPreview } from "../src/domain/patch-preview.ts";
 import { applyPatch, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
@@ -53,6 +54,40 @@ test("sacred ducks produce a distinct successful umbrella repair", () => {
   assert.equal(result.assertions.roomFlooded, false);
   assert.equal(result.assertions.flowerBloomed, true);
   assert.match(result.summary, /twelve umbrella-equipped ducks/);
+});
+
+test("constraint-aware repairs expose every structural edit as a human-readable preview", () => {
+  const graph = createMoonflowerScenario();
+  graph.constraints.push({
+    id: "sacred-summon-ducks",
+    targetId: "summon-ducks",
+    targetType: "node",
+    requirement: "preserve",
+    reason: "The ducks are funny.",
+  });
+  graph.version += 1;
+
+  const [patch] = proposePatches(graph);
+  const preview = buildPatchPreview(graph, patch);
+  assert.equal(preview.length, patch.operations.length);
+  assert.deepEqual(
+    preview.map((entry) => entry.kind),
+    ["disconnect", "disconnect", "awaken", "connect", "connect", "connect", "awaken", "connect"],
+  );
+  assert.deepEqual(
+    preview.map((entry) => entry.label),
+    [
+      "Disconnect Summon ducks → Pour · flows to",
+      "Disconnect Pour → The room · targets",
+      "Awaken Umbrella",
+      "Connect Summon ducks → Umbrella · flows to",
+      "Connect Umbrella → Pour · flows to",
+      "Connect Pour → Moonflower · targets",
+      "Awaken Bloom",
+      "Connect Moonflower → Bloom · flows to",
+    ],
+  );
+  assert.deepEqual(preview.filter((entry) => entry.kind === "disconnect").map((entry) => entry.edgeId), ["e-ducks-pour", "e-pour-room"]);
 });
 
 test("without a sacred constraint the minimal repair removes the ducks", () => {
