@@ -13,16 +13,18 @@ Hex Machina is configured as an existing Sites project and builds to a Cloudflar
 
 ## Release sequence
 
-1. Run `python3 prepare.py --quick` and `npm run test:e2e`.
-2. Package the unchanged successful build with the official Sites helper.
-3. Save one version using the synchronized Git commit.
-4. Deploy privately when that access mode is available; otherwise obtain explicit approval for the resolved access level.
-5. Open the resulting URL in a WebMCP-capable browser and execute the canonical judge prompt.
-6. Record the live URL, discovery timestamp, seven discovered tool names, final graph version, Stable result, and zero console errors in `tests/browser-acceptance.json`.
-7. Run full `python3 prepare.py`; only then mark the submission milestone complete.
+1. Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.
+2. Upload the existing 75-second narrated MP4 to YouTube with public visibility and record its URL.
+3. Run `python3 prepare.py --quick` and `npm run test:e2e`.
+4. Package the unchanged successful build with the official Sites helper.
+5. Save one version using the synchronized Git commit and deploy it.
+6. Make the live app judge-accessible. The current Sites project cannot invite external visitors, so its challenge release must use public access unless another authorized host or judge credential path is chosen.
+7. Open the resulting URL in a WebMCP-capable browser and execute the canonical judge prompt.
+8. Record the live URL, discovery timestamp, seven discovered tool names, final graph version, Stable result, and zero console errors in `tests/browser-acceptance.json` and `submission/release-evidence.json`.
+9. Run full `python3 prepare.py`; only then mark the submission milestone complete.
 
 No deployment or version publication is performed by this readiness check.
 
 ## Current Sites state
 
-The existing **Hex Machina** Sites project is active with custom owner-only access. It currently has zero saved versions, no preview URL, and no live URL. Private deployment is therefore the intended next operation after explicit authorization; the source of truth remains the synchronized private GitHub `main` branch until then.
+The existing **Hex Machina** Sites project is active with custom owner-only access. It currently has zero saved versions, no preview URL, and no live URL. Its workspace policy does not permit external visitor invitations, so an owner-only deployment would not satisfy the judge-access requirement. Explicit authorization is needed for public site access, public repository access plus license selection, and public YouTube upload. The synchronized private GitHub `main` branch remains the source of truth until then.

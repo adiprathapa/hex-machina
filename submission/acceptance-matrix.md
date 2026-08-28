@@ -17,10 +17,14 @@ This matrix maps every item in the project definition of done to current, inspec
 | 11 | Keyboard, focus, reduced motion, contrast, and mobile fallback are present. | Verified | CSS/source tests cover focus and reduced motion; the production-browser test checks keyboard rune nudging, mobile order, 44px target, objective visibility, and zero horizontal overflow. |
 | 12 | Unit, integration, production-build, and browser tests pass through `prepare.py`. | Verified locally and in CI | `python3 prepare.py --quick` passes locally; GitHub Actions performs a clean install, zero-vulnerability audit, quick acceptance, deployment-bundle checks, production response-policy assertions, and a Chrome journey covering human controls, direct registered-tool execution, and same-origin-only traffic on Node 22.13. Full local acceptance reaches only the separate live discovery gate below. |
 | 13 | A deployed experience is tested in a WebMCP-capable in-app browser. | Pending external release | Local in-app production testing is recorded in `tests/browser-acceptance.json`, but the page was intentionally not published and that session did not expose `document.modelContext`. This remains the only unmet acceptance gate. |
-| 14 | Submission description, architecture, tools, limitations, screenshots, and 60–90 second demo exist. | Verified | `submission/` contains the copy, architecture, tool inventory, limitations, three validated 1280×720 captures, a 75-second H.264/AAC video, narration, captions, and reproducible render script. |
+| 14 | Submission description, architecture, tools, limitations, screenshots, and 60–90 second demo exist. | Verified locally | `submission/` contains Devpost-ready copy mapped to every judging criterion, architecture, tool inventory, limitations, three validated 1280×720 captures, a 75-second H.264/AAC video, narration, captions, and reproducible render script. Internal links and required sections are tested. Public delivery URLs remain tracked separately below. |
 
 ## Release condition
 
 Do not mark the project complete until a private or explicitly approved public deployment exposes the seven tools to a compatible browser, the canonical judge prompt succeeds against that deployment, and the live URL and verification timestamp replace the pending evidence above.
 
 The exact pre-deployment archive shape and authorized handoff sequence are documented in `submission/deployment.md`.
+
+## Challenge eligibility gates
+
+The official challenge additionally requires a judge-accessible live URL, a public repository with a visible open-source license, and a public YouTube demo with audio. Their authoritative current values live in `submission/release-evidence.json`; full acceptance fails until each is present. The repository, live site, and submission must remain frozen after the deadline during judging.

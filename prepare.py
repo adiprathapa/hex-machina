@@ -209,6 +209,75 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
     )
 
 
+def release_evidence_checks(require_external: bool) -> list[Check]:
+    evidence_path = ROOT / "submission" / "release-evidence.json"
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        project = evidence["project"]
+        site = evidence["site"]
+        repository = evidence["repository"]
+        video = evidence["video"]
+        devpost = evidence["devpost"]
+        local_video = ROOT / video["local_path"]
+        local_problems: list[str] = []
+        if evidence.get("schema_version") != 1:
+            local_problems.append("unsupported schema version")
+        if project.get("created_during_submission_period") is not True:
+            local_problems.append("challenge-period provenance is not recorded")
+        if devpost.get("copy_ready") is not True or not (ROOT / devpost.get("copy_path", "")).is_file():
+            local_problems.append("Devpost copy is not ready")
+        if video.get("duration_seconds") != 75 or video.get("has_audio") is not True:
+            local_problems.append("local demo evidence is not a 75-second video with audio")
+        if not local_video.is_file() or local_video.stat().st_size < 500_000:
+            local_problems.append("local demo video is missing or too small")
+    except (OSError, KeyError, TypeError, json.JSONDecodeError) as error:
+        return [Check("challenge release evidence", False, f"invalid evidence: {error}")]
+
+    checks = [
+        Check(
+            "challenge release evidence",
+            not local_problems,
+            "Devpost copy, provenance, and local media evidence are ready" if not local_problems else "; ".join(local_problems),
+        )
+    ]
+    if not require_external:
+        return checks
+
+    live_url = site.get("live_url")
+    live_ready = isinstance(live_url, str) and bool(re.fullmatch(r"https://[^\s/]+(?:/.*)?", live_url))
+    checks.append(Check(
+        "judge-accessible live URL",
+        live_ready,
+        live_url if live_ready else "authorized production URL has not been recorded",
+    ))
+
+    repository_url = repository.get("url")
+    license_spdx = repository.get("license_spdx")
+    repository_ready = (
+        repository.get("public") is True
+        and isinstance(repository_url, str)
+        and bool(re.fullmatch(r"https://(?:www\.)?(?:github|gitlab|bitbucket)\.[^\s/]+/.+", repository_url))
+        and isinstance(license_spdx, str)
+        and bool(license_spdx.strip())
+    )
+    checks.append(Check(
+        "public licensed source repository",
+        repository_ready,
+        f"{repository_url} ({license_spdx})" if repository_ready else "repository is private or a visible open-source license has not been selected",
+    ))
+
+    youtube_url = video.get("public_youtube_url")
+    youtube_ready = isinstance(youtube_url, str) and bool(
+        re.fullmatch(r"https://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[A-Za-z0-9_-]+(?:[&?][^\s]*)?", youtube_url)
+    )
+    checks.append(Check(
+        "public YouTube demo",
+        youtube_ready,
+        youtube_url if youtube_ready else "public YouTube URL with audio has not been recorded",
+    ))
+    return checks
+
+
 def choose_runner() -> tuple[list[str], str] | None:
     candidates = [
         (ROOT / "pnpm-lock.yaml", ["pnpm"], "pnpm"),
@@ -423,6 +492,8 @@ def main() -> int:
         "submission/webmcp-conformance.md",
         "submission/security.md",
         "submission/deployment.md",
+        "submission/devpost-entry.md",
+        "submission/release-evidence.json",
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",
@@ -456,6 +527,7 @@ def main() -> int:
         checks.append(screenshot_capture_check(screenshot))
 
     checks.append(demo_video_check())
+    checks.extend(release_evidence_checks(require_external=not args.quick))
 
     package, package_check = load_package()
     checks.append(package_check)
@@ -469,6 +541,7 @@ def main() -> int:
         checks.append(script_check(package, runner, ["test", "test:unit"], required=True))
         checks.append(script_check(package, runner, ["build"], required=True, timeout=360))
         checks.append(script_check(package, runner, ["test:deployment"], required=True))
+        checks.append(script_check(package, runner, ["test:submission"], required=True))
         checks.append(script_check(package, runner, ["lint"], required=False))
         if not args.quick:
             checks.append(

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "challenge": {
+    "name": "The WebMCP Challenge",
+    "submission_deadline": "2026-09-03T13:00:00-07:00",
+    "requirements_url": "https://webmcp.devpost.com/"
+  },
+  "project": {
+    "name": "Hex Machina",
+    "created_during_submission_period": true,
+    "first_commit": "c661551",
+    "first_commit_at": "2026-08-26T22:55:14-04:00"
+  },
+  "site": {
+    "sites_project_configured": true,
+    "access_before_release": "custom_owner_only",
+    "saved_versions": 0,
+    "live_url": null,
+    "webmcp_discovered_live": false
+  },
+  "repository": {
+    "url": "https://github.com/adiprathapa/hex-machina",
+    "public": false,
+    "license_spdx": null
+  },
+  "video": {
+    "local_path": "submission/video/hex-machina-demo.mp4",
+    "duration_seconds": 75,
+    "has_audio": true,
+    "public_youtube_url": null
+  },
+  "devpost": {
+    "copy_path": "submission/devpost-entry.md",
+    "copy_ready": true,
+    "submitted": false
+  },
+  "freeze": {
+    "required_after_deadline": true,
+    "deadline": "2026-09-03T13:00:00-07:00",
+    "note": "Do not modify the submitted repository, live site, or Devpost entry during judging. Continue only in a separate fork."
+  }
+}
