@@ -30,7 +30,7 @@ export function explainFlood(graph: SpellGraph) {
 export function proposePatches(graph: SpellGraph): SpellPatch[] {
   if (simulateCast(graph).success) return [];
 
-  const candidates: SpellPatch[] = [
+  const rawCandidates: Array<Omit<SpellPatch, "preconditions">> = [
     {
       id: `patch-umbrella-v${graph.version}`,
       title: "Give the ducks umbrellas",
@@ -104,6 +104,15 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
   ];
 
   const preserveConstraints = graph.constraints.filter((constraint) => constraint.requirement === "preserve");
+  const candidates: SpellPatch[] = rawCandidates.map((patch) => ({
+    ...patch,
+    preconditions: {
+      expectedGraphVersion: graph.version,
+      requiredEdgeIds: patch.operations.flatMap((operation) => operation.op === "remove_edge" ? [operation.edgeId] : []),
+      requiredDormantNodeIds: patch.operations.flatMap((operation) => operation.op === "activate_node" ? [operation.nodeId] : []),
+      requiredConstraintIds: preserveConstraints.map((constraint) => constraint.id),
+    },
+  }));
   const requiredPreserves = preserveConstraints.map((constraint) => constraint.targetId);
   const eligible = candidates.filter((patch) =>
     requiredPreserves.every((targetId) => patch.preserves.includes(targetId)),

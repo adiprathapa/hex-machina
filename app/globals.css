@@ -836,6 +836,27 @@ kbd {
   text-transform: uppercase;
 }
 
+.patch-preflight {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 8px 9px;
+  border-left: 2px solid var(--lilac);
+  background: rgba(181,161,255,.055);
+}
+
+.patch-preflight span {
+  color: var(--lilac);
+  font: 650 7px/1 var(--font-geist-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.patch-preflight strong {
+  color: #c7c6bf;
+  font: 550 8px/1.35 var(--font-geist-mono), monospace;
+}
+
 .preview-verdict strong {
   justify-self: end;
   color: var(--aqua);

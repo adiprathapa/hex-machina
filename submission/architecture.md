@@ -32,16 +32,18 @@ The application has no database, object-storage binding, account surface, analyt
 ## Mutation protocol
 
 1. `propose_spell_patch` computes available patches for the current graph version.
-2. The agent receives only versioned patch IDs plus operations and predicted outcomes.
+2. The agent receives only versioned patch IDs plus operations, predicted outcomes, and explicit preconditions covering graph version, required live edges, required dormant runes, and required sacred locks.
 3. `apply_spell_patch` accepts a patch ID, not an arbitrary patch object.
 4. The application recomputes that patch against current state.
-5. A stale or unavailable ID fails without mutation.
-6. The selected patch applies to a clone and must pass structural validation plus an independent reachability proof for every sacred node or edge.
+5. A stale or unavailable ID fails without mutation. Before cloning, every live-edge, dormant-rune, and sacred-lock precondition must still match; same-version structural drift also fails closed.
+6. The selected patch then applies to a clone and must pass structural validation plus an independent reachability proof for every sacred node or edge.
 7. The application commits the new graph atomically and immediately runs a verification simulation.
 
 The canonical search evaluates two semantically distinct graph rewrites. Without a sacred constraint, a six-edit direct route ranks first. Protecting the ducks removes that candidate from eligibility, so an eight-edit Umbrella route ranks first and preserves the complete twelve-duck branch. The structured proposal reports rank, edit count, total candidates, eligible candidates, and satisfied constraints.
 
 Before a write is approved, the UI converts the exact application-generated operations into a stable ledger. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. The preview is derived from the same patch object accepted by `apply_spell_patch`, so the explanation cannot drift from the mutation.
+
+The approval card also renders the preflight facts as human evidence. Successful application returns the exact `validatedPreconditions` object alongside its before/after summaries, allowing an agent or judge to compare what was proposed with what the application actually checked.
 
 `simulate_cast` can take that current patch ID and execute it against a cloned graph. The result returns the base version, simulated version, and an explicit `editorMutated: false` receipt. The UI preserves the failed live cast, labels the prediction **Unapplied simulation**, and keeps the canvas header at the base graph version until the separate write tool is invoked.
 

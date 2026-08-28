@@ -22,7 +22,7 @@ Seven narrow WebMCP tools let the agent inspect the exact graph, trace a side ef
 
 The agent does not disappear into a chat transcript. Its work is visible on the shared canvas: inspected runes select, causal paths glow, constraints become physical pins, and every proposed connection, disconnection, and rune activation appears both in an eight-step review ledger and as a pending graph overlay before approval. Mutations advance the graph version, and verification casts animate the outcome. The same shared handlers power WebMCP, human controls, and a local fallback console, so the experience remains understandable in an ordinary browser.
 
-Every write is bounded and reversible. The agent can apply only a current application-generated patch ID—not arbitrary graph operations—and the human can undo the latest unchanged patch without losing their sacred constraint.
+Every write is bounded and reversible. The agent can apply only a current application-generated patch ID—not arbitrary graph operations. The proposal names its exact graph-version, live-edge, dormant-rune, and sacred-lock preconditions; the approval card shows them, application revalidates them before cloning, and the result returns what was checked. The human can undo the latest unchanged patch without losing their sacred constraint.
 
 ## What people and agents can do together
 

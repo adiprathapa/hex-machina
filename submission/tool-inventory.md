@@ -7,8 +7,8 @@
 | `simulate_cast` | Read | Simulate the live graph or an optional current application-generated patch ID without changing editor state. | Seed, ordered events, duck count, assertions, side effects, success, base and simulated graph versions, and `editorMutated: false` for previews. |
 | `explain_side_effect` | Read | Explain the flood from its smallest responsible subgraph. | Structured explanation plus exact nodes and edges. |
 | `set_sacred_constraint` | Reversible write | Preserve or release the duck branch with a human-authored reason. | Before/after constraints and new graph version. |
-| `propose_spell_patch` | Read | Search valid repairs under current constraints. | Rank, edit count, candidate and eligibility counts, satisfied constraints, operations, tradeoffs, and predicted outcome. |
-| `apply_spell_patch` | Reversible write | Apply a current versioned patch ID atomically, or consume its one-use revert token while the graph is unchanged. | Before/after graph summaries, verification cast, and stale-safe rollback evidence. |
+| `propose_spell_patch` | Read | Search valid repairs under current constraints. | Rank, edit count, candidate and eligibility counts, satisfied constraints, operations, tradeoffs, predicted outcome, and explicit version/live-edge/dormant-rune/sacred-lock preconditions. |
+| `apply_spell_patch` | Reversible write | Revalidate every precondition and apply a current patch ID atomically, or consume its one-use revert token while the graph is unchanged. | Validated preconditions, before/after graph summaries, verification cast, and stale-safe rollback evidence. |
 
 ## Safety properties
 
@@ -22,6 +22,7 @@
 - Every tool declares the current standard annotations explicitly: reads use `readOnlyHint: true`, writes use `readOnlyHint: false`, and deterministic application-owned outputs use `untrustedContentHint: false`.
 - Registered callbacks reject already-cancelled executions before invoking shared application logic.
 - Agent-supplied graph operations are never accepted.
+- Every application fails before cloning when its graph version, required live edges, dormant-rune states, or sacred locks have drifted—even if corrupted state reused the same version number.
 - Atomic patch application independently proves that every sacred node or edge remains reachable from an active source, even if a future solver candidate is wrong.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
 - Patch applications return one-use revert tokens; rollback fails closed after any intervening graph mutation and never discards the human's sacred constraint.

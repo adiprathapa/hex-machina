@@ -348,6 +348,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       context.presentResult?.({ tool: "apply_spell_patch", verification, revertToken });
       return {
         action: "apply" as const,
+        validatedPreconditions: patch.preconditions,
         before: { version: before.version, edgeCount: before.edges.length },
         after: { version: next.version, edgeCount: next.edges.length },
         verification,

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildPatchPreview } from "../src/domain/patch-preview.ts";
-import { applyPatch, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
+import { applyPatch, cloneGraph, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { proposePatches } from "../src/solver/repair.ts";
@@ -104,6 +104,12 @@ test("sacred ducks produce a distinct successful umbrella repair", () => {
   assert.equal(patch.searchEvidence.candidateCount, 2);
   assert.equal(patch.searchEvidence.eligibleCandidateCount, 1);
   assert.deepEqual(patch.searchEvidence.constraintsSatisfied, ["sacred-summon-ducks"]);
+  assert.deepEqual(patch.preconditions, {
+    expectedGraphVersion: 2,
+    requiredEdgeIds: ["e-ducks-pour", "e-pour-room"],
+    requiredDormantNodeIds: ["umbrella", "bloom"],
+    requiredConstraintIds: ["sacred-summon-ducks"],
+  });
 
   const repaired = applyPatch(graph, patch);
   const result = simulateCast(repaired);
@@ -160,6 +166,12 @@ test("without a sacred constraint the minimal repair removes the ducks", () => {
   assert.equal(patches[1].searchEvidence.rank, 2);
   assert.equal(patches[1].searchEvidence.editCount, 8);
   assert.equal(patch.tradeoffs.includes("The ducks disappear from the spell"), true);
+  assert.deepEqual(patch.preconditions, {
+    expectedGraphVersion: 1,
+    requiredEdgeIds: ["e-water-multiply", "e-pour-room"],
+    requiredDormantNodeIds: ["bloom"],
+    requiredConstraintIds: [],
+  });
 
   const repaired = applyPatch(graph, patch);
   const result = simulateCast(repaired);
@@ -183,11 +195,44 @@ test("atomic patch application rejects a solver bug that severs a sacred rune", 
 
   const unsafe = proposePatches(createMoonflowerScenario())[0];
   unsafe.expectedVersion = graph.version;
+  unsafe.preconditions.expectedGraphVersion = graph.version;
+  unsafe.preconditions.requiredConstraintIds = ["sacred-summon-ducks"];
   assert.throws(
     () => applyPatch(graph, unsafe),
     /Sacred constraint sacred-summon-ducks would be violated/,
   );
   assert.equal(graph.version, 2);
+});
+
+test("patch application fails closed when same-version structural preconditions drift", () => {
+  const graph = createMoonflowerScenario();
+  graph.constraints.push({
+    id: "sacred-summon-ducks",
+    targetId: "summon-ducks",
+    targetType: "node",
+    requirement: "preserve",
+    reason: "The ducks are funny.",
+  });
+  graph.version += 1;
+  const [patch] = proposePatches(graph);
+
+  const missingEdge = cloneGraph(graph);
+  missingEdge.edges = missingEdge.edges.filter((edge) => edge.id !== "e-ducks-pour");
+  const missingEdgeSnapshot = JSON.stringify(missingEdge);
+  assert.throws(() => applyPatch(missingEdge, patch), /required edge e-ducks-pour is missing/);
+  assert.equal(JSON.stringify(missingEdge), missingEdgeSnapshot);
+
+  const awakenedEarly = cloneGraph(graph);
+  awakenedEarly.nodes.find((node) => node.id === "umbrella").dormant = false;
+  const awakenedSnapshot = JSON.stringify(awakenedEarly);
+  assert.throws(() => applyPatch(awakenedEarly, patch), /rune umbrella is no longer dormant/);
+  assert.equal(JSON.stringify(awakenedEarly), awakenedSnapshot);
+
+  const lostConstraint = cloneGraph(graph);
+  lostConstraint.constraints = [];
+  const constraintSnapshot = JSON.stringify(lostConstraint);
+  assert.throws(() => applyPatch(lostConstraint, patch), /sacred constraint sacred-summon-ducks is missing/);
+  assert.equal(JSON.stringify(lostConstraint), constraintSnapshot);
 });
 
 test("patches reject stale graph versions", () => {

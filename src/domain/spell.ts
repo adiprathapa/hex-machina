@@ -63,6 +63,12 @@ export interface SpellPatch {
   title: string;
   rationale: string;
   expectedVersion: number;
+  preconditions: {
+    expectedGraphVersion: number;
+    requiredEdgeIds: string[];
+    requiredDormantNodeIds: string[];
+    requiredConstraintIds: string[];
+  };
   operations: PatchOperation[];
   preserves: string[];
   tradeoffs: string[];
@@ -218,6 +224,28 @@ export function applyPatch(graph: SpellGraph, patch: SpellPatch): SpellGraph {
     throw new Error(
       `Stale patch: expected graph v${patch.expectedVersion}, received v${graph.version}`,
     );
+  }
+  if (patch.preconditions.expectedGraphVersion !== patch.expectedVersion) {
+    throw new Error(
+      `Patch precondition is inconsistent: expected v${patch.expectedVersion}, preflight requires v${patch.preconditions.expectedGraphVersion}`,
+    );
+  }
+  for (const edgeId of patch.preconditions.requiredEdgeIds) {
+    if (!graph.edges.some((edge) => edge.id === edgeId)) {
+      throw new Error(`Patch precondition failed: required edge ${edgeId} is missing`);
+    }
+  }
+  for (const nodeId of patch.preconditions.requiredDormantNodeIds) {
+    const node = graph.nodes.find((candidate) => candidate.id === nodeId);
+    if (!node) throw new Error(`Patch precondition failed: required rune ${nodeId} is missing`);
+    if (!node.dormant) {
+      throw new Error(`Patch precondition failed: rune ${nodeId} is no longer dormant`);
+    }
+  }
+  for (const constraintId of patch.preconditions.requiredConstraintIds) {
+    if (!graph.constraints.some((constraint) => constraint.id === constraintId)) {
+      throw new Error(`Patch precondition failed: sacred constraint ${constraintId} is missing`);
+    }
   }
 
   const next = cloneGraph(graph);

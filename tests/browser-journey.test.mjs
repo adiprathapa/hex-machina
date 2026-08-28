@@ -177,6 +177,9 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await patchLedger.innerText(), /Disconnect Summon ducks → Pour · flows to/);
     assert.match(await patchLedger.innerText(), /Connect Pour → Moonflower · targets/);
     assert.match(await patchLedger.innerText(), /Awaken Umbrella/);
+    const patchPreflight = page.locator(".patch-preflight");
+    await assertVisible(patchPreflight, "the approval card exposes exact structural preconditions");
+    assert.match(await patchPreflight.innerText(), /Preflight · graph v2[\s\S]*2 live edges · 2 dormant runes · 1 sacred lock/i);
     assert.equal(await page.locator(".edge-layer line.patch-remove").count(), 2, "removed connections are previewed on the graph");
     assert.equal(await page.locator(".edge-layer line.patch-add").count(), 4, "new connections are previewed on the graph");
     assert.equal(await page.locator(".rune.patch-activate").count(), 2, "dormant runes to awaken are previewed on the graph");
@@ -285,6 +288,12 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "agent proposal drives the patch preview");
     assert.equal(agentProposal.patches[0].searchEvidence.editCount, 8);
     assert.equal(agentProposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
+    assert.deepEqual(agentProposal.patches[0].preconditions, {
+      expectedGraphVersion: 2,
+      requiredEdgeIds: ["e-ducks-pour", "e-pour-room"],
+      requiredDormantNodeIds: ["umbrella", "bloom"],
+      requiredConstraintIds: ["sacred-summon-ducks"],
+    });
     assert.equal(await page.locator(".patch-ledger li").count(), 8, "agent proposals use the same complete human-review ledger");
     const agentPreview = await invokeTool("simulate_cast", { patchId: agentProposal.patches[0].id });
     assert.equal(agentPreview.success, true);
@@ -297,6 +306,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
     assert.equal(agentApply.verification.success, true);
     assert.equal(agentApply.verification.assertions.duckCount, 12);
+    assert.deepEqual(agentApply.validatedPreconditions, agentProposal.patches[0].preconditions);
     const recentAgentActivity = await page.locator(".activity-list").innerText();
     assert.match(recentAgentActivity, /apply_spell_patch/);
     assert.match(recentAgentActivity, /simulate_cast/);

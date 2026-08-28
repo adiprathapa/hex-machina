@@ -179,6 +179,12 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(proposal.patches[0].preserves.includes("summon-ducks"), true);
   assert.equal(proposal.patches[0].searchEvidence.editCount, 8);
   assert.equal(proposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
+  assert.deepEqual(proposal.patches[0].preconditions, {
+    expectedGraphVersion: 2,
+    requiredEdgeIds: ["e-ducks-pour", "e-pour-room"],
+    requiredDormantNodeIds: ["umbrella", "bloom"],
+    requiredConstraintIds: ["sacred-summon-ducks"],
+  });
   const graphBeforePreview = JSON.stringify(graph);
   const preview = await handlers.simulate_cast({ patchId: proposal.patches[0].id });
   assert.equal(preview.success, true);
@@ -191,6 +197,7 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(JSON.stringify(graph), graphBeforePreview, "a patch simulation must not mutate editor state");
   const result = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
   assert.equal(result.action, "apply");
+  assert.deepEqual(result.validatedPreconditions, proposal.patches[0].preconditions);
   assert.equal(result.verification.success, true);
   assert.equal(result.verification.assertions.ducksPresent, true);
   assert.equal(result.verification.assertions.duckCount, 12);

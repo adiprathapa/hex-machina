@@ -190,6 +190,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "nonmutating_patch_preview",
         "bounded_causal_trace",
         "coherent_filtered_inspection",
+        "validated_patch_preconditions",
         "twelve_ducks_preserved",
     }
     completed = set(evidence.get("completed_steps", []))
@@ -397,6 +398,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("scenarioState", "boundaryEdges", "omittedNodeCount", "internalEdgeCount")
     )
+    validated_patch_preconditions = all(
+        marker in combined
+        for marker in ("expectedGraphVersion", "requiredEdgeIds", "requiredDormantNodeIds", "requiredConstraintIds", "validatedPreconditions")
+    )
     sacred_reachability = all(
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
@@ -485,6 +490,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "coherent filtered inspection",
             coherent_filtered_inspection,
             "focused inspections partition internal and boundary edges and include current scenario state" if coherent_filtered_inspection else "coherent filtered inspection evidence missing",
+        ),
+        Check(
+            "validated patch preconditions",
+            validated_patch_preconditions,
+            "version, live-edge, dormant-rune, and sacred-lock facts are explicit and revalidated before mutation" if validated_patch_preconditions else "explicit structural patch preconditions are missing",
         ),
         Check(
             "sacred reachability invariant",

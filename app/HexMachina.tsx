@@ -548,6 +548,10 @@ export function HexMachina() {
                 </div>
               )}
               <dl><div><dt>Rank</dt><dd>#{patch.searchEvidence.rank}</dd></div><div><dt>Edits</dt><dd>{patch.searchEvidence.editCount}</dd></div><div><dt>Eligible</dt><dd>{patch.searchEvidence.eligibleCandidateCount}/{patch.searchEvidence.candidateCount}</dd></div></dl>
+              <div className="patch-preflight" aria-label="Patch preconditions">
+                <span>Preflight · graph v{patch.preconditions.expectedGraphVersion}</span>
+                <strong>{patch.preconditions.requiredEdgeIds.length} live edges · {patch.preconditions.requiredDormantNodeIds.length} dormant runes · {patch.preconditions.requiredConstraintIds.length} sacred lock</strong>
+              </div>
               <details className="patch-ledger" open>
                 <summary>Review {patchPreview.length} graph edits</summary>
                 <ol>
