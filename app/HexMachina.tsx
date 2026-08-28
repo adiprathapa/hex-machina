@@ -7,13 +7,11 @@ import {
   type RuneNode,
   type SpellEdgeType,
   type SpellGraph,
-  type SpellPatch,
 } from "@/src/domain/spell";
-import { buildPatchPreview } from "@/src/domain/patch-preview";
 import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
-import { createSpellToolHandlers, type SpellToolPresentation } from "@/src/tools/handlers";
+import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
 
 interface Activity {
@@ -78,7 +76,7 @@ export function HexMachina() {
   const [activity, setActivity] = useState<Activity[]>([]);
   const [cast, setCast] = useState<CastResult | null>(null);
   const [previewCast, setPreviewCast] = useState<CastResult | null>(null);
-  const [patch, setPatch] = useState<SpellPatch | null>(null);
+  const [patch, setPatch] = useState<ReviewedSpellPatch | null>(null);
   const [revertToken, setRevertToken] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>("multiply");
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
@@ -336,7 +334,7 @@ export function HexMachina() {
     () => FAMILIAR_GNN_ENABLED && cast && !cast.success ? inferFamiliar(graph, cast) : null,
     [cast, graph],
   );
-  const patchPreview = useMemo(() => patch ? buildPatchPreview(graph, patch) : [], [graph, patch]);
+  const patchPreview = patch?.operationLedger ?? [];
   const removedPatchEdgeIds = new Set(
     patchPreview.filter((entry) => entry.kind === "disconnect" && entry.edgeId).map((entry) => entry.edgeId!),
   );

@@ -34,6 +34,8 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);
+  assert.match(client, /patch\?\.operationLedger/);
+  assert.doesNotMatch(client, /buildPatchPreview/);
   assert.match(client, /Experimental Familiar graph prediction/);
   assert.match(client, /inferFamiliar\(graph, cast\)/);
   assert.match(client, /Link from rune/);

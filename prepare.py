@@ -402,6 +402,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("causalSteps", "ruleEvidence", "necessityChecks", "everyResponsibleEdgeNecessary", "no-protective-umbrella-route")
     )
+    canonical_patch_review = all(
+        marker in combined
+        for marker in ("operationLedger", "reviewSummary", "appliedPatch", "revertedPatch", "patch?.operationLedger")
+    )
     validated_patch_preconditions = all(
         marker in combined
         for marker in ("expectedGraphVersion", "requiredEdgeIds", "requiredDormantNodeIds", "requiredConstraintIds", "validatedPreconditions")
@@ -499,6 +503,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "minimal side-effect proof",
             minimal_side_effect_proof,
             "typed causal subgraph includes rule premises and counterfactual edge-necessity checks" if minimal_side_effect_proof else "structured minimal side-effect evidence missing",
+        ),
+        Check(
+            "canonical patch review receipt",
+            canonical_patch_review,
+            "proposal, simulation, application, rollback, and UI share one structured operation ledger" if canonical_patch_review else "shared patch-review receipt missing",
         ),
         Check(
             "validated patch preconditions",

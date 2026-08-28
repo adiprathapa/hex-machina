@@ -5,6 +5,7 @@ import {
   type SpellGraph,
   type SpellPatch,
 } from "../domain/spell.ts";
+import { buildPatchPreview, type PatchPreviewEntry } from "../domain/patch-preview.ts";
 import { simulateCast, type CastResult } from "../simulator/cast.ts";
 import { explainFlood, previewPatch, proposePatches } from "../solver/repair.ts";
 import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS, traceSpellGraph } from "../solver/trace.ts";
@@ -48,10 +49,22 @@ export interface SpellToolContext {
   presentResult?(event: SpellToolPresentation): void;
 }
 
+export interface ReviewedSpellPatch extends SpellPatch {
+  predictedOutcome: CastResult | null;
+  operationLedger: PatchPreviewEntry[];
+  reviewSummary: {
+    totalOperations: number;
+    disconnectCount: number;
+    connectCount: number;
+    awakenCount: number;
+    touchedNodeIds: string[];
+  };
+}
+
 export type SpellToolPresentation =
-  | { tool: "simulate_cast"; simulation: CastResult; previewPatch?: SpellPatch }
+  | { tool: "simulate_cast"; simulation: CastResult; previewPatch?: ReviewedSpellPatch }
   | { tool: "set_sacred_constraint" }
-  | { tool: "propose_spell_patch"; patches: SpellPatch[] }
+  | { tool: "propose_spell_patch"; patches: ReviewedSpellPatch[] }
   | {
       tool: "apply_spell_patch";
       verification: CastResult;
@@ -73,11 +86,32 @@ function requireShortText(value: string, label: string, maximum: number) {
   return normalized;
 }
 
+function createReviewedPatch(
+  graph: SpellGraph,
+  patch: SpellPatch,
+  predictedOutcome: CastResult | null,
+): ReviewedSpellPatch {
+  const operationLedger = buildPatchPreview(graph, patch);
+  return {
+    ...patch,
+    predictedOutcome,
+    operationLedger,
+    reviewSummary: {
+      totalOperations: operationLedger.length,
+      disconnectCount: operationLedger.filter((entry) => entry.kind === "disconnect").length,
+      connectCount: operationLedger.filter((entry) => entry.kind === "connect").length,
+      awakenCount: operationLedger.filter((entry) => entry.kind === "awaken").length,
+      touchedNodeIds: [...new Set(operationLedger.flatMap((entry) => entry.nodeIds))],
+    },
+  };
+}
+
 export function createSpellToolHandlers(context: SpellToolContext) {
   let reversiblePatch: {
     token: string;
     appliedVersion: number;
     graphBeforeApply: SpellGraph;
+    reviewedPatch: ReviewedSpellPatch;
   } | null = null;
 
   return {
@@ -194,6 +228,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           throw new Error(`Patch ${patchId} is unavailable or stale for graph v${graph.version}`);
         }
         const result = previewPatch(graph, patch).simulation;
+        const reviewedPatch = createReviewedPatch(graph, patch, result);
         const nodeIds = patch.operations.flatMap((operation) =>
           operation.op === "add_edge"
             ? [operation.edge.from, operation.edge.to]
@@ -206,7 +241,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           `Previewed ${patch.title} without changing graph v${graph.version}. ${result.summary}`,
           nodeIds,
         );
-        context.presentResult?.({ tool: "simulate_cast", simulation: result, previewPatch: patch });
+        context.presentResult?.({ tool: "simulate_cast", simulation: result, previewPatch: reviewedPatch });
         return {
           ...result,
           preview: {
@@ -214,6 +249,10 @@ export function createSpellToolHandlers(context: SpellToolContext) {
             baseGraphVersion: graph.version,
             simulatedGraphVersion: result.graphVersion,
             editorMutated: false,
+          },
+          patchReview: {
+            operationLedger: reviewedPatch.operationLedger,
+            reviewSummary: reviewedPatch.reviewSummary,
           },
         };
       }
@@ -280,7 +319,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         } catch {
           predictedOutcome = null;
         }
-        return { ...patch, predictedOutcome };
+        return createReviewedPatch(graph, patch, predictedOutcome);
       });
       context.recordActivity("propose_spell_patch", patches.length ? `Prepared ${patches.length} constraint-aware patch.` : "No patch is needed.");
       context.presentResult?.({ tool: "propose_spell_patch", patches });
@@ -310,6 +349,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         }
 
         const restored = cloneGraph(reversiblePatch.graphBeforeApply);
+        const revertedPatch = reversiblePatch.reviewedPatch;
         restored.version = current.version + 1;
         const beforeSummary = { version: current.version, edgeCount: current.edges.length };
         context.setGraph(restored);
@@ -326,6 +366,11 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           reverted: true,
           before: beforeSummary,
           after: { version: restored.version, edgeCount: restored.edges.length },
+          revertedPatch: {
+            patchId: revertedPatch.id,
+            operationLedger: revertedPatch.operationLedger,
+            reviewSummary: revertedPatch.reviewSummary,
+          },
           verification,
         };
       }
@@ -342,19 +387,26 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         );
       }
       const next = applyPatch(before, patch);
-      context.setGraph(next);
+      const verification = simulateCast(next);
+      const reviewedPatch = createReviewedPatch(before, patch, verification);
       const revertToken = `revert-${patch.id}-after-v${next.version}`;
+      context.setGraph(next);
       reversiblePatch = {
         token: revertToken,
         appliedVersion: next.version,
         graphBeforeApply: cloneGraph(before),
+        reviewedPatch,
       };
-      const verification = simulateCast(next);
       context.recordActivity("apply_spell_patch", `Applied ${patch.title}. ${verification.summary}`, patch.operations.flatMap((operation) => operation.op === "add_edge" ? [operation.edge.from, operation.edge.to] : operation.op === "activate_node" ? [operation.nodeId] : []));
       context.presentResult?.({ tool: "apply_spell_patch", verification, revertToken });
       return {
         action: "apply" as const,
         validatedPreconditions: patch.preconditions,
+        appliedPatch: {
+          patchId: reviewedPatch.id,
+          operationLedger: reviewedPatch.operationLedger,
+          reviewSummary: reviewedPatch.reviewSummary,
+        },
         before: { version: before.version, edgeCount: before.edges.length },
         after: { version: next.version, edgeCount: next.edges.length },
         verification,

@@ -194,7 +194,7 @@ export async function registerWebMCPTools(
     {
       name: "propose_spell_patch",
       title: "Propose spell patch",
-      description: "Search for ranked spell repairs with explicit graph, edge, dormant-rune, and sacred-constraint preconditions without changing the graph.",
+      description: "Search for ranked spell repairs and return predicted outcomes, explicit preconditions, and the same structured operation ledger shown to the human without changing the graph.",
       inputSchema: emptySchema,
       annotations: trustedReadAnnotations,
       execute: withExecutionSignal(handlers.propose_spell_patch),
@@ -202,7 +202,7 @@ export async function registerWebMCPTools(
     {
       name: "apply_spell_patch",
       title: "Apply spell patch",
-      description: "Atomically revalidate and apply every precondition of a versioned spell patch, or revert the most recent unchanged application with its one-use token.",
+      description: "Atomically revalidate and apply the exact human-reviewed operation ledger for a versioned spell patch, or revert it with a one-use token and matching receipt.",
       inputSchema: {
         type: "object",
         properties: {

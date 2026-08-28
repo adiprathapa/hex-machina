@@ -32,7 +32,7 @@ The application has no database, object-storage binding, account surface, analyt
 ## Mutation protocol
 
 1. `propose_spell_patch` computes available patches for the current graph version.
-2. The agent receives only versioned patch IDs plus operations, predicted outcomes, and explicit preconditions covering graph version, required live edges, required dormant runes, and required sacred locks.
+2. The agent receives only versioned patch IDs plus operations, predicted outcomes, a structured human-readable operation ledger with summary counts, and explicit preconditions covering graph version, required live edges, required dormant runes, and required sacred locks.
 3. `apply_spell_patch` accepts a patch ID, not an arbitrary patch object.
 4. The application recomputes that patch against current state.
 5. A stale or unavailable ID fails without mutation. Before cloning, every live-edge, dormant-rune, and sacred-lock precondition must still match; same-version structural drift also fails closed.
@@ -41,7 +41,7 @@ The application has no database, object-storage binding, account surface, analyt
 
 The canonical search evaluates two semantically distinct graph rewrites. Without a sacred constraint, a six-edit direct route ranks first. Protecting the ducks removes that candidate from eligibility, so an eight-edit Umbrella route ranks first and preserves the complete twelve-duck branch. The structured proposal reports rank, edit count, total candidates, eligible candidates, and satisfied constraints.
 
-Before a write is approved, the UI converts the exact application-generated operations into a stable ledger. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. The preview is derived from the same patch object accepted by `apply_spell_patch`, so the explanation cannot drift from the mutation.
+Before a write is approved, the shared proposal handler converts the exact application-generated operations into a stable ledger. The agent receives that ledger and the UI renders it directly; it does not maintain a second translation path. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. Safe simulation returns the same ledger, successful application echoes it as `appliedPatch`, and rollback echoes it as `revertedPatch`, so tests can prove one review receipt survives the entire transaction.
 
 The approval card also renders the preflight facts as human evidence. Successful application returns the exact `validatedPreconditions` object alongside its before/after summaries, allowing an agent or judge to compare what was proposed with what the application actually checked.
 

@@ -301,12 +301,26 @@ test("production browser completes the constraint-preserving spell journey", { t
       requiredDormantNodeIds: ["umbrella", "bloom"],
       requiredConstraintIds: ["sacred-summon-ducks"],
     });
+    assert.deepEqual(
+      await page.locator(".patch-ledger li p").allTextContents(),
+      agentProposal.patches[0].operationLedger.map((entry) => entry.label),
+      "the human review card renders the exact operation ledger returned to the agent",
+    );
+    assert.deepEqual(agentProposal.patches[0].reviewSummary, {
+      totalOperations: 8,
+      disconnectCount: 2,
+      connectCount: 4,
+      awakenCount: 2,
+      touchedNodeIds: ["summon-ducks", "pour", "room", "umbrella", "moonflower", "bloom"],
+    });
     assert.equal(await page.locator(".patch-ledger li").count(), 8, "agent proposals use the same complete human-review ledger");
     const agentPreview = await invokeTool("simulate_cast", { patchId: agentProposal.patches[0].id });
     assert.equal(agentPreview.success, true);
     assert.equal(agentPreview.preview.editorMutated, false);
     assert.equal(agentPreview.preview.baseGraphVersion, 2);
     assert.equal(agentPreview.preview.simulatedGraphVersion, 3);
+    assert.deepEqual(agentPreview.patchReview.operationLedger, agentProposal.patches[0].operationLedger);
+    assert.deepEqual(agentPreview.patchReview.reviewSummary, agentProposal.patches[0].reviewSummary);
     await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "agent patch simulations remain visibly pending");
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/, "agent preview does not advance the live graph");
     const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
@@ -314,12 +328,18 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(agentApply.verification.success, true);
     assert.equal(agentApply.verification.assertions.duckCount, 12);
     assert.deepEqual(agentApply.validatedPreconditions, agentProposal.patches[0].preconditions);
+    assert.equal(agentApply.appliedPatch.patchId, agentProposal.patches[0].id);
+    assert.deepEqual(agentApply.appliedPatch.operationLedger, agentProposal.patches[0].operationLedger);
+    assert.deepEqual(agentApply.appliedPatch.reviewSummary, agentProposal.patches[0].reviewSummary);
     const recentAgentActivity = await page.locator(".activity-list").innerText();
     assert.match(recentAgentActivity, /apply_spell_patch/);
     assert.match(recentAgentActivity, /simulate_cast/);
     assert.match(recentAgentActivity, /propose_spell_patch/);
 
-    await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });
+    const agentRevert = await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });
+    assert.equal(agentRevert.revertedPatch.patchId, agentProposal.patches[0].id);
+    assert.deepEqual(agentRevert.revertedPatch.operationLedger, agentProposal.patches[0].operationLedger);
+    assert.deepEqual(agentRevert.revertedPatch.reviewSummary, agentProposal.patches[0].reviewSummary);
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "agent rollback restores visible failure state");
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v4/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "agent rollback preserves sacred intent");

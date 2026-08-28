@@ -184,6 +184,24 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(proposal.patches[0].preserves.includes("summon-ducks"), true);
   assert.equal(proposal.patches[0].searchEvidence.editCount, 8);
   assert.equal(proposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
+  assert.deepEqual(proposal.patches[0].operationLedger.map((entry) => entry.label), [
+    "Disconnect Summon ducks → Pour · flows to",
+    "Disconnect Pour → The room · targets",
+    "Awaken Umbrella",
+    "Connect Summon ducks → Umbrella · flows to",
+    "Connect Umbrella → Pour · flows to",
+    "Connect Pour → Moonflower · targets",
+    "Awaken Bloom",
+    "Connect Moonflower → Bloom · flows to",
+  ]);
+  assert.deepEqual(proposal.patches[0].reviewSummary, {
+    totalOperations: 8,
+    disconnectCount: 2,
+    connectCount: 4,
+    awakenCount: 2,
+    touchedNodeIds: ["summon-ducks", "pour", "room", "umbrella", "moonflower", "bloom"],
+  });
+  assert.equal(proposal.patches[0].predictedOutcome.success, true);
   assert.deepEqual(proposal.patches[0].preconditions, {
     expectedGraphVersion: 2,
     requiredEdgeIds: ["e-ducks-pour", "e-pour-room"],
@@ -199,16 +217,24 @@ test("tool handlers preserve human intent through a verified write", async () =>
     simulatedGraphVersion: 3,
     editorMutated: false,
   });
+  assert.deepEqual(preview.patchReview.operationLedger, proposal.patches[0].operationLedger);
+  assert.deepEqual(preview.patchReview.reviewSummary, proposal.patches[0].reviewSummary);
   assert.equal(JSON.stringify(graph), graphBeforePreview, "a patch simulation must not mutate editor state");
   const result = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
   assert.equal(result.action, "apply");
   assert.deepEqual(result.validatedPreconditions, proposal.patches[0].preconditions);
+  assert.equal(result.appliedPatch.patchId, proposal.patches[0].id);
+  assert.deepEqual(result.appliedPatch.operationLedger, proposal.patches[0].operationLedger);
+  assert.deepEqual(result.appliedPatch.reviewSummary, proposal.patches[0].reviewSummary);
   assert.equal(result.verification.success, true);
   assert.equal(result.verification.assertions.ducksPresent, true);
   assert.equal(result.verification.assertions.duckCount, 12);
   assert.match(result.revertToken, /^revert-patch-umbrella/);
   const reverted = await handlers.apply_spell_patch({ revertToken: result.revertToken });
   assert.equal(reverted.action, "revert");
+  assert.equal(reverted.revertedPatch.patchId, proposal.patches[0].id);
+  assert.deepEqual(reverted.revertedPatch.operationLedger, proposal.patches[0].operationLedger);
+  assert.deepEqual(reverted.revertedPatch.reviewSummary, proposal.patches[0].reviewSummary);
   assert.equal(reverted.verification.success, false);
   assert.equal(reverted.verification.assertions.ducksPresent, true);
   assert.equal(graph.version, 4);
