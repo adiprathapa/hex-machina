@@ -56,8 +56,15 @@ test("deployment output contains the worker and complete app-owned assets only",
 
   const relativeFiles = (await filesBelow(DIST)).map((file) => path.relative(DIST, file));
   assert.ok(relativeFiles.some((file) => /^client\/_next\/static\/chunks\/.+\.js$/.test(file)));
-  assert.ok(relativeFiles.some((file) => /^client\/_next\/static\/css\/.+\.css$/.test(file)));
+  const cssFiles = relativeFiles.filter((file) => /^client\/_next\/static\/css\/.+\.css$/.test(file));
+  assert.ok(cssFiles.length > 0);
   assert.ok(relativeFiles.some((file) => /^client\/_next\/static\/_vinext_fonts\/.+\.woff2$/.test(file)));
+  const builtCss = (await Promise.all(cssFiles.map((file) => readFile(path.join(DIST, file), "utf8")))).join("\n");
+  assert.match(builtCss, /--font-poppins/);
+  assert.match(builtCss, /--font-fira-code/);
+  assert.match(builtCss, /var\(--font-poppins\)/);
+  assert.match(builtCss, /var\(--font-fira-code\)/);
+  assert.doesNotMatch(builtCss, /font-geist/);
   assert.deepEqual(
     relativeFiles.filter((file) => /(^|\/)(?:\.env|node_modules|submission|tests)(?:\/|$)|\.(?:map|pem)$/i.test(file)),
     [],

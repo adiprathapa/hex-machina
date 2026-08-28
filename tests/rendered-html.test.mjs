@@ -25,7 +25,14 @@ test("ships Hex Machina instead of the starter preview", async () => {
   ]);
 
   assert.match(page, /<HexMachina \/>/);
-  assert.match(layout, /Hex Machina — Cooperative Spell Debugging/);
+  assert.match(layout, /Hex Machina \| Cooperative Spell Debugging/);
+  assert.match(layout, /Poppins/);
+  assert.match(layout, /Fira_Code/);
+  assert.match(layout, /--font-poppins/);
+  assert.match(layout, /--font-fira-code/);
+  assert.match(css, /var\(--font-poppins\)/);
+  assert.match(css, /var\(--font-fira-code\)/);
+  assert.doesNotMatch(`${layout}\n${css}`, /font-geist/);
   assert.match(client, /Water the moonflower/);
   assert.match(client, /The ducks are funny\. They stay\./);
   assert.match(client, /Drag runes to rearrange/);

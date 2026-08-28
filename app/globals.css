@@ -29,7 +29,7 @@ body {
     radial-gradient(circle at 52% 12%, rgba(181, 161, 255, 0.09), transparent 28rem),
     var(--night);
   color: var(--ink);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: var(--font-poppins), Arial, sans-serif;
 }
 
 button,
@@ -110,7 +110,7 @@ button:focus-visible {
 .section-kicker {
   margin: 0 0 4px;
   color: var(--muted);
-  font: 600 10px/1.2 var(--font-geist-mono), monospace;
+  font: 600 10px/1.2 var(--font-fira-code), monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -128,7 +128,7 @@ button:focus-visible {
 
 .mission-chip span {
   color: var(--acid);
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -144,7 +144,7 @@ button:focus-visible {
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font: 500 11px/1 var(--font-geist-mono), monospace;
+  font: 500 11px/1 var(--font-fira-code), monospace;
 }
 
 .status-dot {
@@ -185,7 +185,7 @@ button:focus-visible {
 
 .brief-panel h2 {
   max-width: 230px;
-  font: 500 clamp(25px, 2.2vw, 35px)/.98 var(--font-geist-sans), sans-serif;
+  font: 500 clamp(25px, 2.2vw, 35px)/.98 var(--font-poppins), sans-serif;
 }
 
 .lede {
@@ -216,7 +216,7 @@ button:focus-visible {
 }
 
 .quest-steps li > span {
-  font: 500 10px/1 var(--font-geist-mono), monospace;
+  font: 500 10px/1 var(--font-fira-code), monospace;
 }
 
 .quest-steps li strong,
@@ -290,7 +290,7 @@ kbd {
   padding: 3px 5px;
   border: 1px solid rgba(0,0,0,.2);
   border-radius: 4px;
-  font: 600 10px/1 var(--font-geist-mono), monospace;
+  font: 600 10px/1 var(--font-fira-code), monospace;
 }
 
 .wish {
@@ -306,7 +306,7 @@ kbd {
 .wish span {
   display: block;
   margin-bottom: 4px;
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
@@ -343,7 +343,7 @@ kbd {
 .cast-state {
   padding: 6px 9px;
   border-radius: 999px;
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -516,7 +516,7 @@ kbd {
   border-radius: 999px;
   background: #111516;
   color: var(--lilac);
-  font: 600 6px/1 var(--font-geist-mono), monospace;
+  font: 600 6px/1 var(--font-fira-code), monospace;
   letter-spacing: .06em;
   text-align: center;
   text-overflow: ellipsis;
@@ -536,7 +536,7 @@ kbd {
   bottom: 10px;
   margin: 0;
   color: var(--subtle);
-  font: 500 8px/1 var(--font-geist-mono), monospace;
+  font: 500 8px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
   pointer-events: none;
@@ -555,7 +555,7 @@ kbd {
   border-radius: 50%;
   background: rgba(255,255,255,.045);
   color: var(--aqua);
-  font: 500 17px/1 var(--font-geist-mono), monospace;
+  font: 500 17px/1 var(--font-fira-code), monospace;
 }
 
 .rune-modifier .rune-glyph {
@@ -580,7 +580,7 @@ kbd {
 .rune-copy small {
   margin-top: 3px;
   color: var(--muted);
-  font: 500 8px/1 var(--font-geist-mono), monospace;
+  font: 500 8px/1 var(--font-fira-code), monospace;
   letter-spacing: .09em;
   text-transform: uppercase;
 }
@@ -684,7 +684,7 @@ kbd {
 
 .node-inspector small {
   color: var(--muted);
-  font: 500 8px/1 var(--font-geist-mono), monospace;
+  font: 500 8px/1 var(--font-fira-code), monospace;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
@@ -757,7 +757,7 @@ kbd {
   align-items: center;
   gap: 5px;
   color: var(--muted);
-  font: 600 7px/1 var(--font-geist-mono), monospace;
+  font: 600 7px/1 var(--font-fira-code), monospace;
   text-transform: uppercase;
 }
 
@@ -831,7 +831,7 @@ kbd {
 .preview-verdict span,
 .preview-verdict small {
   color: var(--muted);
-  font: 600 7px/1.2 var(--font-geist-mono), monospace;
+  font: 600 7px/1.2 var(--font-fira-code), monospace;
   letter-spacing: .07em;
   text-transform: uppercase;
 }
@@ -847,14 +847,14 @@ kbd {
 
 .patch-preflight span {
   color: var(--lilac);
-  font: 650 7px/1 var(--font-geist-mono), monospace;
+  font: 650 7px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
 
 .patch-preflight strong {
   color: #c7c6bf;
-  font: 550 8px/1.35 var(--font-geist-mono), monospace;
+  font: 550 8px/1.35 var(--font-fira-code), monospace;
 }
 
 .preview-verdict strong {
@@ -909,7 +909,7 @@ kbd {
   padding: 9px 10px;
   color: var(--ink);
   cursor: pointer;
-  font: 650 8px/1 var(--font-geist-mono), monospace;
+  font: 650 8px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -936,7 +936,7 @@ kbd {
 
 .patch-ledger li > span {
   color: var(--aqua);
-  font: 700 11px/1 var(--font-geist-mono), monospace;
+  font: 700 11px/1 var(--font-fira-code), monospace;
 }
 
 .patch-ledger li[data-patch-kind="disconnect"] > span {
@@ -950,7 +950,7 @@ kbd {
 .patch-ledger li p {
   margin: 0;
   color: #c7c6bf;
-  font: 500 8px/1.35 var(--font-geist-mono), monospace;
+  font: 500 8px/1.35 var(--font-fira-code), monospace;
 }
 
 .familiar-signal {
@@ -983,7 +983,7 @@ kbd {
   border: 1px solid rgba(181,161,255,.3);
   border-radius: 999px;
   color: var(--lilac);
-  font: 600 7px/1 var(--font-geist-mono), monospace;
+  font: 600 7px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -1020,12 +1020,12 @@ kbd {
 .familiar-signal li button b {
   margin-right: 7px;
   color: var(--lilac);
-  font: 600 8px/1 var(--font-geist-mono), monospace;
+  font: 600 8px/1 var(--font-fira-code), monospace;
 }
 
 .familiar-signal li button > strong {
   color: var(--aqua);
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
 }
 
 .signal-meter {
@@ -1057,7 +1057,7 @@ kbd {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -1091,7 +1091,7 @@ kbd {
 }
 
 .activity-list strong {
-  font: 550 9px/1 var(--font-geist-mono), monospace;
+  font: 550 9px/1 var(--font-fira-code), monospace;
   color: #d2d0c8;
 }
 
@@ -1133,7 +1133,7 @@ kbd {
 
 .tool-console summary strong {
   color: #d2d0c8;
-  font: 600 9px/1 var(--font-geist-mono), monospace;
+  font: 600 9px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -1198,7 +1198,7 @@ kbd {
 
 .tool-console-grid button small {
   color: var(--muted);
-  font: 600 7px/1 var(--font-geist-mono), monospace;
+  font: 600 7px/1 var(--font-fira-code), monospace;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
@@ -1209,7 +1209,7 @@ kbd {
   padding: 8px 12px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font: 600 8px/1 var(--font-geist-mono), monospace;
+  font: 600 8px/1 var(--font-fira-code), monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -1227,7 +1227,7 @@ kbd {
   border-top: 1px solid rgba(255,255,255,.05);
   color: #b7c9c3;
   background: rgba(0,0,0,.2);
-  font: 500 8px/1.5 var(--font-geist-mono), monospace;
+  font: 500 8px/1.5 var(--font-fira-code), monospace;
   white-space: pre-wrap;
   word-break: break-word;
 }

@@ -158,6 +158,12 @@ test("production browser completes the constraint-preserving spell journey", { t
     });
 
     await page.goto(server.url, { waitUntil: "networkidle" });
+    const computedFonts = await page.evaluate(() => ({
+      body: getComputedStyle(document.body).fontFamily,
+      semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
+    }));
+    assert.match(computedFonts.body, /Poppins/i, "the production body uses the intended display typeface");
+    assert.match(computedFonts.semanticLabel, /Fira Code/i, "semantic labels use the intended code typeface");
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "failure spectacle is visible");
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "failure state is visible");

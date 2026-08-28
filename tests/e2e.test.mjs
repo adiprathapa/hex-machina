@@ -28,7 +28,7 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Hex Machina — Cooperative Spell Debugging<\/title>/i);
+  assert.match(html, /<title>Hex Machina \| Cooperative Spell Debugging<\/title>/i);
   assert.match(html, /The overenthusiastic rain spell/);
   assert.match(html, /Water the moonflower\. Keep the room dry\./);
   assert.match(html, /Cast spell/);
