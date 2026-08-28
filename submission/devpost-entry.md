@@ -6,11 +6,11 @@ Hex Machina
 
 ## Tagline
 
-A spell graph where humans decide what matters and agents prove the smallest repair.
+An agent gym where humans decide what matters and agents prove the smallest repair.
 
 ## Short description
 
-Hex Machina is a graph-native cooperative spell-debugging game. A person contributes taste—“the ducks must stay”—while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools.
+Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste—“the ducks must stay”—while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
 
 ## Why this is a strong fit for WebMCP
 
@@ -32,6 +32,12 @@ The person contributes something the graph cannot infer: “The ducks are funny.
 
 This is the central thesis: graph interfaces let people and agents negotiate executable intent. The same pattern applies beyond games to creative tools, workflow builders, data pipelines, and other stateful systems where a person’s subjective constraints are essential but impossible for an optimizer to guess.
 
+## Why it is more than a game
+
+Hex Machina also exposes a headless Agent Gym protocol. The typed graph is the observation, the seven tools are the action space, and the shared application handlers define deterministic transitions. A nine-milestone, 23-point rubric rewards grounding, failure observation, causal tracing, explanation, intent preservation, safe patch preview, atomic application, and final verification. Invalid calls score −2; mutating before explaining scores an additional −5. The visible scorecard updates for both UI and WebMCP calls, and a complete trajectory can be exported as JSON.
+
+The current release is intentionally labeled a single-scenario research prototype. It can benchmark a policy and generate inspectable trajectories now; generated task families and held-out splits are the next step before making claims about reinforcement-learning gains or generalization.
+
 ## How WebMCP was implemented
 
 - `document.modelContext.registerTool()` is feature-detected and registers exactly seven lifecycle-scoped tools.
@@ -40,6 +46,7 @@ This is the central thesis: graph interfaces let people and agents negotiate exe
 - Registered callbacks, visible UI actions, and the fallback console invoke the same runtime-validated handlers.
 - The React adapter reads current graph state at execution time and emits typed presentation events so agent calls visibly update the canvas.
 - A pure deterministic simulator and bounded graph-rewrite solver remain authoritative. The optional two-round Familiar GNN only ranks inspection targets.
+- A shared-handler instrumenter records Agent Gym rewards and trajectories without creating a second execution path.
 
 ## Judging criteria
 
@@ -49,7 +56,7 @@ WebMCP is the collaboration layer, not a decorative integration. The canonical j
 
 ### Execution
 
-The project is a complete responsive game with a typed graph editor, deterministic failure and success spectacle, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 75-second demo.
+The project is a complete responsive game and single-scenario agent-evaluation environment with a typed graph editor, deterministic failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 75-second demo.
 
 ### Potential impact
 

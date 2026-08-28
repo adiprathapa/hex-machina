@@ -2,7 +2,7 @@
 
 **Magic is just code with worse documentation.**
 
-Hex Machina is a graph-native cooperative spell-debugging game built for WebMCP. A person and an agent share the same executable spell canvas: the person decides what must remain magical, while the agent traces causal failures and searches for the smallest valid repair.
+Hex Machina is an agent-evaluation environment disguised as a graph-native cooperative spell game. A person and an agent share the same executable canvas: the person decides what must remain magical, while the agent traces causal failures and searches for the smallest valid repair. Every semantic action becomes a scored, exportable transition, so the playful judge journey doubles as a deterministic test of tool use, causal reasoning, intent preservation, and safe mutation.
 
 In the opening lesson, a rain spell intended for a rare Moonflower multiplies before it has a bounded target. Twelve lunar ducks appear and flood the observatory. A conventional optimizer would delete the duck branch. The player refuses: “The ducks are funny. They stay.” That subjective preference becomes a sacred constraint in the graph. The agent must find a stranger solution—give the ducks umbrellas, redirect their rain onto the Moonflower, and recast without flooding the room.
 
@@ -20,6 +20,12 @@ The browser application remains the source of truth. It validates every mutation
 
 The collaboration is consequential rather than cosmetic: protecting the ducks produces a different valid graph and a different ending than allowing their removal.
 
+## From game to agent gym
+
+The graph is the observation, the seven WebMCP tools are the action space, and the application-owned handlers are the transition function. A visible 23-point rubric rewards evidence gathering, causal proof, constraint capture, safe preview, atomic repair, and final verification; invalid calls and premature writes are penalized. The same instrumented handlers serve the UI and visiting agents, and the complete JSON trajectory can be exported for evaluation or dataset experiments.
+
+This release is a single-scenario research prototype, not a claim of generalized RL training. Its next research step is to generate diverse spell families and held-out splits while retaining the deterministic simulator and inspectable reward receipts.
+
 ## Technical highlights
 
 - Typed directed multigraph with seven rune and seven edge categories
@@ -32,6 +38,7 @@ The collaboration is consequential rather than cosmetic: protecting the ducks pr
 - Keyboard-accessible controls, reduced-motion support, and responsive fallback
 - No OpenAI API key required
 - Experimental two-round Familiar graph network that ranks suspicious runes while leaving the deterministic simulator authoritative
+- Deterministic Agent Gym reset/step protocol with visible rewards and exportable trajectories
 
 ## Built with
 

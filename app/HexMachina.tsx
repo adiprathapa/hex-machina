@@ -9,6 +9,11 @@ import {
   type SpellGraph,
 } from "@/src/domain/spell";
 import { FAMILIAR_GNN_ENABLED, inferFamiliar } from "@/src/familiar/gnn";
+import {
+  AgentGymSession,
+  instrumentSpellToolHandlers,
+  type AgentGymSnapshot,
+} from "@/src/eval/agent-gym";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
@@ -87,13 +92,28 @@ export function HexMachina() {
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [connectionDraft, setConnectionDraft] = useState<ConnectionDraft | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("Select a rune, then start a typed link.");
+  const [gymSession] = useState(() => new AgentGymSession());
+  const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
+  const [canvasWidth, setCanvasWidth] = useState(0);
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef<string | null>(null);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const horizontalInset = canvasWidth ? Math.min(22, Math.max(8, (64 / canvasWidth) * 100)) : 9;
 
   useEffect(() => {
     graphRef.current = graph;
   }, [graph]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const measure = () => setCanvasWidth(canvas.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
 
   const recordActivity = useCallback((tool: string, detail: string, nodeIds: string[] = []) => {
     activityId.current += 1;
@@ -125,23 +145,32 @@ export function HexMachina() {
     }
   }, []);
 
+  // The closures read graphRef only when a tool executes, never during render.
+  /* eslint-disable react-hooks/refs */
   const handlers = useMemo(
-    // The closures read graphRef only when a tool executes, never during render.
-    // eslint-disable-next-line react-hooks/refs
-    () => createSpellToolHandlers({
-      getGraph: () => graphRef.current,
-      setGraph: (next) => {
-        graphRef.current = next;
-        setGraph(next);
-        setRevertToken(null);
-        setConnectFrom(null);
-        setConnectionDraft(null);
-      },
-      recordActivity,
-      presentResult: presentToolResult,
-    }),
-    [presentToolResult, recordActivity],
+    () => {
+      const sharedHandlers = createSpellToolHandlers({
+        getGraph: () => graphRef.current,
+        setGraph: (next) => {
+          graphRef.current = next;
+          setGraph(next);
+          setRevertToken(null);
+          setConnectFrom(null);
+          setConnectionDraft(null);
+        },
+        recordActivity,
+        presentResult: presentToolResult,
+      });
+      return instrumentSpellToolHandlers(
+        sharedHandlers,
+        () => graphRef.current,
+        gymSession,
+        setGymSnapshot,
+      );
+    },
+    [gymSession, presentToolResult, recordActivity],
   );
+  /* eslint-enable react-hooks/refs */
 
   useEffect(() => {
     const registration = new AbortController();
@@ -184,6 +213,7 @@ export function HexMachina() {
   const applyRepair = async () => {
     if (!patch) return;
     await handlers.apply_spell_patch({ patchId: patch.id });
+    await handlers.simulate_cast();
   };
 
   const previewRepair = async () => {
@@ -210,32 +240,49 @@ export function HexMachina() {
     setPositions(initialPositions(next));
     setDragging(null);
     draggingRef.current = null;
+    dragOffsetRef.current = { x: 0, y: 0 };
     setConsoleOutput("Lesson reset. Select a tool to inspect graph v1.");
     setConsoleBusy(null);
     setConnectFrom(null);
     setConnectionDraft(null);
     setConnectionMessage("Select a rune, then start a typed link.");
+    setGymSnapshot(gymSession.reset());
+  };
+
+  const exportEpisode = () => {
+    const payload = JSON.stringify(gymSession.snapshot(), null, 2);
+    const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "hex-machina-agent-gym-episode.json";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const moveNode = useCallback((nodeId: string, x: number, y: number) => {
     setPositions((current) => ({
       ...current,
       [nodeId]: {
-        x: clampPosition(x, 7, 93),
+        x: clampPosition(x, horizontalInset, 100 - horizontalInset),
         y: clampPosition(y, 7, 90),
       },
     }));
-  }, []);
+  }, [horizontalInset]);
 
   const moveNodeFromPointer = useCallback((clientX: number, clientY: number) => {
     const nodeId = draggingRef.current;
     const bounds = canvasRef.current?.getBoundingClientRect();
     if (!nodeId || !bounds) return;
-    moveNode(nodeId, ((clientX - bounds.left) / bounds.width) * 100, ((clientY - bounds.top) / bounds.height) * 100);
+    moveNode(
+      nodeId,
+      ((clientX - bounds.left - dragOffsetRef.current.x) / bounds.width) * 100,
+      ((clientY - bounds.top - dragOffsetRef.current.y) / bounds.height) * 100,
+    );
   }, [moveNode]);
 
   const finishDragging = useCallback(() => {
     draggingRef.current = null;
+    dragOffsetRef.current = { x: 0, y: 0 };
     setDragging(null);
   }, []);
 
@@ -259,7 +306,7 @@ export function HexMachina() {
     if (!selectedNode) return;
     setConnectFrom(selectedNode.id);
     setConnectionDraft(null);
-    setConnectionMessage(`Linking from ${selectedNode.label}. Choose a glowing compatible rune.`);
+    setConnectionMessage(`Linking from ${selectedNode.label}. Choose a highlighted compatible rune.`);
   };
 
   const cancelConnection = () => {
@@ -328,7 +375,8 @@ export function HexMachina() {
 
   const selectedNode = graph.nodes.find((node) => node.id === selected);
   const connectSource = graph.nodes.find((node) => node.id === connectFrom);
-  const highlightedIds = new Set(activity[0]?.nodeIds ?? []);
+  const tracedNodeIds = activity[0]?.nodeIds ?? [];
+  const highlightedIds = new Set(tracedNodeIds);
   const isSacred = graph.constraints.some((item) => item.targetId === "summon-ducks");
   const familiarPrediction = useMemo(
     () => FAMILIAR_GNN_ENABLED && cast && !cast.success ? inferFamiliar(graph, cast) : null,
@@ -351,7 +399,7 @@ export function HexMachina() {
     <main className={`machina stage-${stage}`}>
       <header className="topbar">
         <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">✣</span>
+          <span className="brand-mark" aria-hidden="true">HX</span>
           <div>
             <p className="eyebrow">The cooperative spell debugger</p>
             <h1>Hex Machina</h1>
@@ -389,8 +437,6 @@ export function HexMachina() {
             {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
             {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectDucks}>Protect the ducks</button>}
             {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
-            {patch && <button className="primary" onClick={applyRepair}>Apply patch & recast</button>}
-            {patch && !previewCast && <button className="quiet" onClick={previewRepair}>Simulate patch safely</button>}
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
@@ -417,28 +463,66 @@ export function HexMachina() {
             onPointerCancel={finishDragging}
           >
             <svg className="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <marker id="arrow-default" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#8299aa" />
+                </marker>
+                <marker id="arrow-target" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#c6543b" />
+                </marker>
+                <marker id="arrow-add" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#287a5b" />
+                </marker>
+              </defs>
               {graph.edges.map((edge) => {
                 const from = graph.nodes.find((node) => node.id === edge.from)!;
                 const to = graph.nodes.find((node) => node.id === edge.to)!;
-                const fromPosition = positions[from.id] ?? from;
-                const toPosition = positions[to.id] ?? to;
-                const active = highlightedIds.has(from.id) && highlightedIds.has(to.id);
+                const rawFromPosition = positions[from.id] ?? from;
+                const rawToPosition = positions[to.id] ?? to;
+                const fromPosition = { ...rawFromPosition, x: clampPosition(rawFromPosition.x, horizontalInset, 100 - horizontalInset) };
+                const toPosition = { ...rawToPosition, x: clampPosition(rawToPosition.x, horizontalInset, 100 - horizontalInset) };
+                const dx = toPosition.x - fromPosition.x;
+                const dy = toPosition.y - fromPosition.y;
+                const distance = Math.hypot(dx, dy) || 1;
+                const endpointInset = 6;
+                const x1 = fromPosition.x + (dx / distance) * endpointInset;
+                const y1 = fromPosition.y + (dy / distance) * endpointInset;
+                const x2 = toPosition.x - (dx / distance) * endpointInset;
+                const y2 = toPosition.y - (dy / distance) * endpointInset;
+                const traceIndex = tracedNodeIds.findIndex((nodeId, index) => (
+                  nodeId === from.id && tracedNodeIds[index + 1] === to.id
+                ));
+                const active = traceIndex >= 0;
                 const pendingRemoval = removedPatchEdgeIds.has(edge.id);
-                return <line key={edge.id} data-edge-id={edge.id} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className={`${edge.type} ${active ? "active" : ""} ${pendingRemoval ? "patch-remove" : ""}`} />;
+                return <line key={edge.id} data-edge-id={edge.id} x1={x1} y1={y1} x2={x2} y2={y2} className={`${edge.type} ${active ? "active" : ""} ${pendingRemoval ? "patch-remove" : ""}`} style={active ? { animationDelay: `${traceIndex * 90}ms` } : undefined} />;
               })}
               {addedPatchEdges.map((entry) => {
                 const from = graph.nodes.find((node) => node.id === entry.fromId)!;
                 const to = graph.nodes.find((node) => node.id === entry.toId)!;
-                const fromPosition = positions[from.id] ?? from;
-                const toPosition = positions[to.id] ?? to;
-                return <line key={`preview-${entry.edgeId}`} data-preview-edge-id={entry.edgeId} x1={fromPosition.x} y1={fromPosition.y} x2={toPosition.x} y2={toPosition.y} className="patch-add" />;
+                const rawFromPosition = positions[from.id] ?? from;
+                const rawToPosition = positions[to.id] ?? to;
+                const fromPosition = { ...rawFromPosition, x: clampPosition(rawFromPosition.x, horizontalInset, 100 - horizontalInset) };
+                const toPosition = { ...rawToPosition, x: clampPosition(rawToPosition.x, horizontalInset, 100 - horizontalInset) };
+                const dx = toPosition.x - fromPosition.x;
+                const dy = toPosition.y - fromPosition.y;
+                const distance = Math.hypot(dx, dy) || 1;
+                const endpointInset = 6;
+                return <line key={`preview-${entry.edgeId}`} data-preview-edge-id={entry.edgeId} x1={fromPosition.x + (dx / distance) * endpointInset} y1={fromPosition.y + (dy / distance) * endpointInset} x2={toPosition.x - (dx / distance) * endpointInset} y2={toPosition.y - (dy / distance) * endpointInset} className="patch-add" />;
               })}
             </svg>
+
+            <p className="graph-legend" aria-label="Graph edge legend">
+              <span><i /> Flow</span>
+              <span className="legend-target"><i /> Target</span>
+              <span className="legend-modifier"><i /> Modify</span>
+              <span className="legend-patch"><i /> Proposed</span>
+            </p>
 
             {graph.nodes.map((node) => {
               const sacred = graph.constraints.some((item) => item.targetId === node.id);
               const highlighted = highlightedIds.has(node.id);
-              const position = positions[node.id] ?? node;
+              const rawPosition = positions[node.id] ?? node;
+              const position = { ...rawPosition, x: clampPosition(rawPosition.x, horizontalInset, 100 - horizontalInset) };
               const validPortTypes = connectSource && node.id !== connectSource.id
                 ? getValidEdgeTypes(connectSource.kind, node.kind)
                 : [];
@@ -456,6 +540,15 @@ export function HexMachina() {
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
                   onPointerDown={(event) => {
                     if (connectSource) return;
+                    const nodeBounds = event.currentTarget.getBoundingClientRect();
+                    if (nodeBounds) {
+                      const nodeCenterX = nodeBounds.left + nodeBounds.width / 2;
+                      const nodeCenterY = nodeBounds.top + nodeBounds.height / 2;
+                      dragOffsetRef.current = {
+                        x: event.clientX - nodeCenterX,
+                        y: event.clientY - nodeCenterY,
+                      };
+                    }
                     draggingRef.current = node.id;
                     setDragging(node.id);
                     setSelected(node.id);
@@ -480,7 +573,7 @@ export function HexMachina() {
                 >
                   <span className="rune-glyph" aria-hidden="true">{node.glyph}</span>
                   <span className="rune-copy"><strong>{node.label}</strong><small>{kindLabel[node.kind]}</small></span>
-                  {sacred && <span className="sacred-pin" title="Sacred constraint">◆</span>}
+                  {sacred && <span className="sacred-pin" title="Sacred constraint">Lock</span>}
                   {connectSource && (
                     <span className={`typed-port ${validPortTypes.length ? "valid" : ""}`} aria-hidden="true">
                       {node.id === connectSource.id ? "From" : validPortTypes[0]?.replace("_", " ") ?? "×"}
@@ -490,10 +583,10 @@ export function HexMachina() {
               );
             })}
 
-            <p className="canvas-hint"><span aria-hidden="true">✥</span> Drag runes to rearrange · Arrow keys nudge</p>
+            <p className="canvas-hint">Drag runes to rearrange · Arrow keys nudge</p>
 
             <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
-              {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "☂ ☂ ☂" : "◇ ◇ ◇ ◇"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}
+              {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}
             </div>
           </div>
 
@@ -531,7 +624,7 @@ export function HexMachina() {
         </section>
 
         <aside className="familiar-panel panel">
-          <div className="familiar-title"><span className="familiar-orb">✦</span><div><p className="section-kicker">Agent familiar</p><h2>Moth</h2></div></div>
+          <div className="familiar-title"><span className="familiar-orb">M</span><div><p className="section-kicker">Field note</p><h2>Moth</h2></div></div>
 
           {patch ? (
             <article className="patch-card">
@@ -561,7 +654,11 @@ export function HexMachina() {
                   ))}
                 </ol>
               </details>
-              <div className="preserves">◆ Ducks remain sacred</div>
+              <div className="patch-actions">
+                {!previewCast && <button type="button" className="patch-simulate" onClick={previewRepair}>Simulate patch safely</button>}
+                <button type="button" className="patch-apply" onClick={applyRepair}>Apply patch & recast</button>
+              </div>
+              <div className="preserves">Locked: ducks remain sacred</div>
             </article>
           ) : (
             <div className="familiar-message">
@@ -590,6 +687,23 @@ export function HexMachina() {
               <p>Two message-passing rounds suggest where to inspect. The deterministic trace still decides what happened.</p>
             </section>
           )}
+
+          <section className="agent-gym" aria-label="Agent Gym evaluation">
+            <div className="agent-gym-heading">
+              <div><p className="section-kicker">Agent Gym · evaluation mode</p><h3>Scored semantic episode</h3></div>
+              <span className={gymSnapshot.status}>{gymSnapshot.status}</span>
+            </div>
+            <p>Every site-tool call is a scored transition over the live graph. The interface and visiting agents use the same handlers.</p>
+            <div className="gym-score" aria-live="polite">
+              <strong>{gymSnapshot.score}<small> / {gymSnapshot.maxScore}</small></strong>
+              <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
+            </div>
+            <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
+            <div className="gym-foot">
+              <small>Single-scenario research prototype</small>
+              <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
+            </div>
+          </section>
 
           <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting"}</small></div>
           <div className="activity-list" aria-live="polite">

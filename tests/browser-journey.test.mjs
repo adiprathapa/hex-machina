@@ -158,6 +158,9 @@ test("production browser completes the constraint-preserving spell journey", { t
     });
 
     await page.goto(server.url, { waitUntil: "networkidle" });
+    await assertVisible(page.getByRole("region", { name: "Agent Gym evaluation" }), "the scored agent environment is visible");
+    assert.match(await page.locator(".agent-gym").innerText(), /0\s*\/\s*23[\s\S]*0 steps/i);
+    assert.equal(await page.getByRole("button", { name: "Export episode JSON" }).isDisabled(), true);
     const computedFonts = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontFamily,
       semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
@@ -200,6 +203,8 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await page.locator(".cast-vision").innerText(), /twelve umbrella-equipped ducks/i);
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v3/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
+    await assertVisible(page.locator(".agent-gym-heading .complete"), "apply and recast completes the visible evaluation episode");
+    assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*22\s*\/\s*23/i);
 
     await page.getByRole("button", { name: "Undo agent patch", exact: true }).click();
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "undo restores the failed spell");
@@ -341,6 +346,11 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(recentAgentActivity, /apply_spell_patch/);
     assert.match(recentAgentActivity, /simulate_cast/);
     assert.match(recentAgentActivity, /propose_spell_patch/);
+    const finalVerification = await invokeTool("simulate_cast");
+    assert.equal(finalVerification.success, true);
+    await assertVisible(page.locator(".agent-gym-heading .complete"), "the registered agent completes a scored episode");
+    assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*22\.5\s*\/\s*23/i);
+    assert.equal(await page.getByRole("button", { name: "Export episode JSON" }).isEnabled(), true);
 
     const agentRevert = await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });
     assert.equal(agentRevert.revertedPatch.patchId, agentProposal.patches[0].id);

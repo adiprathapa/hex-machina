@@ -6,6 +6,7 @@
 Human intent ─┐
               ├─> shared tool handlers ─> graph validation ─> deterministic simulator
 WebMCP agent ─┘             │                                      │
+                            └─> Agent Gym reward + trajectory
                             └─> visible activity             verification evidence
 ```
 
@@ -20,6 +21,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
 - `src/solver/trace.ts`: deterministic bounded directed traversal, ordered path evidence, cycle detection, and structural type diagnostics.
 - `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter, including a typed result-presentation channel and stale-safe one-use patch rollback; TypeScript types are never treated as an agent-input security boundary.
+- `src/eval/agent-gym.ts`: headless reset/step environment plus a shared-handler instrumenter that scores tool transitions and records exportable, deterministic episode trajectories.
 - `tests/browser-journey.test.mjs`: boots the built production server in system Chrome and proves the full failure, diagnosis, sacred-constraint, minimal-repair, stable-recast, reset, mobile, and keyboard journey without console errors.
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements—but does not replace—the pending live deployment discovery test.
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
@@ -28,6 +30,14 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `worker/index.ts`: Cloudflare-compatible request boundary adding same-origin content, capability, referrer, framing, and MIME security policies to built responses.
 
 The application has no database, object-storage binding, account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin.
+
+## Agent Gym protocol
+
+The evaluation protocol does not reimplement game logic. It wraps the same seven `createSpellToolHandlers` functions used by local controls and WebMCP registration. Each step records the action and input, graph version before and after, whether state mutated, structured result or error, and an explained reward delta. The headless environment owns a canonical graph and exposes `reset()`, `step()`, and `snapshot()`; the browser uses the same session recorder to make progress visible and export JSON locally.
+
+The reference trajectory has nine milestones and a maximum score of 23: inspect, observe failure, trace, explain, preserve intent, propose, preview safely, apply, and verify. Invalid or stale actions score −2, while mutation before explanation scores an additional −5. Repeated milestones receive a small efficiency penalty. Completion requires a successful cast after an applied repair. Because the scenario and handlers are deterministic, identical policies serialize to identical trajectories.
+
+This makes Hex Machina useful as an evaluation harness and trajectory generator today. It is not yet a general RL training service: scenario generation, held-out task families, rollout infrastructure, and learned-policy experiments remain subsequent research work.
 
 ## Mutation protocol
 

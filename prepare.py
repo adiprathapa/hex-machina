@@ -414,6 +414,18 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
     )
+    deterministic_agent_gym = all(
+        marker in combined
+        for marker in (
+            "hex-machina-agent-gym/v1",
+            "single-scenario-prototype",
+            "AGENT_GYM_MAX_SCORE",
+            "instrumentSpellToolHandlers",
+            "createAgentGymEnvironment",
+            "trajectory",
+            "rewardDelta",
+        )
+    )
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -518,6 +530,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "sacred reachability invariant",
             sacred_reachability,
             "atomic patches fail closed when sacred reachability is lost" if sacred_reachability else "sacred reachability guard missing",
+        ),
+        Check(
+            "deterministic Agent Gym episode",
+            deterministic_agent_gym,
+            "shared handlers expose reset/step, scored rewards, and exportable trajectories" if deterministic_agent_gym else "Agent Gym environment or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

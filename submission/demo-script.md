@@ -8,7 +8,7 @@
 
 **Visual:** Open on the complete spell canvas.
 
-**Voiceover:** “Hex Machina is a cooperative spell debugger. The spell is an executable graph shared by a person and their agent.”
+**Voiceover:** “Hex Machina is an agent evaluation environment disguised as a cooperative spell debugger. The executable graph is shared by a person and their agent.”
 
 ## 0:08–0:18 — Cast the failure
 
@@ -58,11 +58,11 @@
 
 ## 1:08–1:15 — Close
 
-**Visual:** Hold on **The moonflower blooms**, the sacred duck pin, and the visible tool history.
+**Visual:** Hold on **The moonflower blooms**, the sacred duck pin, and the completed Agent Gym scorecard.
 
 **Reference capture:** `screenshots/03-successful-recast.jpg`
 
-**Voiceover:** “Hex Machina: graph interfaces let humans and agents negotiate executable intent. Magic is just code with worse documentation.”
+**Voiceover:** “Each semantic action earns an explained reward and an exportable trajectory. Hex Machina turns a magical game into a deterministic gym for safer agents.”
 
 ## Judge prompt
 

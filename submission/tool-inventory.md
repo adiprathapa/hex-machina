@@ -10,6 +10,8 @@
 | `propose_spell_patch` | Read | Search valid repairs under current constraints. | Rank, edit count, candidate and eligibility counts, satisfied constraints, raw operations, the canonical labeled operation ledger and summary, tradeoffs, predicted outcome, and explicit version/live-edge/dormant-rune/sacred-lock preconditions. |
 | `apply_spell_patch` | Reversible write | Revalidate every precondition and apply a current patch ID atomically, or consume its one-use revert token while the graph is unchanged. | Validated preconditions, matching applied/reverted operation-ledger receipts, before/after graph summaries, verification cast, and stale-safe rollback evidence. |
 
+All seven handlers are instrumented once by the Agent Gym layer before they are given to either the interface or WebMCP registration. Each invocation therefore records the same action input, before/after graph versions, mutation flag, result or error, and explained reward delta. The instrumenter observes behavior but never replaces validation, simulation, or mutation logic.
+
 ## Safety properties
 
 - All schemas set `additionalProperties: false`.

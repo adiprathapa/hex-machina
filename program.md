@@ -8,6 +8,8 @@ The product thesis is:
 
 > Graph interfaces let humans and agents negotiate executable intent.
 
+The game is also a legible agent-evaluation environment. Its typed graph is the observation, the seven semantic tools are the action space, application-owned handlers define deterministic transitions, and the human-constraint-preserving journey supplies a reproducible reward signal. The canonical lesson remains the judge-facing demonstration; an Agent Gym protocol exposes reset, step, score, and an exportable trajectory for evaluating tool-using policies. This is honestly scoped as a single-scenario research prototype, not a claim that the application already trains or improves general models.
+
 The player creates spells from typed rune nodes and directed edges. Casting executes the graph. Incorrect or unstable graphs create funny, visible side effects. The browser agent uses semantic WebMCP tools to inspect the same live spell, explain causal paths, preserve the player's subjective constraints, propose minimal repairs, and apply approved patches.
 
 The canonical demo begins with a request to water a moonflower. A faulty multiply-before-target spell summons levitating ducks and floods the room. The player insists that the ducks remain. The agent must repair the spell without deleting the duck branch; the successful cast gives the ducks umbrellas and redirects their rain onto the flower.
@@ -46,6 +48,7 @@ Hex Machina is done only when all of the following are true:
 12. Unit, integration, production-build, and browser smoke tests pass through `python3 prepare.py`.
 13. The deployed experience has been tested in a WebMCP-capable in-app browser.
 14. A submission package exists with a concise description, architecture summary, tool list, repository instructions, screenshots, and a 60–90 second demo script.
+15. The same production handlers power a deterministic Agent Gym episode with reset/step semantics, visible scoring, negative rewards for invalid or premature actions, and exportable JSON trajectories.
 
 ## Product boundaries
 

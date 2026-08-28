@@ -1,4 +1,4 @@
-Hex Machina is a cooperative spell debugger. Its executable graph is shared by a person and their browser agent.
+Hex Machina is an agent evaluation environment disguised as a cooperative spell debugger. Its executable graph is shared by a person and their browser agent.
 
 This spell should water a rare Moonflower. Instead, Multiply runs before rain has a bounded target. Twelve lunar ducks flood the observatory.
 
@@ -10,4 +10,4 @@ The agent ranks bounded rewrites under that constraint. The eight-edit umbrella 
 
 After approval, the application proves sacred reachability and applies the patch atomically. Umbrella and Bloom activate. A new cast returns Stable, with the room dry and all twelve sacred ducks preserved.
 
-Hex Machina shows why graph interfaces matter: humans and agents negotiate executable intent instead of guessing from pixels. Magic is just code with worse documentation.
+Each semantic action earns an explained reward and an exportable trajectory. Hex Machina turns a magical game into a deterministic gym for safer agents.

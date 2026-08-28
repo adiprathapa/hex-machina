@@ -2,11 +2,17 @@
 
 **Magic is just code with worse documentation.**
 
-> A graph-native WebMCP game where a human and a browser agent negotiate executable intent.
+> An agent-training environment disguised as a graph-native spell game.
 
-Hex Machina is a graph-native WebMCP game about debugging executable spells with an agent. The human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same graph both participants can see.
+Hex Machina is a deterministic WebMCP environment for evaluating whether an agent can inspect state, explain causality, preserve human intent, and make a safe repair. The playable spell game makes that evaluation understandable at a glance: the human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same typed graph both participants can see.
 
 The canonical lesson asks the player to water a Moonflower. The initial spell floods the observatory with twelve lunar ducks. The player protects the ducks as a sacred constraint, forcing a stranger but valid repair: give them umbrellas and redirect their rain onto the flower.
+
+## Agent Gym protocol
+
+The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Each transition records before/after graph versions, mutation evidence, structured results or errors, reward deltas, and reward reasons. A reference policy earns 23/23 by grounding itself, observing the failure, proving its cause, encoding the human constraint, safely previewing and applying the repair, and recasting successfully. Invalid calls lose points; changing state before explanation loses more.
+
+The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Today this is deliberately a **single-scenario research prototype**. The credible route to reinforcement learning is to add generated scenario families, train/validation splits, and policy rollouts—not to pretend one handcrafted puzzle is already a training corpus.
 
 ## Run locally
 
@@ -66,6 +72,7 @@ The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages th
 - `src/solver/` — causal diagnosis and constraint-aware repair search
 - `src/tools/` — shared semantic handlers and guarded WebMCP registration
 - `src/familiar/` — optional deterministic message-passing suspect ranking
+- `src/eval/` — deterministic Agent Gym reset/step protocol, rewards, and trajectory capture
 - `app/` — the visual spell canvas and local fallback console
 - `tests/` — graph, simulation, repair, and WebMCP contract coverage
 - `submission/screenshots/` — verified 1280×720 judge-journey evidence

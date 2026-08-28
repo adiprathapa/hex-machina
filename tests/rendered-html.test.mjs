@@ -36,8 +36,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /Water the moonflower/);
   assert.match(client, /The ducks are funny\. They stay\./);
   assert.match(client, /Drag runes to rearrange/);
+  assert.match(client, /dragOffsetRef/);
+  assert.match(client, /Graph edge legend/);
+  assert.match(client, /marker id="arrow-default"/);
   assert.match(client, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.match(client, /Same handlers · structured JSON/);
+  assert.match(client, /Agent Gym · evaluation mode/);
+  assert.match(client, /instrumentSpellToolHandlers/);
+  assert.match(client, /Export episode JSON/);
+  assert.match(client, /single-scenario research prototype/i);
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);
@@ -51,6 +58,9 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /connectRunes/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.doesNotMatch(layout, /—/);
+  assert.match(layout, /Poppins/);
+  assert.match(layout, /Fira_Code/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /button:focus-visible/);
   const cssColor = (name) => css.match(new RegExp(`--${name}:\\s*(#[a-f\\d]{6})`, "i"))?.[1];

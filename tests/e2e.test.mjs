@@ -34,6 +34,9 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /Cast spell/);
   assert.match(html, /Executable spell graph/);
   assert.match(html, /Local spell console/);
+  assert.match(html, /Agent Gym · evaluation mode/);
+  assert.match(html, /Scored semantic episode/);
+  assert.match(html, /Single-scenario research prototype/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/);
 });
 
@@ -46,6 +49,7 @@ test("production shell exposes accessible controls and state regions", async () 
   assert.match(html, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.match(html, /Local tool console/);
   assert.match(html, /aria-label="Semantic tool console"/);
+  assert.match(html, /aria-label="Agent Gym evaluation"/);
   assert.match(html, /Link from rune/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /rel="stylesheet"/);

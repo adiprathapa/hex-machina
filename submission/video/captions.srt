@@ -1,7 +1,7 @@
 1
 00:00:00,000 --> 00:00:08,000
-Hex Machina is a cooperative spell debugger.
-The spell is an executable graph shared by a person and their agent.
+Hex Machina is an agent evaluation environment disguised as a spell game.
+The executable graph is shared by a person and their agent.
 
 2
 00:00:08,000 --> 00:00:18,000
@@ -30,5 +30,5 @@ The recast is Stable: the room is dry and all twelve ducks remain.
 
 7
 00:01:08,000 --> 00:01:15,000
-Humans and agents negotiate executable intent—not pixels.
-Magic is just code with worse documentation.
+Each semantic action earns an explained reward and exportable trajectory.
+It is a deterministic gym for safer agents.

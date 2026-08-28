@@ -1,12 +1,12 @@
 # Hex Machina screenshot set
 
-These 1280×720 captures were recorded from the canonical local judge journey on 2026-08-27. The capture script verifies zero console errors and zero cross-origin requests while producing them. Regenerate the complete set with `npm run capture:submission`.
+These 1280×720 captures were recorded from the canonical local judge journey on 2026-08-28. The capture script verifies zero console errors and zero cross-origin requests while producing them. Regenerate the complete set with `npm run capture:submission`.
 
 ## 01 — Failure diagnosis
 
 ![Failure diagnosis with highlighted causal path and Familiar ranking](01-failure-diagnosis.jpg)
 
-The initial cast floods the observatory. The causal path is highlighted, `trace_effect` and `explain_side_effect` are visible in tool activity, and the advisory Familiar ranks `Multiply` first without replacing the deterministic explanation.
+The initial cast floods the observatory. The causal path is highlighted, the advisory Familiar ranks `Multiply` first without replacing the deterministic explanation, and the Agent Gym card records the first scored transitions.
 
 ## 02 — Constraint-aware patch
 
@@ -18,4 +18,4 @@ The initial cast floods the observatory. The causal path is highlighted, `trace_
 
 ![Stable repaired graph with umbrella ducks and blooming moonflower](03-successful-recast.jpg)
 
-The applied v3 graph activates `Umbrella` and `Bloom`, targets the Moonflower, preserves all twelve ducks and their sacred constraint, displays the full semantic tool history, and ends in **Stable — The moonflower blooms**.
+The applied v3 graph activates `Umbrella` and `Bloom`, targets the Moonflower, preserves all twelve ducks and their sacred constraint, and ends in **Stable — The moonflower blooms** with a completed, exportable Agent Gym trajectory.
