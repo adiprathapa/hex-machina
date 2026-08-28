@@ -6,8 +6,8 @@ Moth suggests suspicious runes, while WebMCP tools inspect exact graph state and
 
 Then the person contributes something the graph cannot know: taste. The ducks are funny, so they become a sacred constraint. Deleting them is no longer valid.
 
-The agent searches under that constraint and proposes umbrellas, redirecting rain onto the flower. The versioned diff changes nothing until the person approves.
+The agent ranks bounded rewrites under that constraint. The eight-edit umbrella route is the only eligible candidate, and changes nothing until the person approves.
 
-After approval, the application validates and applies the patch atomically. Umbrella and Bloom activate; Pour targets Moonflower. A new cast returns Stable, with the room dry and the sacred ducks preserved.
+After approval, the application proves sacred reachability and applies the patch atomically. Umbrella and Bloom activate. A new cast returns Stable, with the room dry and all twelve sacred ducks preserved.
 
 Hex Machina shows why graph interfaces matter: humans and agents negotiate executable intent instead of guessing from pixels. Magic is just code with worse documentation.

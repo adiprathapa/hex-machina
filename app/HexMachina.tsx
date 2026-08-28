@@ -502,7 +502,7 @@ export function HexMachina() {
               <p className="section-kicker">Proposed patch</p>
               <h3>{patch.title}</h3>
               <p>{patch.rationale}</p>
-              <dl><div><dt>Changes</dt><dd>{patch.operations.length}</dd></div><div><dt>Preserves</dt><dd>{patch.preserves.length}</dd></div></dl>
+              <dl><div><dt>Rank</dt><dd>#{patch.searchEvidence.rank}</dd></div><div><dt>Edits</dt><dd>{patch.searchEvidence.editCount}</dd></div><div><dt>Eligible</dt><dd>{patch.searchEvidence.eligibleCandidateCount}/{patch.searchEvidence.candidateCount}</dd></div></dl>
               <div className="preserves">◆ Ducks remain sacred</div>
             </article>
           ) : (

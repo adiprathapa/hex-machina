@@ -186,6 +186,8 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "reversible_patch_undo",
         "registered_tools_drive_visible_ui",
         "same_origin_runtime_requests",
+        "ranked_repair_evidence",
+        "twelve_ducks_preserved",
     }
     completed = set(evidence.get("completed_steps", []))
     problems: list[str] = []
@@ -307,6 +309,14 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
     )
     typed_editor = all(marker in combined for marker in ("connectRunes", "getValidEdgeTypes", "Typed edge category"))
     advisory_familiar = all(marker in combined for marker in ("inferFamiliar", "authoritative: false", "rounds: 2"))
+    constrained_search = all(
+        marker in combined
+        for marker in ("searchEvidence", "eligibleCandidateCount", "constraintsSatisfied")
+    )
+    sacred_reachability = all(
+        marker in combined
+        for marker in ("Sacred constraint", "no longer reachable from a source")
+    )
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -372,6 +382,16 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             advisory_familiar,
             "two-round advisory model is explicitly non-authoritative" if advisory_familiar else "Familiar advisory boundary missing",
         ),
+        Check(
+            "constraint-ranked graph repair",
+            constrained_search,
+            "rank, edit cost, eligibility, and satisfied constraints detected" if constrained_search else "bounded repair ranking evidence missing",
+        ),
+        Check(
+            "sacred reachability invariant",
+            sacred_reachability,
+            "atomic patches fail closed when sacred reachability is lost" if sacred_reachability else "sacred reachability guard missing",
+        ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]
 
@@ -405,6 +425,7 @@ def main() -> int:
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",
+        "submission/screenshots/capture.mjs",
         "submission/screenshots/01-failure-diagnosis.jpg",
         "submission/screenshots/02-constraint-aware-patch.jpg",
         "submission/screenshots/03-successful-recast.jpg",

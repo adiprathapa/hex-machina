@@ -42,11 +42,11 @@
 
 **Action:** The agent calls `propose_spell_patch`.
 
-**Visual:** The patch card reads **Give the ducks umbrellas** and explicitly shows that the ducks remain preserved.
+**Visual:** The patch card reads **Give the ducks umbrellas** and reports rank #1, eight edits, and one eligible candidate out of two.
 
 **Reference capture:** `screenshots/02-constraint-aware-patch.jpg`
 
-**Voiceover:** “The agent searches under that constraint and proposes a versioned patch. It changes nothing until the person approves.”
+**Voiceover:** “The agent ranks bounded rewrites under that constraint. The eight-edit umbrella route is the only eligible candidate and changes nothing until the person approves.”
 
 ## 0:57–1:08 — Apply and verify
 
@@ -54,7 +54,7 @@
 
 **Visual:** Umbrella activates, Pour targets Moonflower, Bloom activates, and the canvas reports **Stable**.
 
-**Voiceover:** “The site applies the patch atomically, verifies the outcome, and returns before-and-after evidence.”
+**Voiceover:** “The site proves sacred reachability, applies the patch atomically, and verifies that all twelve ducks survive.”
 
 ## 1:08–1:15 — Close
 

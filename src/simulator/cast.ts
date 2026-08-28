@@ -25,6 +25,7 @@ export interface CastResult {
   sideEffects: SideEffect[];
   assertions: {
     ducksPresent: boolean;
+    duckCount: number;
     roomFlooded: boolean;
     flowerWatered: boolean;
     flowerBloomed: boolean;
@@ -39,12 +40,15 @@ export function simulateCast(graph: SpellGraph): CastResult {
   const multipliedDucks = hasEdge(graph, "moonwell", "multiply") &&
     hasEdge(graph, "multiply", "summon-ducks");
   const ducksPresent = multipliedDucks || hasEdge(graph, "moonwell", "summon-ducks");
+  const duckCount = multipliedDucks ? 12 : ducksPresent ? 1 : 0;
+  const ducksCarryWater = ducksPresent && hasEdge(graph, "summon-ducks", "pour");
+  const directRoute = hasEdge(graph, "moonwell", "pour");
   const umbrellaRoute =
     (hasEdge(graph, "summon-ducks", "umbrella") ||
       hasEdge(graph, "moonwell", "umbrella")) &&
     hasEdge(graph, "umbrella", "pour");
-  const roomFlooded = hasEdge(graph, "pour", "room") && !umbrellaRoute;
-  const flowerWatered = hasEdge(graph, "pour", "moonflower") && umbrellaRoute;
+  const roomFlooded = hasEdge(graph, "pour", "room") && (ducksCarryWater || directRoute) && !umbrellaRoute;
+  const flowerWatered = hasEdge(graph, "pour", "moonflower") && (umbrellaRoute || directRoute);
   const flowerBloomed = flowerWatered && hasEdge(graph, "moonflower", "bloom");
 
   const events: CastEvent[] = [
@@ -127,10 +131,14 @@ export function simulateCast(graph: SpellGraph): CastResult {
     seed: graph.seed,
     success: flowerBloomed && !roomFlooded,
     summary: flowerBloomed && !roomFlooded
-      ? "Stable cast: the ducks water the Moonflower and the room remains dry."
+      ? duckCount === 12
+        ? "Stable cast: twelve umbrella-equipped ducks water the Moonflower and the room remains dry."
+        : duckCount === 1
+          ? "Stable cast: an umbrella-equipped duck waters the Moonflower and the room remains dry."
+          : "Stable cast: Moonwell water reaches the Moonflower directly and the room remains dry."
       : "Unstable cast: the room floods before the Moonflower receives any water.",
     events,
     sideEffects,
-    assertions: { ducksPresent, roomFlooded, flowerWatered, flowerBloomed },
+    assertions: { ducksPresent, duckCount, roomFlooded, flowerWatered, flowerBloomed },
   };
 }

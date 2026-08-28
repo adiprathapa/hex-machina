@@ -136,10 +136,13 @@ test("tool handlers preserve human intent through a verified write", async () =>
   });
   const proposal = await handlers.propose_spell_patch();
   assert.equal(proposal.patches[0].preserves.includes("summon-ducks"), true);
+  assert.equal(proposal.patches[0].searchEvidence.editCount, 8);
+  assert.equal(proposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
   const result = await handlers.apply_spell_patch({ patchId: proposal.patches[0].id });
   assert.equal(result.action, "apply");
   assert.equal(result.verification.success, true);
   assert.equal(result.verification.assertions.ducksPresent, true);
+  assert.equal(result.verification.assertions.duckCount, 12);
   assert.match(result.revertToken, /^revert-patch-umbrella/);
   const reverted = await handlers.apply_spell_patch({ revertToken: result.revertToken });
   assert.equal(reverted.action, "revert");

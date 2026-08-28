@@ -42,11 +42,12 @@ The requirement-by-requirement evidence and exact release condition are tracked 
 1. Cast the faulty graph: twelve lunar ducks flood the observatory.
 2. Trace the responsible path from `Multiply` through `Pour` to `The room`.
 3. Mark the ducks sacred—the repair is now constrained by human taste.
-4. Preview and apply the smallest valid structural patch.
-5. Recast: umbrella-equipped ducks water the Moonflower while the room stays dry.
+4. Preview the ranked eight-edit repair; the cheaper direct route is ineligible because it violates the sacred constraint.
+5. Recast: all twelve umbrella-equipped ducks water the Moonflower while the room stays dry.
 
 Every visible action is also available through a narrow semantic tool. Tool results flow through one shared presentation channel, so calls from a browser agent visibly drive the same cast spectacle, causal highlights, constraint pins, patch preview, and verification state as local controls. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
 Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
+Patch proposals include a compact minimality certificate—rank, edit count, candidate count, eligibility count, and satisfied constraints—and atomic application separately proves that sacred graph elements remain reachable from an active source.
 
 ## Judge journey
 

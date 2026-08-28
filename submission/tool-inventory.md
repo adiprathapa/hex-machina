@@ -4,10 +4,10 @@
 |---|---|---|---|
 | `inspect_spell` | Read | Inspect current graph, version, outcome, and constraints, optionally filtered to known node IDs. | Stable IDs and bounded node list. |
 | `trace_effect` | Read | Trace the causal path behind the known active failure. | Responsible node and edge IDs. |
-| `simulate_cast` | Read | Simulate without changing editor state. | Seed, ordered events, assertions, side effects, and success. |
+| `simulate_cast` | Read | Simulate without changing editor state. | Seed, ordered events, duck count, assertions, side effects, and success. |
 | `explain_side_effect` | Read | Explain the flood from its smallest responsible subgraph. | Structured explanation plus exact nodes and edges. |
 | `set_sacred_constraint` | Reversible write | Preserve or release the duck branch with a human-authored reason. | Before/after constraints and new graph version. |
-| `propose_spell_patch` | Read | Search valid repairs under current constraints. | Ranked patch operations, preserved intent, tradeoffs, and predicted outcome. |
+| `propose_spell_patch` | Read | Search valid repairs under current constraints. | Rank, edit count, candidate and eligibility counts, satisfied constraints, operations, tradeoffs, and predicted outcome. |
 | `apply_spell_patch` | Reversible write | Apply a current versioned patch ID atomically, or consume its one-use revert token while the graph is unchanged. | Before/after graph summaries, verification cast, and stale-safe rollback evidence. |
 
 ## Safety properties
@@ -19,6 +19,7 @@
 - Every tool declares the current standard annotations explicitly: reads use `readOnlyHint: true`, writes use `readOnlyHint: false`, and deterministic application-owned outputs use `untrustedContentHint: false`.
 - Registered callbacks reject already-cancelled executions before invoking shared application logic.
 - Agent-supplied graph operations are never accepted.
+- Atomic patch application independently proves that every sacred node or edge remains reachable from an active source, even if a future solver candidate is wrong.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
 - Patch applications return one-use revert tokens; rollback fails closed after any intervening graph mutation and never discards the human's sacred constraint.
 - Registrations are abort-scoped so unmounts, navigation, and React Strict Mode remounts cannot leave duplicate tool names behind.

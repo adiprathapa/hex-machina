@@ -16,7 +16,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, and atomic patch application.
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
-- `src/solver/repair.ts`: failure explanation, bounded candidate generation, sacred-constraint handling, and patch preview.
+- `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
 - `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter, including a typed result-presentation channel and stale-safe one-use patch rollback; TypeScript types are never treated as an agent-input security boundary.
 - `tests/browser-journey.test.mjs`: boots the built production server in system Chrome and proves the full failure, diagnosis, sacred-constraint, minimal-repair, stable-recast, reset, mobile, and keyboard journey without console errors.
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements—but does not replace—the pending live deployment discovery test.
@@ -34,8 +34,10 @@ The application has no database, object-storage binding, account surface, analyt
 3. `apply_spell_patch` accepts a patch ID, not an arbitrary patch object.
 4. The application recomputes that patch against current state.
 5. A stale or unavailable ID fails without mutation.
-6. The selected patch applies to a clone and must pass graph validation.
+6. The selected patch applies to a clone and must pass structural validation plus an independent reachability proof for every sacred node or edge.
 7. The application commits the new graph atomically and immediately runs a verification simulation.
+
+The canonical search evaluates two semantically distinct graph rewrites. Without a sacred constraint, a six-edit direct route ranks first. Protecting the ducks removes that candidate from eligibility, so an eight-edit Umbrella route ranks first and preserves the complete twelve-duck branch. The structured proposal reports rank, edit count, total candidates, eligible candidates, and satisfied constraints.
 
 Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
 

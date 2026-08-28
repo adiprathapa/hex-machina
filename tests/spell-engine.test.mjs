@@ -39,26 +39,61 @@ test("sacred ducks produce a distinct successful umbrella repair", () => {
   const [patch] = proposePatches(graph);
   assert.equal(patch.id.startsWith("patch-umbrella"), true);
   assert.equal(patch.preserves.includes("summon-ducks"), true);
+  assert.equal(patch.searchEvidence.rank, 1);
+  assert.equal(patch.searchEvidence.editCount, 8);
+  assert.equal(patch.searchEvidence.candidateCount, 2);
+  assert.equal(patch.searchEvidence.eligibleCandidateCount, 1);
+  assert.deepEqual(patch.searchEvidence.constraintsSatisfied, ["sacred-summon-ducks"]);
 
   const repaired = applyPatch(graph, patch);
   const result = simulateCast(repaired);
   assert.equal(result.success, true);
   assert.equal(result.assertions.ducksPresent, true);
+  assert.equal(result.assertions.duckCount, 12);
   assert.equal(result.assertions.roomFlooded, false);
   assert.equal(result.assertions.flowerBloomed, true);
+  assert.match(result.summary, /twelve umbrella-equipped ducks/);
 });
 
 test("without a sacred constraint the minimal repair removes the ducks", () => {
   const graph = createMoonflowerScenario();
-  const [patch] = proposePatches(graph);
+  const patches = proposePatches(graph);
+  const [patch] = patches;
+  assert.equal(patches.length, 2);
   assert.equal(patch.id.startsWith("patch-direct"), true);
+  assert.equal(patch.searchEvidence.rank, 1);
+  assert.equal(patch.searchEvidence.editCount, 6);
+  assert.equal(patches[1].searchEvidence.rank, 2);
+  assert.equal(patches[1].searchEvidence.editCount, 8);
   assert.equal(patch.tradeoffs.includes("The ducks disappear from the spell"), true);
 
   const repaired = applyPatch(graph, patch);
   const result = simulateCast(repaired);
   assert.equal(result.success, true);
   assert.equal(result.assertions.ducksPresent, false);
+  assert.equal(result.assertions.duckCount, 0);
   assert.equal(result.assertions.roomFlooded, false);
+  assert.match(result.summary, /reaches the Moonflower directly/);
+});
+
+test("atomic patch application rejects a solver bug that severs a sacred rune", () => {
+  const graph = createMoonflowerScenario();
+  graph.constraints.push({
+    id: "sacred-summon-ducks",
+    targetId: "summon-ducks",
+    targetType: "node",
+    requirement: "preserve",
+    reason: "The ducks are funny.",
+  });
+  graph.version += 1;
+
+  const unsafe = proposePatches(createMoonflowerScenario())[0];
+  unsafe.expectedVersion = graph.version;
+  assert.throws(
+    () => applyPatch(graph, unsafe),
+    /Sacred constraint sacred-summon-ducks would be violated/,
+  );
+  assert.equal(graph.version, 2);
 });
 
 test("patches reject stale graph versions", () => {

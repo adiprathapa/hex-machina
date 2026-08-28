@@ -170,9 +170,11 @@ test("production browser completes the constraint-preserving spell journey", { t
 
     await page.getByRole("button", { name: "Find a repair", exact: true }).click();
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "constraint-aware patch is previewed");
+    assert.match(await page.locator(".patch-card").innerText(), /RANK\s+#1[\s\S]*EDITS\s+8[\s\S]*ELIGIBLE\s+1\/2/i);
     await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
     await assertVisible(page.getByText("Stable", { exact: true }), "successful cast is stable");
     await assertVisible(page.getByText("The moonflower blooms", { exact: true }), "successful outcome is visible");
+    assert.match(await page.locator(".cast-vision").innerText(), /twelve umbrella-equipped ducks/i);
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v3/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
 
@@ -245,9 +247,12 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.locator(".rune.sacred"), "agent constraint visibly pins the duck rune");
     const agentProposal = await invokeTool("propose_spell_patch");
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "agent proposal drives the patch preview");
+    assert.equal(agentProposal.patches[0].searchEvidence.editCount, 8);
+    assert.equal(agentProposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
     const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
     await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
     assert.equal(agentApply.verification.success, true);
+    assert.equal(agentApply.verification.assertions.duckCount, 12);
     assert.match(await page.locator(".activity-list").innerText(), /inspect_spell[\s\S]*simulate_cast|simulate_cast[\s\S]*inspect_spell/);
 
     await invokeTool("apply_spell_patch", { revertToken: agentApply.revertToken });

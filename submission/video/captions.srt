@@ -20,13 +20,13 @@ They become sacred, so deleting them is no longer valid.
 
 5
 00:00:42,000 --> 00:00:57,000
-The agent proposes umbrellas and redirects the rain.
-The versioned diff changes nothing until the person approves.
+The agent ranks bounded rewrites. The eight-edit umbrella route
+is the only eligible candidate and waits for approval.
 
 6
 00:00:57,000 --> 00:01:08,000
-The application validates and applies the patch atomically.
-The recast is Stable: the room is dry and the ducks remain.
+The application proves sacred reachability and applies atomically.
+The recast is Stable: the room is dry and all twelve ducks remain.
 
 7
 00:01:08,000 --> 00:01:15,000

@@ -66,6 +66,13 @@ export interface SpellPatch {
   operations: PatchOperation[];
   preserves: string[];
   tradeoffs: string[];
+  searchEvidence: {
+    rank: number;
+    editCount: number;
+    candidateCount: number;
+    eligibleCandidateCount: number;
+    constraintsSatisfied: string[];
+  };
 }
 
 const validConnections: Record<SpellEdgeType, Array<[RuneKind, RuneKind]>> = {
@@ -230,5 +237,39 @@ export function applyPatch(graph: SpellGraph, patch: SpellPatch): SpellGraph {
   next.version += 1;
   const problems = validateSpellGraph(next);
   if (problems.length) throw new Error(`Invalid patch: ${problems.join("; ")}`);
+
+  const reachable = new Set(
+    next.nodes
+      .filter((node) => node.kind === "source" && !node.dormant)
+      .map((node) => node.id),
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const edge of next.edges) {
+      const destination = next.nodes.find((node) => node.id === edge.to);
+      if (reachable.has(edge.from) && destination && !destination.dormant && !reachable.has(edge.to)) {
+        reachable.add(edge.to);
+        changed = true;
+      }
+    }
+  }
+
+  for (const constraint of graph.constraints) {
+    if (constraint.requirement !== "preserve") continue;
+    if (constraint.targetType === "node" && !reachable.has(constraint.targetId)) {
+      throw new Error(
+        `Sacred constraint ${constraint.id} would be violated: ${constraint.targetId} is no longer reachable from a source`,
+      );
+    }
+    if (constraint.targetType === "edge") {
+      const sacredEdge = next.edges.find((edge) => edge.id === constraint.targetId);
+      if (!sacredEdge || !reachable.has(sacredEdge.from) || !reachable.has(sacredEdge.to)) {
+        throw new Error(
+          `Sacred constraint ${constraint.id} would be violated: ${constraint.targetId} is no longer on a reachable path`,
+        );
+      }
+    }
+  }
   return next;
 }
