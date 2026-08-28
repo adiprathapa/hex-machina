@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/familiar-gnn.test.mjs tests/rendered-html.test.mjs tests/spell-engine.test.mjs tests/webmcp-tools.test.mjs",
     "test:e2e": "node --test tests/e2e.test.mjs tests/browser-journey.test.mjs",
+    "test:deployment": "node --test tests/deployment-readiness.test.mjs",
     "capture:submission": "npm run build && node submission/screenshots/capture.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },

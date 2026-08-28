@@ -422,6 +422,7 @@ def main() -> int:
         "submission/acceptance-matrix.md",
         "submission/webmcp-conformance.md",
         "submission/security.md",
+        "submission/deployment.md",
         "submission/tool-inventory.md",
         "submission/limitations.md",
         "submission/screenshots/README.md",
@@ -467,6 +468,7 @@ def main() -> int:
         checks.append(script_check(package, runner, ["typecheck", "check"], required=True))
         checks.append(script_check(package, runner, ["test", "test:unit"], required=True))
         checks.append(script_check(package, runner, ["build"], required=True, timeout=360))
+        checks.append(script_check(package, runner, ["test:deployment"], required=True))
         checks.append(script_check(package, runner, ["lint"], required=False))
         if not args.quick:
             checks.append(

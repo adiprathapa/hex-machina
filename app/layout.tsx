@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       title,
       description,
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina spell graph with three umbrella ducks and a blooming moonflower" }],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina spell graph with umbrella-equipped ducks and a blooming moonflower" }],
     },
     twitter: {
       card: "summary_large_image",

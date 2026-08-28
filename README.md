@@ -36,6 +36,7 @@ python3 prepare.py
 
 The full command also checks production E2E behavior and recorded browser evidence. Live `document.modelContext` discovery requires a compatible WebMCP browser, so an ordinary browser can pass every local gate while that final deployment gate remains pending.
 The requirement-by-requirement evidence and exact release condition are tracked in [`submission/acceptance-matrix.md`](submission/acceptance-matrix.md).
+The exact Sites bundle and authorization-aware release handoff are recorded in [`submission/deployment.md`](submission/deployment.md); `npm run test:deployment` validates the built Worker, assets, hosting metadata, social metadata, and secret-free archive surface without publishing it.
 
 ## The 60-second story
 
