@@ -7,6 +7,7 @@ import {
 } from "../domain/spell.ts";
 import { simulateCast, type CastResult } from "../simulator/cast.ts";
 import { explainFlood, previewPatch, proposePatches } from "../solver/repair.ts";
+import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS, traceSpellGraph } from "../solver/trace.ts";
 
 export const MAX_INSPECT_NODES = 12;
 
@@ -31,6 +32,13 @@ function requireToolInput(
 function requireString(value: unknown, label: string) {
   if (typeof value !== "string") throw new Error(`${label} must be a string`);
   return value;
+}
+
+function requireBoundedInteger(value: unknown, label: string, minimum: number, maximum: number) {
+  if (!Number.isInteger(value) || (value as number) < minimum || (value as number) > maximum) {
+    throw new Error(`${label} must be an integer from ${minimum} to ${maximum}`);
+  }
+  return value as number;
 }
 
 export interface SpellToolContext {
@@ -97,16 +105,41 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       return { ...graph, nodes: selected };
     },
     trace_effect: async (input: unknown = {}) => {
-      const parsed = requireToolInput(input, "trace_effect", ["effectId"]);
+      const parsed = requireToolInput(input, "trace_effect", ["effectId", "sourceId", "maxDepth", "maxPaths"]);
+      if (parsed.effectId !== undefined && parsed.sourceId !== undefined) {
+        throw new Error("trace_effect accepts either effectId or sourceId, not both");
+      }
       const effectId = parsed.effectId === undefined
         ? "flooded-observatory"
         : requireString(parsed.effectId, "effectId");
-      if (effectId !== "flooded-observatory") {
+      const sourceId = parsed.sourceId === undefined ? undefined : requireString(parsed.sourceId, "sourceId");
+      if (parsed.effectId !== undefined && effectId !== "flooded-observatory") {
         throw new Error(`Unknown effect: ${effectId}`);
       }
-      const explanation = explainFlood(context.getGraph());
-      context.recordActivity("trace_effect", `Traced ${effectId}.`, explanation.nodeIds);
-      return explanation;
+      const graph = context.getGraph();
+      if (sourceId) {
+        requireNode(graph, sourceId);
+        const source = graph.nodes.find((node) => node.id === sourceId)!;
+        if (source.kind !== "source") throw new Error(`Rune ${sourceId} is not a source`);
+      }
+      const maxDepth = parsed.maxDepth === undefined
+        ? 8
+        : requireBoundedInteger(parsed.maxDepth, "maxDepth", 1, MAX_TRACE_DEPTH);
+      const maxPaths = parsed.maxPaths === undefined
+        ? 3
+        : requireBoundedInteger(parsed.maxPaths, "maxPaths", 1, MAX_TRACE_PATHS);
+      const trace = traceSpellGraph(graph, {
+        effectId: sourceId ? undefined : effectId,
+        sourceId,
+        maxDepth,
+        maxPaths,
+      });
+      context.recordActivity(
+        "trace_effect",
+        `Traced ${trace.paths.length} ordered path${trace.paths.length === 1 ? "" : "s"}; ${trace.cycles.length} cycles and ${trace.typeViolations.length} type violations.`,
+        trace.responsibleNodeIds,
+      );
+      return trace;
     },
     simulate_cast: async (input: unknown = {}) => {
       const parsed = requireToolInput(input, "simulate_cast", ["patchId"]);

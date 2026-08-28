@@ -1,4 +1,5 @@
 import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
+import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS } from "../solver/trace.ts";
 import { MAX_INSPECT_NODES, type SpellToolHandlers } from "./handlers.ts";
 
 interface WebMCPExecutionOptions {
@@ -86,7 +87,7 @@ export async function registerWebMCPTools(
     {
       name: "trace_effect",
       title: "Trace spell effect",
-      description: "Trace the bounded causal path responsible for a spell effect or current failure.",
+      description: "Trace bounded, ordered causal paths from a source or into a known spell effect, including cycles and type violations.",
       inputSchema: {
         type: "object",
         properties: {
@@ -95,7 +96,29 @@ export async function registerWebMCPTools(
             description: "The known effect to trace; defaults to the current observatory flood.",
             enum: ["flooded-observatory"],
           },
+          sourceId: {
+            type: "string",
+            description: "Optional active source rune to trace forward; mutually exclusive with effectId.",
+            enum: ["moonwell"],
+          },
+          maxDepth: {
+            type: "integer",
+            description: "Maximum number of directed edges per returned path; defaults to 8.",
+            minimum: 1,
+            maximum: MAX_TRACE_DEPTH,
+          },
+          maxPaths: {
+            type: "integer",
+            description: "Maximum number of ordered paths to return; defaults to 3.",
+            minimum: 1,
+            maximum: MAX_TRACE_PATHS,
+          },
         },
+        oneOf: [
+          { required: ["effectId"], not: { required: ["sourceId"] } },
+          { required: ["sourceId"], not: { required: ["effectId"] } },
+          { not: { anyOf: [{ required: ["effectId"] }, { required: ["sourceId"] }] } },
+        ],
         additionalProperties: false,
       },
       annotations: trustedReadAnnotations,

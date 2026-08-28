@@ -252,7 +252,16 @@ test("production browser completes the constraint-preserving spell journey", { t
     const agentFailure = await invokeTool("simulate_cast");
     assert.equal(agentFailure.success, false);
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "agent simulation drives the visible failure");
-    await invokeTool("trace_effect", { effectId: "flooded-observatory" });
+    const agentTrace = await invokeTool("trace_effect", { effectId: "flooded-observatory" });
+    assert.deepEqual(agentTrace.paths[0].nodeIds, ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
+    assert.deepEqual(agentTrace.paths[0].edgeIds, ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+    assert.equal(agentTrace.paths[0].complete, true);
+    assert.deepEqual(agentTrace.cycles, []);
+    assert.deepEqual(agentTrace.typeViolations, []);
+    const boundedSourceTrace = await invokeTool("trace_effect", { sourceId: "moonwell", maxDepth: 2, maxPaths: 1 });
+    assert.equal(boundedSourceTrace.truncated, true);
+    assert.deepEqual(boundedSourceTrace.bounds, { maxDepth: 2, maxPaths: 1 });
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "read-only traces do not advance the graph");
     await invokeTool("explain_side_effect", { sideEffectId: "flooded-observatory" });
     await invokeTool("set_sacred_constraint", {
       targetId: "summon-ducks",

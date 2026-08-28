@@ -63,6 +63,11 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   const simulateTool = definitions.find((item) => item.name === "simulate_cast");
   assert.equal(simulateTool.inputSchema.properties.patchId.type, "string");
   assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|direct)-v[0-9]+$");
+  const traceTool = definitions.find((item) => item.name === "trace_effect");
+  assert.deepEqual(traceTool.inputSchema.properties.sourceId.enum, ["moonwell"]);
+  assert.equal(traceTool.inputSchema.properties.maxDepth.maximum, 12);
+  assert.equal(traceTool.inputSchema.properties.maxPaths.maximum, 5);
+  assert.equal(traceTool.inputSchema.oneOf.length, 3);
   assert.equal(
     definitions.flatMap((item) => Object.values(item.inputSchema.properties)).every(
       (property) => typeof property.description === "string" && property.description.length > 0,
@@ -131,6 +136,14 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(failed.success, false);
   const trace = await handlers.trace_effect({ effectId: "flooded-observatory" });
   assert.equal(trace.present, true);
+  assert.deepEqual(trace.paths[0].nodeIds, ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
+  assert.equal(trace.paths[0].complete, true);
+  assert.deepEqual(trace.cycles, []);
+  assert.deepEqual(trace.typeViolations, []);
+  const sourceTrace = await handlers.trace_effect({ sourceId: "moonwell", maxDepth: 2, maxPaths: 1 });
+  assert.deepEqual(sourceTrace.query, { kind: "source", id: "moonwell" });
+  assert.equal(sourceTrace.truncated, true);
+  assert.equal(sourceTrace.paths[0].depth, 2);
   const explanation = await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
   assert.equal(explanation.requestedId, "flooded-observatory");
   await handlers.set_sacred_constraint({
@@ -224,6 +237,13 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
     handlers.trace_effect({ effectId: "exploding-moon" }),
     /Unknown effect/,
   );
+  await assert.rejects(
+    handlers.trace_effect({ effectId: "flooded-observatory", sourceId: "moonwell" }),
+    /either effectId or sourceId/,
+  );
+  await assert.rejects(handlers.trace_effect({ sourceId: "room" }), /is not a source/);
+  await assert.rejects(handlers.trace_effect({ maxDepth: 0 }), /integer from 1 to 12/);
+  await assert.rejects(handlers.trace_effect({ maxPaths: 6 }), /integer from 1 to 5/);
   await assert.rejects(
     handlers.inspect_spell({ nodeIds: ["moonwell", "moonwell"] }),
     /must be unique/,

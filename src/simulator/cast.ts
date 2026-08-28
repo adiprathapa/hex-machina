@@ -120,8 +120,8 @@ export function simulateCast(graph: SpellGraph): CastResult {
           id: "flooded-observatory",
           label: "Observatory flooded by twelve enthusiastic ducks",
           severity: "messy",
-          responsibleNodeIds: ["multiply", "summon-ducks", "pour", "room"],
-          responsibleEdgeIds: ["e-water-multiply", "e-multiply-ducks", "e-pour-room"],
+          responsibleNodeIds: ["moonwell", "multiply", "summon-ducks", "pour", "room"],
+          responsibleEdgeIds: ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"],
         },
       ]
     : [];

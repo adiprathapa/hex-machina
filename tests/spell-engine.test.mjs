@@ -6,6 +6,7 @@ import { applyPatch, connectRunes, getValidEdgeTypes, serializeSpellGraph, valid
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { proposePatches } from "../src/solver/repair.ts";
+import { traceSpellGraph } from "../src/solver/trace.ts";
 
 test("moonflower fixture is valid and serializes deterministically", () => {
   const graph = createMoonflowerScenario();
@@ -24,6 +25,64 @@ test("initial spell deterministically floods the room", () => {
   assert.equal(first.assertions.ducksPresent, true);
   assert.equal(first.assertions.roomFlooded, true);
   assert.equal(first.sideEffects[0].id, "flooded-observatory");
+  assert.deepEqual(first.sideEffects[0].responsibleNodeIds, ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
+  assert.deepEqual(first.sideEffects[0].responsibleEdgeIds, ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+});
+
+test("effect tracing returns a bounded ordered causal path with complete graph evidence", () => {
+  const graph = createMoonflowerScenario();
+  const trace = traceSpellGraph(graph, {
+    effectId: "flooded-observatory",
+    maxDepth: 8,
+    maxPaths: 3,
+  });
+  assert.equal(trace.present, true);
+  assert.deepEqual(trace.query, { kind: "effect", id: "flooded-observatory" });
+  assert.deepEqual(trace.paths, [{
+    pathIndex: 1,
+    nodeIds: ["moonwell", "multiply", "summon-ducks", "pour", "room"],
+    edgeIds: ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"],
+    depth: 4,
+    terminalNodeId: "room",
+    complete: true,
+  }]);
+  assert.deepEqual(trace.responsibleNodeIds, trace.paths[0].nodeIds);
+  assert.deepEqual(trace.responsibleEdgeIds, trace.paths[0].edgeIds);
+  assert.deepEqual(trace.cycles, []);
+  assert.deepEqual(trace.typeViolations, []);
+  assert.equal(trace.truncated, false);
+});
+
+test("source tracing enforces depth bounds and reports cycles and type violations", () => {
+  const bounded = traceSpellGraph(createMoonflowerScenario(), {
+    sourceId: "moonwell",
+    maxDepth: 2,
+    maxPaths: 1,
+  });
+  assert.deepEqual(bounded.paths[0].nodeIds, ["moonwell", "multiply", "summon-ducks"]);
+  assert.equal(bounded.paths[0].complete, false);
+  assert.equal(bounded.truncated, true);
+  assert.deepEqual(bounded.bounds, { maxDepth: 2, maxPaths: 1 });
+
+  const cyclic = createMoonflowerScenario();
+  cyclic.edges.push({ id: "e-cycle-pour-multiply", from: "pour", to: "multiply", type: "flows_to" });
+  const evidence = traceSpellGraph(cyclic, {
+    sourceId: "moonwell",
+    maxDepth: 8,
+    maxPaths: 3,
+  });
+  assert.deepEqual(evidence.cycles, [{
+    nodeIds: ["multiply", "summon-ducks", "pour", "multiply"],
+    edgeIds: ["e-multiply-ducks", "e-ducks-pour", "e-cycle-pour-multiply"],
+  }]);
+  const invalid = createMoonflowerScenario();
+  invalid.edges.push({ id: "e-invalid-room-water", from: "room", to: "moonwell", type: "targets" });
+  const invalidEvidence = traceSpellGraph(invalid, {
+    sourceId: "moonwell",
+    maxDepth: 8,
+    maxPaths: 3,
+  });
+  assert.equal(invalidEvidence.typeViolations.some((problem) => /Invalid targets connection: target -> source/.test(problem)), true);
 });
 
 test("sacred ducks produce a distinct successful umbrella repair", () => {

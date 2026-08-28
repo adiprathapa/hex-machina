@@ -18,6 +18,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
+- `src/solver/trace.ts`: deterministic bounded directed traversal, ordered path evidence, cycle detection, and structural type diagnostics.
 - `src/tools/handlers.ts`: runtime-validated semantic operations independent of the browser adapter, including a typed result-presentation channel and stale-safe one-use patch rollback; TypeScript types are never treated as an agent-input security boundary.
 - `tests/browser-journey.test.mjs`: boots the built production server in system Chrome and proves the full failure, diagnosis, sacred-constraint, minimal-repair, stable-recast, reset, mobile, and keyboard journey without console errors.
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements—but does not replace—the pending live deployment discovery test.
@@ -43,6 +44,8 @@ The canonical search evaluates two semantically distinct graph rewrites. Without
 Before a write is approved, the UI converts the exact application-generated operations into a stable ledger. Removed edges remain visible in ember, proposed edges appear as aqua ghosts, and dormant nodes to be activated receive a distinct pending state. The preview is derived from the same patch object accepted by `apply_spell_patch`, so the explanation cannot drift from the mutation.
 
 `simulate_cast` can take that current patch ID and execute it against a cloned graph. The result returns the base version, simulated version, and an explicit `editorMutated: false` receipt. The UI preserves the failed live cast, labels the prediction **Unapplied simulation**, and keeps the canvas header at the base graph version until the separate write tool is invoked.
+
+`trace_effect` walks active typed edges in stable ID order. It can trace the known outcome backward through its responsible subgraph or trace forward from a known source, stopping at caller-supplied bounds capped at depth 12 and five paths. Every response carries ordered node and edge sequences, terminal and completeness state, deduplicated responsible IDs, cycle evidence, graph validation errors, the applied bounds, and a truncation flag.
 
 Manual human edits use the same domain invariants through `connectRunes`. The canvas derives compatible target ports from `getValidEdgeTypes`, collects an explicit edge category, rejects duplicates and invalid endpoint categories, activates linked dormant runes, and advances the graph version only after the cloned graph validates.
 

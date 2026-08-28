@@ -188,6 +188,7 @@ def browser_evidence_check(require_site_tools: bool) -> Check:
         "same_origin_runtime_requests",
         "ranked_repair_evidence",
         "nonmutating_patch_preview",
+        "bounded_causal_trace",
         "twelve_ducks_preserved",
     }
     completed = set(evidence.get("completed_steps", []))
@@ -387,6 +388,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("previewPatch", "baseGraphVersion", "simulatedGraphVersion", "editorMutated: false")
     )
+    bounded_causal_trace = all(
+        marker in combined
+        for marker in ("MAX_TRACE_DEPTH", "MAX_TRACE_PATHS", "typeViolations", "cycles", "responsibleEdgeIds")
+    )
     sacred_reachability = all(
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
@@ -465,6 +470,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "non-mutating patch simulation",
             nonmutating_patch_preview,
             "current patch IDs return explicit base/simulated version evidence without editor mutation" if nonmutating_patch_preview else "bounded patch-preview simulation evidence missing",
+        ),
+        Check(
+            "bounded causal tracing",
+            bounded_causal_trace,
+            "ordered paths expose responsible edges, cycles, type violations, and hard bounds" if bounded_causal_trace else "bounded causal-path evidence missing",
         ),
         Check(
             "sacred reachability invariant",
