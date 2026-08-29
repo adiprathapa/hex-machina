@@ -27,6 +27,8 @@ Held-out scores are evidence of generalization to graph structures the training 
 
 For structural evidence, see the transfer protocol below, which withholds an entire scenario family.
 
+For structural evidence, see the transfer protocol below, which withholds an entire scenario family.
+
 | Property | Measured |
 | --- | --- |
 | Scenarios | 96 across 3 families |
