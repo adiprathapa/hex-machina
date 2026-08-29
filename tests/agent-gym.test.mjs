@@ -16,9 +16,11 @@ import {
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   AGENT_GYM_FAMILY_IDS,
+  AGENT_GYM_SAMPLER_PROTOCOL,
   generateAgentGymScenario,
   generateAgentGymScenarioForFamily,
   getAgentGymSplitManifest,
+  sampleAgentGymTask,
 } from "../src/scenarios/agent-gym-family.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { verifyAgentGymDatasetJsonl } from "../src/eval/replay-verifier.ts";
@@ -131,6 +133,29 @@ test("scenario family creates deterministic disjoint train, validation, and test
   assert.equal(seenSeeds.size, 96);
   assert.equal(seenScenarioIds.size, 96);
   assert.equal([...topologySignatures.values()].every((signatures) => signatures.size >= 3), true);
+});
+
+test("seeded task sampling is deterministic, bounded, family-aware, and split-safe", () => {
+  const first = sampleAgentGymTask("validation", 42);
+  assert.deepEqual(first, sampleAgentGymTask("validation", 42));
+  assert.equal(first.protocol, AGENT_GYM_SAMPLER_PROTOCOL);
+  assert.equal(first.split, "validation");
+  assert.equal(first.scenarioId, generateAgentGymScenarioForFamily(first.familyId, first.split, first.index).scenarioId);
+
+  const sampled = Array.from({ length: 256 }, (_, seed) => sampleAgentGymTask("test", seed));
+  assert.deepEqual(new Set(sampled.map((selection) => selection.familyId)), new Set(Object.values(AGENT_GYM_FAMILY_IDS)));
+  assert.equal(sampled.every((selection) => (
+    selection.index >= 0 && selection.index < AGENT_GYM_FAMILY_SPLIT_SIZES[selection.familyId].test
+  )), true);
+
+  const restricted = Array.from({ length: 32 }, (_, seed) => (
+    sampleAgentGymTask("train", seed, AGENT_GYM_FAMILY_IDS.clockworkOrchard)
+  ));
+  assert.equal(restricted.every((selection) => (
+    selection.familyId === AGENT_GYM_FAMILY_IDS.clockworkOrchard && selection.index < 16
+  )), true);
+  assert.throws(() => sampleAgentGymTask("test", -1), /sampleSeed/);
+  assert.throws(() => sampleAgentGymTask("test", 0x1_0000_0000), /sampleSeed/);
 });
 
 test("resonant family is deterministic, opaque, structurally cyclic, and solvable", async () => {

@@ -42,6 +42,13 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   const description = JSON.parse(await bridge.handleLine('{"id":1,"op":"describe"}'));
   assert.equal(description.ok, true, "a bad request must not poison the bridge");
   assert.equal(description.payload.maxEpisodeSteps, 32);
+  assert.deepEqual(description.payload.resetSampling, {
+    protocol: "hex-machina-agent-gym-sampler/v1",
+    algorithm: "xorshift32-uniform-task-v1",
+    sampleSeedRange: [0, 4294967295],
+    defaultSplit: "train",
+    supportsFamilyRestriction: true,
+  });
   assert.equal(description.payload.splitSizes.test, 8);
   assert.equal(description.payload.familySplitSizes[AGENT_GYM_FAMILY_IDS.resonantAviary].test, 4);
   assert.equal(description.payload.familySplitSizes[AGENT_GYM_FAMILY_IDS.clockworkOrchard].test, 4);
@@ -62,6 +69,34 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   })));
   assert.equal(reset.ok, true);
   assert.equal(reset.payload.info.scenarioId, "task-01-test-05");
+
+  const sampledReset = JSON.parse(await bridge.handleLine(JSON.stringify({
+    id: "sampled",
+    op: "reset",
+    sampleSeed: 42,
+  })));
+  const repeatedSample = JSON.parse(await bridge.handleLine(JSON.stringify({
+    id: "sampled-again",
+    op: "reset",
+    sampleSeed: 42,
+  })));
+  assert.equal(sampledReset.ok, true);
+  assert.equal(sampledReset.payload.info.sampledTask.protocol, "hex-machina-agent-gym-sampler/v1");
+  assert.equal(sampledReset.payload.info.sampledTask.sampleSeed, 42);
+  assert.equal(sampledReset.payload.info.sampledTask.split, "train");
+  assert.equal(sampledReset.payload.info.sampledTask.scenarioId, sampledReset.payload.info.scenarioId);
+  assert.deepEqual(sampledReset.payload.observation, repeatedSample.payload.observation);
+  assert.deepEqual(sampledReset.payload.task, repeatedSample.payload.task);
+
+  for (const request of [
+    { id: "ambiguous-sample", op: "reset", split: "test", index: 0, sampleSeed: 1 },
+    { id: "invalid-sample", op: "reset", split: "test", sampleSeed: -1 },
+  ]) {
+    const rejected = JSON.parse(await bridge.handleLine(JSON.stringify(request)));
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.error.code, "operation-error");
+    assert.match(rejected.error.message, /sampleSeed|index/);
+  }
 
   const resonanceReset = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: "resonance",
@@ -120,6 +155,8 @@ from adapters.hex_machina_env import HexMachinaEnv
 
 with HexMachinaEnv() as env:
     description = env.describe()
+    seeded_observation, seeded_info = env.reset(seed=42, options={"split": "validation"})
+    repeated_observation, repeated_info = env.reset(seed=42, options={"split": "validation"})
     observation, reset_info = env.reset("validation", 3)
     observation, reward, terminated, truncated, info = env.step({"tool": "inspect_spell"})
     print(json.dumps({
@@ -133,6 +170,10 @@ with HexMachinaEnv() as env:
         "resultNodes": len(info["result"]["nodes"]),
         "snapshotSteps": len(env.snapshot()["trajectory"]),
         "semanticsExposed": "semantics" in observation,
+        "seededRepeatable": seeded_observation == repeated_observation,
+        "sampleSeed": seeded_info["sampledTask"]["sampleSeed"],
+        "sampleProtocol": seeded_info["sampledTask"]["protocol"],
+        "sampleScenarioRepeatable": seeded_info["scenarioId"] == repeated_info["scenarioId"],
     }))
 `;
   const result = await run("python3", ["-c", script]);
@@ -149,6 +190,10 @@ with HexMachinaEnv() as env:
     resultNodes: 12,
     snapshotSteps: 1,
     semanticsExposed: false,
+    seededRepeatable: true,
+    sampleSeed: 42,
+    sampleProtocol: "hex-machina-agent-gym-sampler/v1",
+    sampleScenarioRepeatable: true,
   });
 });
 
@@ -188,6 +233,8 @@ with HexMachinaVectorEnv(3) as envs:
             "family-03-v1",
         ],
     )
+    seeded_observations, seeded_info = envs.reset("validation", seed=[11, 22, 33])
+    repeated_seeded_observations, repeated_seeded_info = envs.reset("validation", seed=[11, 22, 33])
     print(json.dumps({
         "scenarioIds": [info["scenarioId"] for info in reset_info],
         "graphIds": [observation["id"] for observation in observations],
@@ -200,6 +247,9 @@ with HexMachinaVectorEnv(3) as envs:
         "validationErrors": validationErrors,
         "mixedFamilies": [info["episode"]["familyId"] for info in mixed_info],
         "mixedScenarios": [info["scenarioId"] for info in mixed_info],
+        "seededScenarios": [info["scenarioId"] for info in seeded_info],
+        "seededRepeatable": seeded_observations == repeated_seeded_observations,
+        "sampleSeeds": [info["sampledTask"]["sampleSeed"] for info in seeded_info],
     }))
 `;
   const result = await run("python3", ["-c", script]);
@@ -235,4 +285,7 @@ with HexMachinaVectorEnv(3) as envs:
     "task-02-test-00",
     "task-03-test-01",
   ]);
+  assert.equal(receipt.seededScenarios.length, 3);
+  assert.equal(receipt.seededRepeatable, true);
+  assert.deepEqual(receipt.sampleSeeds, [11, 22, 33]);
 });

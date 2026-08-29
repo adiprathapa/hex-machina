@@ -6,6 +6,8 @@ import {
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   AGENT_GYM_FAMILY_IDS,
+  AGENT_GYM_MAX_SAMPLE_SEED,
+  AGENT_GYM_SAMPLER_PROTOCOL,
   type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
@@ -20,6 +22,7 @@ interface RolloutRequest {
   split?: AgentGymSplit;
   family?: AgentGymFamilyId;
   index?: number;
+  sampleSeed?: number;
   action?: { tool: string; input?: unknown };
 }
 
@@ -50,17 +53,25 @@ function parseRequest(line: string): RolloutRequest {
 }
 
 function parseResetOptions(request: RolloutRequest) {
-  if (request.family === undefined && request.split === undefined && request.index === undefined) return undefined;
+  if (request.family === undefined && request.split === undefined && request.index === undefined && request.sampleSeed === undefined) return undefined;
   const family = request.family ?? AGENT_GYM_FAMILY_IDS.moonflower;
   if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, family)) {
     throw new Error(`Reset family must be ${Object.values(AGENT_GYM_FAMILY_IDS).join(" or ")}`);
   }
-  if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES[family], String(request.split))) {
+  const split = request.sampleSeed === undefined ? request.split : request.split ?? "train";
+  if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES[family], String(split))) {
     throw new Error("Reset split must be train, validation, or test");
+  }
+  if (request.sampleSeed !== undefined) {
+    if (request.index !== undefined) throw new Error("Reset accepts index or sampleSeed, not both");
+    if (!Number.isInteger(request.sampleSeed) || request.sampleSeed < 0 || request.sampleSeed > AGENT_GYM_MAX_SAMPLE_SEED) {
+      throw new Error(`Reset sampleSeed must be an integer from 0 to ${AGENT_GYM_MAX_SAMPLE_SEED}`);
+    }
+    return { family: request.family, split: split!, sampleSeed: request.sampleSeed };
   }
   const index = request.index ?? 0;
   if (!Number.isInteger(index)) throw new Error("Reset index must be an integer");
-  return { family, split: request.split!, index };
+  return { family, split: split!, index };
 }
 
 function parseAction(request: RolloutRequest) {
@@ -123,6 +134,13 @@ export function createAgentGymJsonlBridge() {
               ],
             },
             maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
+            resetSampling: {
+              protocol: AGENT_GYM_SAMPLER_PROTOCOL,
+              algorithm: "xorshift32-uniform-task-v1",
+              sampleSeedRange: [0, AGENT_GYM_MAX_SAMPLE_SEED],
+              defaultSplit: "train",
+              supportsFamilyRestriction: true,
+            },
             transport: "One JSON request and one JSON response per line on stdin/stdout.",
           });
         }

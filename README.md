@@ -61,13 +61,15 @@ Write one JSON request per line to stdin and read one correlated response per li
 {"id":2,"op":"step","action":{"tool":"inspect_spell","input":{}}}
 ```
 
+Use `{"op":"reset","sampleSeed":42}` to select reproducibly across every training task, or add `family` to restrict sampling to one curriculum family. The default sampled split is `train`; explicit `split` values keep train, validation, and test selection disjoint. The reset receipt records the sampler protocol, seed, chosen family, index, and scenario ID.
+
 [`adapters/hex_machina_env.py`](adapters/hex_machina_env.py) wraps that bridge with dependency-free, Gymnasium-shaped Python `reset()` and `step()` signatures. It launches the exact TypeScript environment and shared production handlers rather than maintaining a Python simulator fork:
 
 ```python
 from adapters.hex_machina_env import HexMachinaEnv
 
 with HexMachinaEnv() as env:
-    observation, info = env.reset("train", 0)
+    observation, info = env.reset(seed=42, options={"split": "train"})
     observation, reward, terminated, truncated, info = env.step(
         {"tool": "inspect_spell", "input": {}}
     )
@@ -79,13 +81,13 @@ For batched training, `HexMachinaVectorEnv` runs isolated environment subprocess
 from adapters import HexMachinaVectorEnv
 
 with HexMachinaVectorEnv(4) as envs:
-    observations, infos = envs.reset("train", [0, 1, 2, 3])
+    observations, infos = envs.reset("train", seed=42)
     observations, rewards, terminated, truncated, infos = envs.step(
         [{"tool": "inspect_spell"}] * 4
     )
 ```
 
-Every slot owns separate graph, proposal-capability, reward, and trajectory state. Batch sizes are strict, split/index choices are explicit, calls run in parallel, and one agent's invalid action remains a scored transition in only its own slot. This is process-level vectorization for reproducible local experiments; it is not a distributed trainer.
+Every slot owns separate graph, proposal-capability, reward, and trajectory state. A scalar vector seed expands deterministically by slot, while an explicit seed sequence permits exact assignment; family restrictions make simple curricula reproducible. Batch sizes are strict, calls run in parallel, and one agent's invalid action remains a scored transition in only its own slot. This is process-level vectorization for reproducible local experiments; it is not a distributed trainer.
 
 ## Run locally
 

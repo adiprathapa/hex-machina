@@ -78,14 +78,35 @@ class HexMachinaEnv:
         split: str | None = None,
         index: int | None = None,
         family: str | None = None,
+        *,
+        seed: int | None = None,
+        options: Mapping[str, Any] | None = None,
     ):
+        selected_split = split
+        selected_index = index
+        selected_family = family
+        if options is not None:
+            unknown = set(options) - {"split", "index", "family"}
+            if unknown:
+                raise ValueError(f"unknown reset options: {', '.join(sorted(unknown))}")
+            if split is not None or index is not None or family is not None:
+                raise ValueError("reset options cannot be combined with split, index, or family arguments")
+            selected_split = options.get("split")
+            selected_index = options.get("index")
+            selected_family = options.get("family")
+        if seed is not None and selected_index is not None:
+            raise ValueError("seed and index are mutually exclusive")
+        if seed is not None and selected_split is None:
+            selected_split = "train"
         values: dict[str, Any] = {}
-        if split is not None:
-            values["split"] = split
-        if index is not None:
-            values["index"] = index
-        if family is not None:
-            values["family"] = family
+        if selected_split is not None:
+            values["split"] = selected_split
+        if selected_index is not None:
+            values["index"] = selected_index
+        if selected_family is not None:
+            values["family"] = selected_family
+        if seed is not None:
+            values["sampleSeed"] = seed
         payload = self._request("reset", **values)
         info = dict(payload["info"])
         info["task"] = payload["task"]
@@ -177,16 +198,36 @@ class HexMachinaVectorEnv:
         indices: Sequence[int] | None = None,
         family: str | None = None,
         families: Sequence[str] | None = None,
+        *,
+        seed: int | Sequence[int] | None = None,
     ):
         self._ensure_open()
-        if indices is None:
+        if seed is not None and indices is not None:
+            raise ValueError("seed and indices are mutually exclusive")
+        selected_split = "train" if seed is not None and split is None else split
+        if seed is None and indices is None:
             selected_indices: list[int | None] = (
-                list(range(self.num_envs)) if split is not None else [None] * self.num_envs
+                list(range(self.num_envs)) if selected_split is not None else [None] * self.num_envs
             )
-        else:
-            if split is None:
+        elif indices is not None:
+            if selected_split is None:
                 raise ValueError("split is required when indices are provided")
             selected_indices = self._require_batch(indices, "indices")
+        else:
+            selected_indices = [None] * self.num_envs
+
+        if isinstance(seed, bool):
+            raise ValueError("seed must be an integer, not a boolean")
+        if isinstance(seed, int):
+            if seed < 0 or seed > 0xFFFF_FFFF:
+                raise ValueError("seed must be between 0 and 4294967295")
+            selected_seeds: list[int | None] = [
+                (seed + index) & 0xFFFF_FFFF for index in range(self.num_envs)
+            ]
+        elif seed is not None:
+            selected_seeds = self._require_batch(seed, "seed")
+        else:
+            selected_seeds = [None] * self.num_envs
 
         if family is not None and families is not None:
             raise ValueError("family and families are mutually exclusive")
@@ -196,13 +237,13 @@ class HexMachinaVectorEnv:
             else [family] * self.num_envs
         )
 
-        def reset_slot(values: tuple[HexMachinaEnv, int | None, str | None]):
-            env, index, selected_family = values
-            return env.reset(split=split, index=index, family=selected_family)
+        def reset_slot(values: tuple[HexMachinaEnv, int | None, str | None, int | None]):
+            env, index, selected_family, selected_seed = values
+            return env.reset(split=selected_split, index=index, family=selected_family, seed=selected_seed)
 
         results = list(self._executor.map(
             reset_slot,
-            zip(self._environments, selected_indices, selected_families),
+            zip(self._environments, selected_indices, selected_families, selected_seeds),
         ))
         observations, infos = zip(*results)
         return list(observations), list(infos)

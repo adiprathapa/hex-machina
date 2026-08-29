@@ -10,6 +10,8 @@ export const AGENT_GYM_FAMILY_IDS = {
   clockworkOrchard: "family-03-v1",
 } as const;
 export type AgentGymFamilyId = typeof AGENT_GYM_FAMILY_IDS[keyof typeof AGENT_GYM_FAMILY_IDS];
+export const AGENT_GYM_SAMPLER_PROTOCOL = "hex-machina-agent-gym-sampler/v1" as const;
+export const AGENT_GYM_MAX_SAMPLE_SEED = 0xffff_ffff;
 
 export const AGENT_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
   train: 32,
@@ -164,6 +166,12 @@ function addBenignDecoySubgraph(graph: SpellGraph, familyId: AgentGymFamilyId, m
   graph.nodes = graph.nodes.map((node) => activeNodeIds.has(node.id) ? { ...node, dormant: false } : node);
 }
 
+function familyTaskNumber(familyId: AgentGymFamilyId) {
+  if (familyId === AGENT_GYM_FAMILY_IDS.moonflower) return "01";
+  if (familyId === AGENT_GYM_FAMILY_IDS.resonantAviary) return "02";
+  return "03";
+}
+
 export function generateAgentGymScenarioForFamily(
   familyId: AgentGymFamilyId,
   split: AgentGymSplit,
@@ -234,7 +242,7 @@ export function generateAgentGymScenarioForFamily(
       : CONSTRAINTS;
   const objective = objectives[next() % objectives.length];
   const humanConstraint = constraints[next() % constraints.length];
-  const scenarioId = `task-${resonance ? "02" : temporal ? "03" : "01"}-${split}-${String(index).padStart(2, "0")}`;
+  const scenarioId = `task-${familyTaskNumber(familyId)}-${split}-${String(index).padStart(2, "0")}`;
   graph.id = `spell-${scenarioId}`;
   graph.scenario = resonance ? "eval-family-02" : temporal ? "eval-family-03" : "eval-family-01";
   graph.seed = seed;
@@ -262,6 +270,45 @@ export function generateAgentGymScenarioForFamily(
 
 export function generateAgentGymScenario(split: AgentGymSplit, index: number) {
   return generateAgentGymScenarioForFamily(AGENT_GYM_FAMILY_IDS.moonflower, split, index);
+}
+
+export function sampleAgentGymTask(
+  split: AgentGymSplit,
+  sampleSeed: number,
+  family?: AgentGymFamilyId,
+) {
+  if (!Number.isInteger(sampleSeed) || sampleSeed < 0 || sampleSeed > AGENT_GYM_MAX_SAMPLE_SEED) {
+    throw new Error(`sampleSeed must be an integer from 0 to ${AGENT_GYM_MAX_SAMPLE_SEED}`);
+  }
+  if (!Object.hasOwn(AGENT_GYM_SPLIT_SIZES, split)) {
+    throw new Error("split must be train, validation, or test");
+  }
+  if (family !== undefined && !Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, family)) {
+    throw new Error("family is unknown");
+  }
+
+  const splitSalt = split === "train" ? 0x1357_9bdf : split === "validation" ? 0x2468_ace0 : 0xdead_beef;
+  const next = createPrng((sampleSeed ^ splitSalt) >>> 0);
+  const familyIds = family
+    ? [family]
+    : Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
+  const total = familyIds.reduce((sum, familyId) => sum + AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split], 0);
+  let cursor = next() % total;
+  for (const familyId of familyIds) {
+    const count = AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split];
+    if (cursor < count) {
+      return {
+        protocol: AGENT_GYM_SAMPLER_PROTOCOL,
+        sampleSeed,
+        split,
+        familyId,
+        index: cursor,
+        scenarioId: `task-${familyTaskNumber(familyId)}-${split}-${String(cursor).padStart(2, "0")}`,
+      };
+    }
+    cursor -= count;
+  }
+  throw new Error("Deterministic task sampler could not resolve a scenario");
 }
 
 export function getAgentGymSplitManifest() {

@@ -62,6 +62,8 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /96 deterministic tasks/i);
   assert.match(copy, /one to three seeded, typed decoy edges/i);
   assert.match(copy, /at least three visible topologies/i);
+  assert.match(copy, /Seeded resets select reproducibly/i);
+  assert.match(copy, /family-restricted curriculum/i);
   assert.match(copy, /cross-rule grounding evidence/i);
   assert.match(copy, /omit the simulator's role map/i);
   assert.match(copy, /natural-language constraints plus inspected rune text/i);

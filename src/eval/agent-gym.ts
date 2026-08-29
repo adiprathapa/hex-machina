@@ -7,6 +7,7 @@ import {
 } from "../domain/spell.ts";
 import {
   generateAgentGymScenarioForFamily,
+  sampleAgentGymTask,
   AGENT_GYM_FAMILY_IDS,
   type AgentGymScenarioVariant,
   type AgentGymFamilyId,
@@ -337,9 +338,26 @@ export function instrumentSpellToolHandlers(
   };
 }
 
-export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId; split: AgentGymSplit; index: number }) {
+export interface AgentGymEnvironmentOptions {
+  family?: AgentGymFamilyId;
+  split: AgentGymSplit;
+  index?: number;
+  sampleSeed?: number;
+}
+
+export function createAgentGymEnvironment(options?: AgentGymEnvironmentOptions) {
+  if (options && (options.index === undefined) === (options.sampleSeed === undefined)) {
+    throw new Error("Agent Gym options require exactly one of index or sampleSeed");
+  }
+  const sampledTask = options?.sampleSeed === undefined
+    ? null
+    : sampleAgentGymTask(options.split, options.sampleSeed, options.family);
   const variant: AgentGymScenarioVariant | null = options
-    ? generateAgentGymScenarioForFamily(options.family ?? AGENT_GYM_FAMILY_IDS.moonflower, options.split, options.index)
+    ? generateAgentGymScenarioForFamily(
+        sampledTask?.familyId ?? options.family ?? AGENT_GYM_FAMILY_IDS.moonflower,
+        options.split,
+        sampledTask?.index ?? options.index!,
+      )
     : null;
   const initialGraph = variant?.graph ?? createMoonflowerScenario();
   let graph = cloneGraph(initialGraph);
@@ -382,6 +400,7 @@ export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId;
           scenarioId: session.snapshot().scenarioId,
           actionSpace: AGENT_GYM_TOOL_NAMES,
           maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
+          ...(sampledTask ? { sampledTask } : {}),
         },
       };
     },
