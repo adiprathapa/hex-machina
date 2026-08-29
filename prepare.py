@@ -442,6 +442,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "hex-machina-agent-gym/jsonl-v1",
             "createAgentGymJsonlBridge",
             "HexMachinaEnv",
+            "HexMachinaVectorEnv",
             "instrumentSpellToolHandlers",
             "createAgentGymEnvironment",
             "trajectory",
@@ -561,7 +562,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose rollout-safe reset/step, 48 split variants, contrast policies, replay observations, JSONL datasets, and live Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
+            "shared handlers expose rollout-safe reset/step, 48 split variants, contrast policies, replay observations, JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

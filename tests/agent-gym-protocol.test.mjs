@@ -109,3 +109,67 @@ with HexMachinaEnv() as env:
     snapshotSteps: 1,
   });
 });
+
+test("Python vector adapter preserves deterministic slot order and state isolation", async () => {
+  const script = String.raw`
+import json
+from adapters import HexMachinaVectorEnv
+
+with HexMachinaVectorEnv(3) as envs:
+    validationErrors = []
+    try:
+        envs.step([{"tool": "inspect_spell"}])
+    except ValueError as error:
+        validationErrors.append(str(error))
+    try:
+        envs.reset(indices=[0, 1, 2])
+    except ValueError as error:
+        validationErrors.append(str(error))
+    observations, reset_info = envs.reset("train", [0, 1, 2])
+    observations, rewards, terminated, truncated, infos = envs.step([
+        {"tool": "inspect_spell"},
+        {"tool": "inspect_spell"},
+        {"tool": "inspect_spell"},
+    ])
+    _, second_rewards, _, _, second_infos = envs.step([
+        {"tool": "simulate_cast"},
+        {"tool": "invented_tool"},
+        {"tool": "inspect_spell"},
+    ])
+    snapshots = envs.snapshots()
+    print(json.dumps({
+        "scenarioIds": [info["scenarioId"] for info in reset_info],
+        "graphIds": [observation["id"] for observation in observations],
+        "firstRewards": rewards,
+        "firstSteps": [info["stepIndex"] for info in infos],
+        "secondRewards": second_rewards,
+        "secondAccepted": [info["actionAccepted"] for info in second_infos],
+        "trajectoryLengths": [len(snapshot["trajectory"]) for snapshot in snapshots],
+        "stateKeys": [snapshot["trajectory"][0]["stateKeyBefore"] for snapshot in snapshots],
+        "validationErrors": validationErrors,
+    }))
+`;
+  const result = await run("python3", ["-c", script]);
+  assert.equal(result.code, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.scenarioIds, [
+    "moonflower-train-00",
+    "moonflower-train-01",
+    "moonflower-train-02",
+  ]);
+  assert.deepEqual(receipt.graphIds, [
+    "spell-moonflower-train-00",
+    "spell-moonflower-train-01",
+    "spell-moonflower-train-02",
+  ]);
+  assert.deepEqual(receipt.firstRewards, [1, 1, 1]);
+  assert.deepEqual(receipt.firstSteps, [0, 0, 0]);
+  assert.deepEqual(receipt.secondRewards, [1, -2, -0.25]);
+  assert.deepEqual(receipt.secondAccepted, [true, false, true]);
+  assert.deepEqual(receipt.trajectoryLengths, [2, 2, 2]);
+  assert.equal(new Set(receipt.stateKeys).size, 3, "opaque split slots must not share observations");
+  assert.deepEqual(receipt.validationErrors, [
+    "actions must contain exactly 3 items; received 1",
+    "split is required when indices are provided",
+  ]);
+});

@@ -50,9 +50,11 @@ The family generator prevents a policy from succeeding by memorizing canonical I
 
 `npm run --silent gym:serve` exposes the same environment as a stateful newline-delimited subprocess protocol. Correlated `describe`, `reset`, `step`, and `snapshot` operations keep transport failures distinct from scored agent mistakes and never write logs to stdout. The dependency-free Python adapter exposes Gymnasium-shaped return signatures while delegating every transition to the TypeScript process, avoiding a second simulator or reward implementation. Cross-process tests drive a held-out validation scenario through this exact path.
 
+`HexMachinaVectorEnv` composes isolated adapters into a process-level vector environment. Each slot owns its own TypeScript bridge, graph, issued patch capabilities, reward recorder, and trajectory; a bounded thread pool executes reset, step, describe, snapshot, and close calls concurrently while preserving input slot order. Strict batch lengths and explicit split/index pairing prevent silent task misalignment. A cross-process test runs three different opaque training scenarios together, injects an invalid action into only one slot, and proves rewards, acceptance flags, state keys, and trajectory lengths remain isolated.
+
 `npm run --silent gym:policies` runs four deterministic controls over all held-out test variants. Grounded reference behavior scores 23 with 100% completion and no unsafe episodes; mutation-before-explanation also completes but scores 18 with a 100% unsafe-episode rate; diagnosis-only stops safely at 6; canonical-ID memorization records four invalid actions and scores −8. The product renders these checked aggregate rewards as a compact separation table. This is evidence that the rubric responds to grounding, safety, and completeness—not a claim about learned models.
 
-This makes Hex Machina useful as a within-family online evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, parallel rollout orchestration, and learned-policy experiments remain subsequent research work.
+This makes Hex Machina useful as a within-family online evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, distributed rollout orchestration, and learned-policy experiments remain subsequent research work.
 
 ## Mutation protocol
 

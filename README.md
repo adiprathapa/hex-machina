@@ -65,6 +65,20 @@ with HexMachinaEnv() as env:
     )
 ```
 
+For batched training, `HexMachinaVectorEnv` runs isolated environment subprocesses concurrently and returns Gymnasium-style vectors in deterministic slot order:
+
+```python
+from adapters import HexMachinaVectorEnv
+
+with HexMachinaVectorEnv(4) as envs:
+    observations, infos = envs.reset("train", [0, 1, 2, 3])
+    observations, rewards, terminated, truncated, infos = envs.step(
+        [{"tool": "inspect_spell"}] * 4
+    )
+```
+
+Every slot owns separate graph, proposal-capability, reward, and trajectory state. Batch sizes are strict, split/index choices are explicit, calls run in parallel, and one agent's invalid action remains a scored transition in only its own slot. This is process-level vectorization for reproducible local experiments; it is not a distributed trainer.
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and Python 3.11 or newer.

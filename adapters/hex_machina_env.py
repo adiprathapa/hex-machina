@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -113,6 +114,114 @@ class HexMachinaEnv:
         self._process = None
 
     def __enter__(self) -> "HexMachinaEnv":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
+
+class HexMachinaVectorEnv:
+    """Parallel, isolated Hex Machina environments with vector-style returns.
+
+    Each slot owns a separate production rollout subprocess. Calls execute in
+    parallel, preserve slot order, and never share graph or episode state.
+    """
+
+    def __init__(
+        self,
+        num_envs: int,
+        command: Sequence[str] | None = None,
+        cwd: str | Path | None = None,
+    ) -> None:
+        if not isinstance(num_envs, int) or isinstance(num_envs, bool) or num_envs < 1:
+            raise ValueError("num_envs must be a positive integer")
+        self.num_envs = num_envs
+        self._environments = [
+            HexMachinaEnv(command=command, cwd=cwd) for _ in range(num_envs)
+        ]
+        self._executor = ThreadPoolExecutor(
+            max_workers=num_envs,
+            thread_name_prefix="hex-machina-rollout",
+        )
+        self._closed = False
+
+    def _ensure_open(self) -> None:
+        if self._closed:
+            raise RuntimeError("Vector environment is closed")
+
+    def _require_batch(self, values: Sequence[Any], label: str) -> list[Any]:
+        selected = list(values)
+        if len(selected) != self.num_envs:
+            raise ValueError(
+                f"{label} must contain exactly {self.num_envs} items; received {len(selected)}"
+            )
+        return selected
+
+    def describe(self) -> list[Mapping[str, Any]]:
+        self._ensure_open()
+        return list(self._executor.map(lambda env: env.describe(), self._environments))
+
+    def reset(
+        self,
+        split: str | None = None,
+        indices: Sequence[int] | None = None,
+    ):
+        self._ensure_open()
+        if indices is None:
+            selected_indices: list[int | None] = (
+                list(range(self.num_envs)) if split is not None else [None] * self.num_envs
+            )
+        else:
+            if split is None:
+                raise ValueError("split is required when indices are provided")
+            selected_indices = self._require_batch(indices, "indices")
+
+        def reset_slot(values: tuple[HexMachinaEnv, int | None]):
+            env, index = values
+            return env.reset(split=split, index=index)
+
+        results = list(self._executor.map(
+            reset_slot,
+            zip(self._environments, selected_indices, strict=True),
+        ))
+        observations, infos = zip(*results, strict=True)
+        return list(observations), list(infos)
+
+    def step(self, actions: Sequence[Mapping[str, Any]]):
+        self._ensure_open()
+        selected_actions = self._require_batch(actions, "actions")
+        if any(not isinstance(action, Mapping) for action in selected_actions):
+            raise ValueError("every action must be a mapping")
+
+        def step_slot(values: tuple[HexMachinaEnv, Mapping[str, Any]]):
+            env, action = values
+            return env.step(action)
+
+        results = list(self._executor.map(
+            step_slot,
+            zip(self._environments, selected_actions, strict=True),
+        ))
+        observations, rewards, terminated, truncated, infos = zip(*results, strict=True)
+        return (
+            list(observations),
+            list(rewards),
+            list(terminated),
+            list(truncated),
+            list(infos),
+        )
+
+    def snapshots(self) -> list[Mapping[str, Any]]:
+        self._ensure_open()
+        return list(self._executor.map(lambda env: env.snapshot(), self._environments))
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        list(self._executor.map(lambda env: env.close(), self._environments))
+        self._executor.shutdown(wait=True)
+        self._closed = True
+
+    def __enter__(self) -> "HexMachinaVectorEnv":
         return self
 
     def __exit__(self, *_: object) -> None:

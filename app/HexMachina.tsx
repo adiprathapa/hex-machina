@@ -710,7 +710,7 @@ export function HexMachina() {
               ))}
             </div>
             <div className="gym-foot">
-              <small>48 variants · live + offline rollouts</small>
+              <small>48 variants · vector + offline rollouts</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>

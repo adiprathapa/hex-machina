@@ -66,7 +66,8 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /termination\/truncation flags/i);
   assert.match(copy, /32 actions/i);
   assert.match(copy, /streaming JSONL service/i);
-  assert.match(copy, /Python adapter/i);
+  assert.match(copy, /Python adapters/i);
+  assert.match(copy, /isolated parallel vectors/i);
   assert.match(copy, /contrast suite/i);
   assert.match(copy, /canonical-ID memorization \(−8\)/i);
 });
