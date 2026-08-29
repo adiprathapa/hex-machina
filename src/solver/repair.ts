@@ -7,11 +7,12 @@ import {
 import { simulateCast } from "../simulator/cast.ts";
 
 export function explainFlood(graph: SpellGraph) {
+  const { effectId, roles, initialRouteEdgeIds } = graph.semantics;
   const result = simulateCast(graph);
-  const effect = result.sideEffects.find((item) => item.id === "flooded-observatory");
+  const effect = result.sideEffects.find((item) => item.id === effectId);
   if (!effect) {
     return {
-      sideEffectId: "flooded-observatory",
+      sideEffectId: effectId,
       present: false,
       explanation: "The current graph does not produce the observatory flood.",
       nodeIds: [],
@@ -20,7 +21,7 @@ export function explainFlood(graph: SpellGraph) {
       causalSteps: [],
       ruleEvidence: {
         ruleId: "unshielded-water-route-targets-room",
-        conclusion: { sideEffectId: "flooded-observatory", observed: false },
+        conclusion: { sideEffectId: effectId, observed: false },
         premises: [],
         allPremisesSatisfied: false,
       },
@@ -60,23 +61,23 @@ export function explainFlood(graph: SpellGraph) {
   const premiseSpecs = [
     {
       id: "water-enters-multiplier",
-      nodeIds: ["moonwell", "multiply"],
-      edgeIds: ["e-water-multiply"],
+      nodeIds: [roles.source, roles.multiplier],
+      edgeIds: [initialRouteEdgeIds[0]],
     },
     {
       id: "multiplier-creates-twelve-ducks",
-      nodeIds: ["multiply", "summon-ducks"],
-      edgeIds: ["e-multiply-ducks"],
+      nodeIds: [roles.multiplier, roles.subject],
+      edgeIds: [initialRouteEdgeIds[1]],
     },
     {
       id: "ducks-carry-water-to-pour",
-      nodeIds: ["summon-ducks", "pour"],
-      edgeIds: ["e-ducks-pour"],
+      nodeIds: [roles.subject, roles.action],
+      edgeIds: [initialRouteEdgeIds[2]],
     },
     {
       id: "unshielded-pour-targets-room",
-      nodeIds: ["pour", "room"],
-      edgeIds: ["e-pour-room"],
+      nodeIds: [roles.action, roles.failureTarget],
+      edgeIds: [initialRouteEdgeIds[3]],
     },
   ];
   const positivePremises = premiseSpecs.map((premise) => ({
@@ -90,16 +91,16 @@ export function explainFlood(graph: SpellGraph) {
     ...positivePremises,
     {
       id: "no-protective-umbrella-route",
-      nodeIds: ["umbrella"],
+      nodeIds: [roles.safeguard],
       edgeIds: [],
       absentConnections: [
-        ["summon-ducks", "umbrella"],
-        ["moonwell", "umbrella"],
-        ["umbrella", "pour"],
+        [roles.subject, roles.safeguard],
+        [roles.source, roles.safeguard],
+        [roles.safeguard, roles.action],
       ],
       satisfied: !(
-        (hasConnection("summon-ducks", "umbrella") || hasConnection("moonwell", "umbrella")) &&
-        hasConnection("umbrella", "pour")
+        (hasConnection(roles.subject, roles.safeguard) || hasConnection(roles.source, roles.safeguard)) &&
+        hasConnection(roles.safeguard, roles.action)
       ),
     },
   ];
@@ -149,6 +150,11 @@ export function explainFlood(graph: SpellGraph) {
 export function proposePatches(graph: SpellGraph): SpellPatch[] {
   if (simulateCast(graph).success) return [];
 
+  const { roles, initialRouteEdgeIds } = graph.semantics;
+  const edgeId = (canonical: string, suffix: string) => graph.scenario === "moonflower"
+    ? canonical
+    : `e-${graph.seed.toString(36)}-${suffix}`;
+
   const rawCandidates: Array<Omit<SpellPatch, "preconditions">> = [
     {
       id: `patch-umbrella-v${graph.version}`,
@@ -157,28 +163,28 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
         "Keep the multiplied duck branch intact, route it through Umbrella, narrow Pour to the Moonflower, and explicitly trigger Bloom.",
       expectedVersion: graph.version,
       operations: [
-        { op: "remove_edge", edgeId: "e-ducks-pour" },
-        { op: "remove_edge", edgeId: "e-pour-room" },
-        { op: "activate_node", nodeId: "umbrella" },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[2] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
+        { op: "activate_node", nodeId: roles.safeguard },
         {
           op: "add_edge",
-          edge: { id: "e-ducks-umbrella", from: "summon-ducks", to: "umbrella", type: "flows_to" },
+          edge: { id: edgeId("e-ducks-umbrella", "subject-safeguard"), from: roles.subject, to: roles.safeguard, type: "flows_to" },
         },
         {
           op: "add_edge",
-          edge: { id: "e-umbrella-pour", from: "umbrella", to: "pour", type: "flows_to" },
+          edge: { id: edgeId("e-umbrella-pour", "safeguard-action"), from: roles.safeguard, to: roles.action, type: "flows_to" },
         },
         {
           op: "add_edge",
-          edge: { id: "e-pour-flower", from: "pour", to: "moonflower", type: "targets" },
+          edge: { id: edgeId("e-pour-flower", "action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" },
         },
-        { op: "activate_node", nodeId: "bloom" },
+        { op: "activate_node", nodeId: roles.goalSink },
         {
           op: "add_edge",
-          edge: { id: "e-flower-bloom", from: "moonflower", to: "bloom", type: "flows_to" },
+          edge: { id: edgeId("e-flower-bloom", "goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" },
         },
       ],
-      preserves: ["summon-ducks", "ducks-present"],
+      preserves: [roles.subject, "ducks-present"],
       tradeoffs: ["Keeps all twelve ducks", "Activates the dormant Umbrella rune"],
       searchEvidence: {
         rank: 0,
@@ -194,20 +200,20 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
       rationale: "Disconnect the summon branch from its source and direct Moonwell water to the flower.",
       expectedVersion: graph.version,
       operations: [
-        { op: "remove_edge", edgeId: "e-water-multiply" },
-        { op: "remove_edge", edgeId: "e-pour-room" },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[0] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
         {
           op: "add_edge",
-          edge: { id: "e-water-pour", from: "moonwell", to: "pour", type: "flows_to" },
+          edge: { id: edgeId("e-water-pour", "source-action"), from: roles.source, to: roles.action, type: "flows_to" },
         },
         {
           op: "add_edge",
-          edge: { id: "e-direct-pour-flower", from: "pour", to: "moonflower", type: "targets" },
+          edge: { id: edgeId("e-direct-pour-flower", "direct-action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" },
         },
-        { op: "activate_node", nodeId: "bloom" },
+        { op: "activate_node", nodeId: roles.goalSink },
         {
           op: "add_edge",
-          edge: { id: "e-direct-flower-bloom", from: "moonflower", to: "bloom", type: "flows_to" },
+          edge: { id: edgeId("e-direct-flower-bloom", "direct-goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" },
         },
       ],
       preserves: [],

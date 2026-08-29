@@ -12,7 +12,17 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Each transition records before/after graph versions, mutation evidence, structured results or errors, reward deltas, and reward reasons. A reference policy earns 23/23 by grounding itself, observing the failure, proving its cause, encoding the human constraint, safely previewing and applying the repair, and recasting successfully. Invalid calls lose points; changing state before explanation loses more.
 
-The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Today this is deliberately a **single-scenario research prototype**. The credible route to reinforcement learning is to add generated scenario families, train/validation splits, and policy rollouts—not to pretend one handcrafted puzzle is already a training corpus.
+The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. The first scenario family contains 48 deterministic variants across 32 train, eight validation, and eight test tasks. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, and paraphrases the prompt. Tests prove an inspection-driven policy reaches 23/23 on held-out variants while memorized training IDs fail safely without mutation.
+
+This is evidence of robustness within one semantic task family—not broad agent generalization and not a training service. The credible route to reinforcement learning now is to add genuinely different simulator rules and scenario families, then run policy rollouts across those held-out families.
+
+Run the reproducible baseline over every split:
+
+```bash
+npm run --silent gym:benchmark
+```
+
+The command emits a JSON benchmark receipt with per-episode scores and aggregate split means. The checked-in reference policy discovers task-specific IDs through inspection; it is a transparency baseline, not a learned model.
 
 ## Run locally
 
@@ -68,6 +78,7 @@ The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages th
 
 - `src/domain/` — typed graph schema, validation, stable serialization, atomic patches
 - `src/scenarios/` — deterministic Moonflower fixture
+- `src/scenarios/agent-gym-family.ts` — seeded opaque-ID variants and disjoint evaluation splits
 - `src/simulator/` — cast execution and ordered event traces
 - `src/solver/` — causal diagnosis and constraint-aware repair search
 - `src/tools/` — shared semantic handlers and guarded WebMCP registration

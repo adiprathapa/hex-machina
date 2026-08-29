@@ -62,7 +62,7 @@
 
 **Reference capture:** `screenshots/03-successful-recast.jpg`
 
-**Voiceover:** “Each semantic action earns an explained reward and an exportable trajectory. Hex Machina turns a magical game into a deterministic gym for safer agents.”
+**Voiceover:** “Forty-eight split variants test whether agents inspect instead of memorize. Hex Machina turns a magical game into a deterministic gym for safer agents.”
 
 ## Judge prompt
 

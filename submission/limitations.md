@@ -6,7 +6,7 @@
 - Patch search uses a bounded catalog of semantically meaningful repairs for the Moonflower scenario.
 - The graph layout is authored for legibility instead of using a general automatic layout engine; players can rearrange runes and add validated typed edges, but arbitrary node creation and edge deletion remain outside this lesson.
 - State is local to the live page. The latest unchanged agent patch has a one-step undo, and the entire lesson can always be reset.
-- Agent Gym currently evaluates one canonical scenario with an authored reward rubric. It produces deterministic trajectories and useful policy diagnostics, but it does not by itself train an LLM or demonstrate generalization.
+- Agent Gym currently evaluates one semantic task family with 48 deterministic opaque-ID and prompt variants. Held-out validation/test success demonstrates grounding rather than ID memorization, but does not establish transfer to unrelated graph rules or domains. The environment does not itself train an LLM.
 
 ## WebMCP availability
 
@@ -22,6 +22,6 @@ The optional Familiar is a tiny frozen-weight message-passing prototype, not a t
 - Import/export and shareable spell replays
 - Broader authoring with arbitrary rune creation and edge deletion
 - A learned Familiar ranking model trained on a larger corpus of generated spell failures
-- Procedurally generated scenario families with train, validation, and adversarial evaluation splits
+- Additional semantic families with different failure rules, repair operators, and adversarial constraints
 - Policy-rollout adapters for offline preference optimization or reinforcement learning over exported trajectories
 - Collaborative puzzle authoring

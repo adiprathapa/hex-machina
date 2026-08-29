@@ -1,6 +1,6 @@
 # Security and privacy posture
 
-Hex Machina is a local-first, single-scenario game with no accounts, analytics, external APIs, cookies, browser storage, or user-uploaded content. The production browser journey asserts that every runtime request remains same-origin.
+Hex Machina is a local-first canonical game plus a deterministic in-memory evaluation family. It has no accounts, analytics, external APIs, cookies, browser storage, or user-uploaded content. The production browser journey asserts that every runtime request remains same-origin.
 
 ## Response boundary
 

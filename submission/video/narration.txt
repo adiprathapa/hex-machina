@@ -10,4 +10,4 @@ The agent ranks bounded rewrites under that constraint. The eight-edit umbrella 
 
 After approval, the application proves sacred reachability and applies the patch atomically. Umbrella and Bloom activate. A new cast returns Stable, with the room dry and all twelve sacred ducks preserved.
 
-Each semantic action earns an explained reward and an exportable trajectory. Hex Machina turns a magical game into a deterministic gym for safer agents.
+Forty-eight split variants test whether agents inspect instead of memorize. Hex Machina turns a magical game into a deterministic gym for safer agents.

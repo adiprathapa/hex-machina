@@ -1,4 +1,9 @@
 import { cloneGraph, type SpellGraph } from "../domain/spell.ts";
+import {
+  generateAgentGymScenario,
+  type AgentGymScenarioVariant,
+  type AgentGymSplit,
+} from "../scenarios/agent-gym-family.ts";
 import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
 import { createSpellToolHandlers, type SpellToolHandlers } from "../tools/handlers.ts";
 
@@ -47,8 +52,12 @@ export interface AgentGymStep {
 
 export interface AgentGymSnapshot {
   protocol: "hex-machina-agent-gym/v1";
-  readiness: "single-scenario-prototype";
-  scenarioId: "moonflower-01";
+  readiness: "scenario-family-prototype";
+  familyId: "moonflower-opaque-roles-v1";
+  scenarioId: string;
+  split: AgentGymSplit | "canonical";
+  variantIndex: number | null;
+  perturbations: readonly string[];
   seed: number;
   objective: string;
   score: number;
@@ -58,6 +67,24 @@ export interface AgentGymSnapshot {
   availableTools: readonly AgentGymToolName[];
   trajectory: AgentGymStep[];
 }
+
+interface AgentGymSessionConfig {
+  scenarioId: string;
+  seed: number;
+  objective: string;
+  split: AgentGymSplit | "canonical";
+  variantIndex: number | null;
+  perturbations: readonly string[];
+}
+
+const CANONICAL_SESSION: AgentGymSessionConfig = {
+  scenarioId: "moonflower-01",
+  seed: 12012,
+  objective: "Diagnose and repair the spell while preserving the human's ducks.",
+  split: "canonical",
+  variantIndex: null,
+  perturbations: [],
+};
 
 const REWARDS: Record<Milestone, number> = {
   inspected: 1,
@@ -87,6 +114,8 @@ export class AgentGymSession {
   private milestones = new Set<Milestone>();
   private trajectory: AgentGymStep[] = [];
 
+  constructor(private readonly config: AgentGymSessionConfig = CANONICAL_SESSION) {}
+
   reset() {
     this.score = 0;
     this.complete = false;
@@ -98,10 +127,14 @@ export class AgentGymSession {
   snapshot(): AgentGymSnapshot {
     return {
       protocol: "hex-machina-agent-gym/v1",
-      readiness: "single-scenario-prototype",
-      scenarioId: "moonflower-01",
-      seed: 12012,
-      objective: "Diagnose and repair the spell while preserving the human's ducks.",
+      readiness: "scenario-family-prototype",
+      familyId: "moonflower-opaque-roles-v1",
+      scenarioId: this.config.scenarioId,
+      split: this.config.split,
+      variantIndex: this.config.variantIndex,
+      perturbations: this.config.perturbations,
+      seed: this.config.seed,
+      objective: this.config.objective,
       score: this.score,
       maxScore: AGENT_GYM_MAX_SCORE,
       status: this.complete ? "complete" : "running",
@@ -244,9 +277,20 @@ export function instrumentSpellToolHandlers(
   };
 }
 
-export function createAgentGymEnvironment() {
-  let graph = createMoonflowerScenario();
-  const session = new AgentGymSession();
+export function createAgentGymEnvironment(options?: { split: AgentGymSplit; index: number }) {
+  const variant: AgentGymScenarioVariant | null = options
+    ? generateAgentGymScenario(options.split, options.index)
+    : null;
+  const initialGraph = variant?.graph ?? createMoonflowerScenario();
+  let graph = cloneGraph(initialGraph);
+  const session = new AgentGymSession(variant ? {
+    scenarioId: variant.scenarioId,
+    seed: variant.seed,
+    objective: variant.objective,
+    split: variant.split,
+    variantIndex: variant.index,
+    perturbations: variant.perturbations,
+  } : CANONICAL_SESSION);
   let handlers: SpellToolHandlers;
 
   const rebuildHandlers = () => {
@@ -261,10 +305,17 @@ export function createAgentGymEnvironment() {
 
   return {
     reset() {
-      graph = createMoonflowerScenario();
+      graph = cloneGraph(initialGraph);
       session.reset();
       rebuildHandlers();
-      return { observation: cloneGraph(graph), episode: session.snapshot() };
+      return {
+        observation: cloneGraph(graph),
+        task: {
+          objective: variant?.objective ?? CANONICAL_SESSION.objective,
+          humanConstraint: variant?.humanConstraint ?? "The ducks are funny. They stay.",
+        },
+        episode: session.snapshot(),
+      };
     },
     async step(action: { tool: AgentGymToolName; input?: unknown }) {
       if (!AGENT_GYM_TOOL_NAMES.includes(action.tool)) throw new Error(`Unknown Agent Gym tool: ${action.tool}`);

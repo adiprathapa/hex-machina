@@ -184,10 +184,10 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         throw new Error("trace_effect accepts either effectId or sourceId, not both");
       }
       const effectId = parsed.effectId === undefined
-        ? "flooded-observatory"
+        ? context.getGraph().semantics.effectId
         : requireString(parsed.effectId, "effectId");
       const sourceId = parsed.sourceId === undefined ? undefined : requireString(parsed.sourceId, "sourceId");
-      if (parsed.effectId !== undefined && effectId !== "flooded-observatory") {
+      if (parsed.effectId !== undefined && effectId !== context.getGraph().semantics.effectId) {
         throw new Error(`Unknown effect: ${effectId}`);
       }
       const graph = context.getGraph();
@@ -265,7 +265,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
     explain_side_effect: async (input: unknown = {}) => {
       const parsed = requireToolInput(input, "explain_side_effect", ["sideEffectId"]);
       const sideEffectId = requireString(parsed.sideEffectId, "sideEffectId");
-      if (sideEffectId !== "flooded-observatory") {
+      if (sideEffectId !== context.getGraph().semantics.effectId) {
         throw new Error(`Unknown side effect: ${sideEffectId}`);
       }
       const explanation = explainFlood(context.getGraph());
@@ -285,7 +285,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       if (typeof preserve !== "boolean") throw new Error("preserve must be a boolean");
       const before = context.getGraph();
       requireNode(before, targetId);
-      if (targetId !== "summon-ducks") throw new Error(`Unsupported sacred target: ${targetId}`);
+      if (targetId !== before.semantics.roles.subject) throw new Error(`Unsupported sacred target: ${targetId}`);
       const reason = requireShortText(requireString(parsed.reason, "reason"), "Constraint reason", 180);
       const next = cloneGraph(before);
       const id = `sacred-${targetId}`;

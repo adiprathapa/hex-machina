@@ -47,7 +47,7 @@ export function traceSpellGraph(graph: SpellGraph, options: TraceOptions) {
     : undefined;
   const query = options.sourceId
     ? { kind: "source" as const, id: options.sourceId }
-    : { kind: "effect" as const, id: options.effectId ?? "flooded-observatory" };
+    : { kind: "effect" as const, id: options.effectId ?? graph.semantics.effectId };
 
   if (query.kind === "effect" && !effect) {
     return {

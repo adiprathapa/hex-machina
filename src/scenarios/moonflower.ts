@@ -7,6 +7,20 @@ export function createMoonflowerScenario(): SpellGraph {
     scenario: "moonflower",
     seed: 12012,
     desiredOutcome: "Water the moonflower without flooding the room.",
+    semantics: {
+      effectId: "flooded-observatory",
+      roles: {
+        source: "moonwell",
+        multiplier: "multiply",
+        subject: "summon-ducks",
+        action: "pour",
+        failureTarget: "room",
+        safeguard: "umbrella",
+        goalTarget: "moonflower",
+        goalSink: "bloom",
+      },
+      initialRouteEdgeIds: ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"],
+    },
     constraints: [],
     nodes: [
       {

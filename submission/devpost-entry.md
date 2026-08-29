@@ -36,7 +36,9 @@ This is the central thesis: graph interfaces let people and agents negotiate exe
 
 Hex Machina also exposes a headless Agent Gym protocol. The typed graph is the observation, the seven tools are the action space, and the shared application handlers define deterministic transitions. A nine-milestone, 23-point rubric rewards grounding, failure observation, causal tracing, explanation, intent preservation, safe patch preview, atomic application, and final verification. Invalid calls score −2; mutating before explaining scores an additional −5. The visible scorecard updates for both UI and WebMCP calls, and a complete trajectory can be exported as JSON.
 
-The current release is intentionally labeled a single-scenario research prototype. It can benchmark a policy and generate inspectable trajectories now; generated task families and held-out splits are the next step before making claims about reinforcement-learning gains or generalization.
+The first semantic family contains 48 deterministic tasks across 32 train, eight validation, and eight test variants. Node, edge, and effect IDs are opaque and remapped per task; serialized order, layout, and prompt wording also change. Tests prove that an inspection-driven policy earns 23/23 on held-out variants, while a memorized training ID is rejected without mutation. That is meaningful within-family grounding evidence, not a claim of transfer to unrelated domains or reinforcement-learning gains.
+
+The reproducible benchmark command runs the transparent reference policy over all 48 variants and emits JSON episode receipts and split means. It currently reports 48/48 completions at 23/23; this validates the environment and baseline, not a learned-policy result.
 
 ## How WebMCP was implemented
 
@@ -56,7 +58,7 @@ WebMCP is the collaboration layer, not a decorative integration. The canonical j
 
 ### Execution
 
-The project is a complete responsive game and single-scenario agent-evaluation environment with a typed graph editor, deterministic failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 75-second demo.
+The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 48 deterministic task variants, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 75-second demo.
 
 ### Potential impact
 

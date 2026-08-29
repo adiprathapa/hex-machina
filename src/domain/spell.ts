@@ -42,12 +42,28 @@ export interface SacredConstraint {
   reason: string;
 }
 
+export interface SpellSemantics {
+  effectId: string;
+  roles: {
+    source: string;
+    multiplier: string;
+    subject: string;
+    action: string;
+    failureTarget: string;
+    safeguard: string;
+    goalTarget: string;
+    goalSink: string;
+  };
+  initialRouteEdgeIds: [string, string, string, string];
+}
+
 export interface SpellGraph {
   id: string;
   version: number;
   scenario: string;
   seed: number;
   desiredOutcome: string;
+  semantics: SpellSemantics;
   nodes: RuneNode[];
   edges: SpellEdge[];
   constraints: SacredConstraint[];
@@ -160,6 +176,16 @@ export function validateSpellGraph(graph: SpellGraph): string[] {
     if (constraint.targetType === "edge" && !edgeIds.has(constraint.targetId)) {
       problems.push(`Constraint ${constraint.id} references a missing edge`);
     }
+  }
+
+  for (const [role, nodeId] of Object.entries(graph.semantics.roles)) {
+    if (!nodeIds.has(nodeId)) problems.push(`Semantic role ${role} references a missing node: ${nodeId}`);
+  }
+  if (new Set(Object.values(graph.semantics.roles)).size !== Object.keys(graph.semantics.roles).length) {
+    problems.push("Semantic roles must reference distinct nodes");
+  }
+  if (new Set(graph.semantics.initialRouteEdgeIds).size !== graph.semantics.initialRouteEdgeIds.length) {
+    problems.push("Semantic failure route edge IDs must be distinct");
   }
 
   return problems;

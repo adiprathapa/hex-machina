@@ -418,8 +418,13 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in (
             "hex-machina-agent-gym/v1",
-            "single-scenario-prototype",
+            "scenario-family-prototype",
             "AGENT_GYM_MAX_SCORE",
+            "AGENT_GYM_SPLIT_SIZES",
+            "opaque-node-ids",
+            "opaque-edge-ids",
+            "benchmarkAgentGymFamily",
+            "hex-machina-agent-gym-benchmark/v1",
             "instrumentSpellToolHandlers",
             "createAgentGymEnvironment",
             "trajectory",
@@ -534,7 +539,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose reset/step, scored rewards, and exportable trajectories" if deterministic_agent_gym else "Agent Gym environment or shared-handler instrumentation missing",
+            "shared handlers expose reset/step, 48 split variants, scored rewards, and exportable trajectories" if deterministic_agent_gym else "Agent Gym environment, split family, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

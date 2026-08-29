@@ -30,5 +30,5 @@ The recast is Stable: the room is dry and all twelve ducks remain.
 
 7
 00:01:08,000 --> 00:01:15,000
-Each semantic action earns an explained reward and exportable trajectory.
-It is a deterministic gym for safer agents.
+Forty-eight split variants test whether agents inspect instead of memorize.
+Hex Machina is a deterministic gym for safer agents.

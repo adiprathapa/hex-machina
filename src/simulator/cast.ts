@@ -37,25 +37,34 @@ function hasEdge(graph: SpellGraph, from: string, to: string): boolean {
 }
 
 export function simulateCast(graph: SpellGraph): CastResult {
-  const multipliedDucks = hasEdge(graph, "moonwell", "multiply") &&
-    hasEdge(graph, "multiply", "summon-ducks");
-  const ducksPresent = multipliedDucks || hasEdge(graph, "moonwell", "summon-ducks");
+  const {
+    source,
+    multiplier,
+    subject,
+    action,
+    failureTarget,
+    safeguard,
+    goalTarget,
+    goalSink,
+  } = graph.semantics.roles;
+  const multipliedDucks = hasEdge(graph, source, multiplier) &&
+    hasEdge(graph, multiplier, subject);
+  const ducksPresent = multipliedDucks || hasEdge(graph, source, subject);
   const duckCount = multipliedDucks ? 12 : ducksPresent ? 1 : 0;
-  const ducksCarryWater = ducksPresent && hasEdge(graph, "summon-ducks", "pour");
-  const directRoute = hasEdge(graph, "moonwell", "pour");
+  const ducksCarryWater = ducksPresent && hasEdge(graph, subject, action);
+  const directRoute = hasEdge(graph, source, action);
   const umbrellaRoute =
-    (hasEdge(graph, "summon-ducks", "umbrella") ||
-      hasEdge(graph, "moonwell", "umbrella")) &&
-    hasEdge(graph, "umbrella", "pour");
-  const roomFlooded = hasEdge(graph, "pour", "room") && (ducksCarryWater || directRoute) && !umbrellaRoute;
-  const flowerWatered = hasEdge(graph, "pour", "moonflower") && (umbrellaRoute || directRoute);
-  const flowerBloomed = flowerWatered && hasEdge(graph, "moonflower", "bloom");
+    (hasEdge(graph, subject, safeguard) || hasEdge(graph, source, safeguard)) &&
+    hasEdge(graph, safeguard, action);
+  const roomFlooded = hasEdge(graph, action, failureTarget) && (ducksCarryWater || directRoute) && !umbrellaRoute;
+  const flowerWatered = hasEdge(graph, action, goalTarget) && (umbrellaRoute || directRoute);
+  const flowerBloomed = flowerWatered && hasEdge(graph, goalTarget, goalSink);
 
   const events: CastEvent[] = [
     {
       id: "event-source",
       order: 1,
-      nodeId: "moonwell",
+      nodeId: source,
       tone: "magic",
       message: "The Moonwell releases a silver ribbon of water.",
     },
@@ -64,7 +73,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-ducks-twelve",
       order: 2,
-      nodeId: "multiply",
+      nodeId: multiplier,
       tone: "magic",
       message: "Multiply fires before targeting: twelve lunar ducks arrive.",
     });
@@ -72,7 +81,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-ducks-preserved",
       order: 2,
-      nodeId: "summon-ducks",
+      nodeId: subject,
       tone: "magic",
       message: "The lunar ducks remain part of the spell.",
     });
@@ -81,7 +90,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-umbrellas",
       order: 3,
-      nodeId: "umbrella",
+      nodeId: safeguard,
       tone: "magic",
       message: "Tiny umbrellas open and catch the falling water.",
     });
@@ -90,7 +99,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-flood",
       order: events.length + 1,
-      nodeId: "room",
+      nodeId: failureTarget,
       tone: "danger",
       message: "With no bounded target, the ducks pour water across the room.",
     });
@@ -99,7 +108,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-water-flower",
       order: events.length + 1,
-      nodeId: "moonflower",
+      nodeId: goalTarget,
       tone: "success",
       message: "Umbrella rain falls gently onto the Moonflower.",
     });
@@ -108,7 +117,7 @@ export function simulateCast(graph: SpellGraph): CastResult {
     events.push({
       id: "event-bloom",
       order: events.length + 1,
-      nodeId: "bloom",
+      nodeId: goalSink,
       tone: "success",
       message: "The Moonflower opens. The spell settles without a flood.",
     });
@@ -117,11 +126,11 @@ export function simulateCast(graph: SpellGraph): CastResult {
   const sideEffects: SideEffect[] = roomFlooded
     ? [
         {
-          id: "flooded-observatory",
+          id: graph.semantics.effectId,
           label: "Observatory flooded by twelve enthusiastic ducks",
           severity: "messy",
-          responsibleNodeIds: ["moonwell", "multiply", "summon-ducks", "pour", "room"],
-          responsibleEdgeIds: ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"],
+          responsibleNodeIds: [source, multiplier, subject, action, failureTarget],
+          responsibleEdgeIds: graph.semantics.initialRouteEdgeIds,
         },
       ]
     : [];

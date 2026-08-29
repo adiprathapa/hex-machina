@@ -44,7 +44,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /Agent Gym · evaluation mode/);
   assert.match(client, /instrumentSpellToolHandlers/);
   assert.match(client, /Export episode JSON/);
-  assert.match(client, /single-scenario research prototype/i);
+  assert.match(client, /48 variants · held-out test split/i);
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);

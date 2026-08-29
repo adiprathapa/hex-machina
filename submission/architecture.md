@@ -17,6 +17,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, and atomic patch application.
 - `src/domain/patch-preview.ts`: deterministic translation from structural operations to the human-review ledger and canvas overlay.
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
+- `src/scenarios/agent-gym-family.ts`: 48 seeded variants with opaque role/edge/effect IDs, stable shuffling, layout jitter, prompt paraphrases, and disjoint 32/8/8 train/validation/test splits.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
 - `src/solver/trace.ts`: deterministic bounded directed traversal, ordered path evidence, cycle detection, and structural type diagnostics.
@@ -37,7 +38,11 @@ The evaluation protocol does not reimplement game logic. It wraps the same seven
 
 The reference trajectory has nine milestones and a maximum score of 23: inspect, observe failure, trace, explain, preserve intent, propose, preview safely, apply, and verify. Invalid or stale actions score −2, while mutation before explanation scores an additional −5. Repeated milestones receive a small efficiency penalty. Completion requires a successful cast after an applied repair. Because the scenario and handlers are deterministic, identical policies serialize to identical trajectories.
 
-This makes Hex Machina useful as an evaluation harness and trajectory generator today. It is not yet a general RL training service: scenario generation, held-out task families, rollout infrastructure, and learned-policy experiments remain subsequent research work.
+The family generator prevents a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after discovering their live IDs through `inspect_spell`; reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. All 48 variants validate and reproduce byte-identically from their split and index.
+
+`npm run --silent gym:benchmark` executes the transparent inspection-driven reference policy across all splits and emits a machine-readable receipt. The expected baseline is 48/48 completed episodes, nine steps each, and a mean score of 23 in every split. This is a reproducibility check for the environment, not evidence of a learned policy.
+
+This makes Hex Machina useful as a within-family evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, rollout infrastructure, and learned-policy experiments remain subsequent research work.
 
 ## Mutation protocol
 

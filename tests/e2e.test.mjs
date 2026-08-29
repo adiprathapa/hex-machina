@@ -36,7 +36,7 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /Local spell console/);
   assert.match(html, /Agent Gym · evaluation mode/);
   assert.match(html, /Scored semantic episode/);
-  assert.match(html, /Single-scenario research prototype/);
+  assert.match(html, /48 variants · held-out test split/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/);
 });
 

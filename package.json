@@ -15,6 +15,7 @@
     "test:deployment": "node --test tests/deployment-readiness.test.mjs",
     "test:submission": "node --test tests/submission-package.test.mjs",
     "capture:submission": "npm run build && node submission/screenshots/capture.mjs",
+    "gym:benchmark": "tsx scripts/benchmark-agent-gym.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
