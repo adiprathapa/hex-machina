@@ -587,9 +587,12 @@ export function HexMachina() {
 
             <p className="canvas-hint">Drag runes to rearrange · Arrow keys nudge</p>
 
-            <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
-              {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}
-            </div>
+          </div>
+
+          {/* Below the canvas, not over it: an overlay verdict hid the runes it
+              was describing, including the dormant ones a repair has to use. */}
+          <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
+            {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}
           </div>
 
           <footer className={`node-inspector ${connectSource ? "connection-active" : ""}`}>
