@@ -10,7 +10,7 @@
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/agent-gym.test.mjs tests/agent-gym-constraint.test.mjs tests/agent-gym-diversity.test.mjs tests/agent-gym-evidence.test.mjs tests/agent-gym-protocol.test.mjs tests/familiar-gnn.test.mjs tests/rendered-html.test.mjs tests/spell-engine.test.mjs tests/webmcp-tools.test.mjs",
+    "test": "tsx --test tests/agent-gym.test.mjs tests/agent-gym-constraint.test.mjs tests/agent-gym-diversity.test.mjs tests/agent-gym-evidence.test.mjs tests/agent-gym-transfer.test.mjs tests/agent-gym-protocol.test.mjs tests/familiar-gnn.test.mjs tests/rendered-html.test.mjs tests/spell-engine.test.mjs tests/webmcp-tools.test.mjs",
     "test:e2e": "node --test tests/e2e.test.mjs tests/browser-journey.test.mjs",
     "test:deployment": "node --test tests/deployment-readiness.test.mjs",
     "test:submission": "node --test tests/submission-package.test.mjs",
@@ -20,6 +20,7 @@
     "gym:dataset": "tsx scripts/export-agent-gym-dataset.ts",
     "gym:constraint": "tsx scripts/audit-agent-gym-constraint.ts",
     "gym:evidence": "tsx scripts/report-agent-gym-evidence.ts",
+    "gym:transfer": "tsx scripts/benchmark-structural-transfer.ts",
     "gym:verify": "tsx scripts/verify-agent-gym-dataset.ts",
     "gym:serve": "tsx scripts/serve-agent-gym.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"

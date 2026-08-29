@@ -26,6 +26,13 @@ test("the evidence bundle asserts every headline claim and they all hold", async
   assert.equal(report.claims.grounding.completed, report.claims.grounding.episodes);
   assert.equal(report.claims.grounding.meanScore, 23);
 
+  assert.equal(report.claims.structuralTransfer.holds, true);
+  for (const protocol of report.claims.structuralTransfer.protocols) {
+    assert.equal(protocol.groundedCompletionRate, 1, `${protocol.heldOutFamily} must transfer`);
+    assert.equal(protocol.memorizingCompletionRate, 0, "memorization must not transfer");
+    assert.ok(protocol.separation > 0);
+  }
+
   assert.equal(report.claims.constraintPreservation.holds, true);
   for (const split of report.claims.constraintPreservation.splits) {
     assert.equal(split.verdict, "priced", `${split.split} must price constraint violation`);
@@ -77,6 +84,7 @@ test("the rendered report states each verdict a judge needs to read", async () =
     "Deterministic replay",
     "Held-out grounding",
     "Reward separation",
+    "Structural transfer",
     "Constraint preservation",
     "What a held-out score here does and does not show",
   ]) {

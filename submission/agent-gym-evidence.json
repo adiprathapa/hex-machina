@@ -97,6 +97,34 @@
       ],
       "holds": true
     },
+    "structuralTransfer": {
+      "claim": "A grounded policy solves a scenario family whose structure was withheld from training; a policy that memorized training vocabulary does not.",
+      "protocols": [
+        {
+          "heldOutFamily": "family-01-v1",
+          "trainingFamilies": [
+            "family-02-v1"
+          ],
+          "groundedMeanScore": 23,
+          "groundedCompletionRate": 1,
+          "memorizingMeanScore": -1,
+          "memorizingCompletionRate": 0,
+          "separation": 24
+        },
+        {
+          "heldOutFamily": "family-02-v1",
+          "trainingFamilies": [
+            "family-01-v1"
+          ],
+          "groundedMeanScore": 23,
+          "groundedCompletionRate": 1,
+          "memorizingMeanScore": -1,
+          "memorizingCompletionRate": 0,
+          "separation": 24
+        }
+      ],
+      "holds": true
+    },
     "constraintPreservation": {
       "claim": "Reaching the goal by discarding what the human protected is scored as a failure.",
       "splits": [
@@ -129,5 +157,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:d3e0077fc292e8f9"
+  "evidenceDigest": "sha256:c4a259765f5c1038"
 }

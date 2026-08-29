@@ -52,6 +52,56 @@ function structuralFingerprint(graph: SpellGraph) {
   })).digest("hex").slice(0, 16);
 }
 
+/**
+ * Diversity under a transfer protocol that withholds one family.
+ *
+ * The default splits hold out identifiers. A transfer protocol holds out a
+ * structure, so the same measurement applied to it reports the stronger scope —
+ * which is the point of having the measurement drive the claim rather than the
+ * other way round.
+ */
+export function measureTransferDiversity(
+  heldOutFamily: AgentGymFamilyId,
+  trainingFamilies: AgentGymFamilyId[],
+) {
+  const structuresInTraining = new Set<string>();
+  for (const family of trainingFamilies) {
+    for (const split of ["train", "validation"] as AgentGymSplit[]) {
+      for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[family][split]; index += 1) {
+        structuresInTraining.add(
+          structuralFingerprint(generateAgentGymScenarioForFamily(family, split, index).graph),
+        );
+      }
+    }
+  }
+
+  const evaluatedStructures = new Set<string>();
+  for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[heldOutFamily].test; index += 1) {
+    evaluatedStructures.add(
+      structuralFingerprint(generateAgentGymScenarioForFamily(heldOutFamily, "test", index).graph),
+    );
+  }
+
+  const unseen = [...evaluatedStructures].filter(
+    (fingerprint) => !structuresInTraining.has(fingerprint),
+  );
+  const heldOutScope: HeldOutScope = unseen.length > 0 ? "structural" : "identifier-and-layout";
+
+  return {
+    protocol: AGENT_GYM_DIVERSITY_PROTOCOL,
+    mode: "transfer" as const,
+    heldOutFamily,
+    trainingFamilies,
+    structuresInTraining: structuresInTraining.size,
+    structuresEvaluated: evaluatedStructures.size,
+    evaluatedStructuresUnseenInTraining: unseen.length,
+    heldOutScope,
+    supportedClaim: unseen.length > 0
+      ? `Scores under this protocol are evidence of generalization to a graph structure training never contained: ${unseen.length} of ${evaluatedStructures.size} evaluated structures are absent from the training families.`
+      : "This protocol withholds no structure, so its scores are evidence of identifier and layout robustness only.",
+  };
+}
+
 export function measureAgentGymFamilyDiversity() {
   const families = Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
   const splits = ["train", "validation", "test"] as AgentGymSplit[];

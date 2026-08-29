@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { auditAgentGymConstraintPreservation } from "./constraint-audit.ts";
 import { measureAgentGymFamilyDiversity } from "./family-diversity.ts";
+import { benchmarkStructuralTransfer } from "./transfer-protocol.ts";
 import { benchmarkAgentGymPolicies } from "./policy-benchmark.ts";
 import {
   benchmarkAgentGymFamily,
@@ -41,6 +42,7 @@ export async function buildAgentGymEvidence() {
   for (const split of SPLITS) constraint.push(await auditAgentGymConstraintPreservation(split));
 
   const diversity = measureAgentGymFamilyDiversity();
+  const transfer = await benchmarkStructuralTransfer();
   const dataset = serializeAgentGymDatasetJsonl(await collectAgentGymDataset());
   const replay = await verifyAgentGymDatasetJsonl(dataset);
 
@@ -80,6 +82,19 @@ export async function buildAgentGymEvidence() {
         return grounded !== undefined && scores.every((score) => score <= grounded.meanScore)
           && new Set(scores).size === scores.length;
       })(),
+    },
+    structuralTransfer: {
+      claim: "A grounded policy solves a scenario family whose structure was withheld from training; a policy that memorized training vocabulary does not.",
+      protocols: transfer.results.map((result) => ({
+        heldOutFamily: result.heldOutFamily,
+        trainingFamilies: result.trainingFamilies,
+        groundedMeanScore: result.policies.grounded.meanScore,
+        groundedCompletionRate: result.policies.grounded.completionRate,
+        memorizingMeanScore: result.policies.memorizing.meanScore,
+        memorizingCompletionRate: result.policies.memorizing.completionRate,
+        separation: result.separation,
+      })),
+      holds: transfer.holds,
     },
     constraintPreservation: {
       claim: "Reaching the goal by discarding what the human protected is scored as a failure.",
@@ -126,6 +141,7 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     `| Held-out grounding | ${mark(report.claims.grounding.holds)} | ${report.claims.grounding.completed}/${report.claims.grounding.episodes} complete, mean score ${report.claims.grounding.meanScore} |`,
     `| Task diversity | measured | ${report.taskDiversity.scenarioCount} scenarios, ${report.taskDiversity.structuralDiversity.distinctStructures} distinct structure(s), held out: ${report.taskDiversity.heldOutScope} |`,
     `| Reward separation | ${mark(report.claims.rewardSeparation.holds)} | ${report.claims.rewardSeparation.policies.map((policy) => `${policy.policyId} ${policy.meanScore}`).join(", ")} |`,
+    `| Structural transfer | ${mark(report.claims.structuralTransfer.holds)} | ${report.claims.structuralTransfer.protocols.map((protocol) => `hold out ${protocol.heldOutFamily}: grounded ${protocol.groundedMeanScore} vs memorizing ${protocol.memorizingMeanScore}`).join(", ")} |`,
     `| Constraint preservation | ${mark(report.claims.constraintPreservation.holds)} | ${report.claims.constraintPreservation.splits.map((split) => `${split.split} ${split.verdict} (grounded ${split.groundedMeanScore} vs violating ${split.violatingMeanScore})`).join(", ")} |`,
     "",
     "## Policy contrast on the held-out test split",
@@ -147,6 +163,16 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     `| Distinct graph structures | ${report.taskDiversity.structuralDiversity.distinctStructures} |`,
     `| Test structures unseen in training | ${report.taskDiversity.structuralDiversity.testStructuresUnseenInTraining} |`,
     `| Objectives recurring across splits | ${report.taskDiversity.promptDiversity.objectivesSharedAcrossSplits} of ${report.taskDiversity.promptDiversity.distinctObjectives} |`,
+    "",
+    "## Structural transfer",
+    "",
+    "Each family is withheld from training in turn and evaluated on its own test split. The default splits hold out identifiers; this protocol holds out a graph structure.",
+    "",
+    "| Held-out family | Trained on | Grounded score | Grounded completion | Memorizing score | Memorizing completion |",
+    "| --- | --- | --- | --- | --- | --- |",
+    ...report.claims.structuralTransfer.protocols.map((protocol) => (
+      `| ${protocol.heldOutFamily} | ${protocol.trainingFamilies.join(", ")} | ${protocol.groundedMeanScore} | ${(protocol.groundedCompletionRate * 100).toFixed(0)}% | ${protocol.memorizingMeanScore} | ${(protocol.memorizingCompletionRate * 100).toFixed(0)}% |`
+    )),
     "",
     "## Constraint preservation",
     "",
