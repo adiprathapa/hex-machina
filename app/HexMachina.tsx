@@ -700,7 +700,7 @@ export function HexMachina() {
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
             <div className="gym-foot">
-              <small>48 variants · held-out test split</small>
+              <small>48 variants · live + offline rollouts</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>

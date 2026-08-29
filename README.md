@@ -32,6 +32,31 @@ npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
 
 Omit `--split` to export all 48 episodes. Each line contains one complete episode with its task metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
 
+Drive live online rollouts from any process over a strict newline-delimited protocol:
+
+```bash
+npm run --silent gym:serve
+```
+
+Write one JSON request per line to stdin and read one correlated response per line from stdout. The operations are `describe`, `reset`, `step`, and `snapshot`; transport errors stay separate from scored agent mistakes, so a bad action cannot crash or desynchronize a training run. For example:
+
+```json
+{"id":1,"op":"reset","split":"test","index":0}
+{"id":2,"op":"step","action":{"tool":"inspect_spell","input":{}}}
+```
+
+[`adapters/hex_machina_env.py`](adapters/hex_machina_env.py) wraps that bridge with dependency-free, Gymnasium-shaped Python `reset()` and `step()` signatures. It launches the exact TypeScript environment and shared production handlers rather than maintaining a Python simulator fork:
+
+```python
+from adapters.hex_machina_env import HexMachinaEnv
+
+with HexMachinaEnv() as env:
+    observation, info = env.reset("train", 0)
+    observation, reward, terminated, truncated, info = env.step(
+        {"tool": "inspect_spell", "input": {}}
+    )
+```
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and Python 3.11 or newer.
@@ -91,7 +116,8 @@ The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages th
 - `src/solver/` — causal diagnosis and constraint-aware repair search
 - `src/tools/` — shared semantic handlers and guarded WebMCP registration
 - `src/familiar/` — optional deterministic message-passing suspect ranking
-- `src/eval/` — deterministic Agent Gym reset/step protocol, rewards, and trajectory capture
+- `src/eval/` — deterministic Agent Gym reset/step protocol, rewards, trajectory capture, and JSONL rollout bridge
+- `adapters/` — dependency-free Python client with Gymnasium-shaped signatures
 - `app/` — the visual spell canvas and local fallback console
 - `tests/` — graph, simulation, repair, and WebMCP contract coverage
 - `submission/screenshots/` — verified 1280×720 judge-journey evidence

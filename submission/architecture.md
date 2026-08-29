@@ -46,7 +46,9 @@ The family generator prevents a policy from succeeding by memorizing canonical I
 
 `npm run --silent gym:dataset -- --split=test` emits newline-delimited `hex-machina-agent-gym-episode/v1` records. Each episode contains replay-complete transition observations and state keys; omitting the split exports all 48 baseline rollouts without writing files or contacting an external service.
 
-This makes Hex Machina useful as a within-family evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, rollout infrastructure, and learned-policy experiments remain subsequent research work.
+`npm run --silent gym:serve` exposes the same environment as a stateful newline-delimited subprocess protocol. Correlated `describe`, `reset`, `step`, and `snapshot` operations keep transport failures distinct from scored agent mistakes and never write logs to stdout. The dependency-free Python adapter exposes Gymnasium-shaped return signatures while delegating every transition to the TypeScript process, avoiding a second simulator or reward implementation. Cross-process tests drive a held-out validation scenario through this exact path.
+
+This makes Hex Machina useful as a within-family online evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, parallel rollout orchestration, and learned-policy experiments remain subsequent research work.
 
 ## Mutation protocol
 

@@ -432,12 +432,15 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "truncated",
             "serializeAgentGymDatasetJsonl",
             "hex-machina-agent-gym-episode/v1",
+            "hex-machina-agent-gym/jsonl-v1",
+            "createAgentGymJsonlBridge",
+            "HexMachinaEnv",
             "instrumentSpellToolHandlers",
             "createAgentGymEnvironment",
             "trajectory",
             "rewardDelta",
         )
-    )
+    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists()
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -546,7 +549,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose rollout-safe reset/step, 48 split variants, replay observations, rewards, termination flags, and JSONL export" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
+            "shared handlers expose rollout-safe reset/step, 48 split variants, replay observations, rewards, JSONL datasets, and live Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]
