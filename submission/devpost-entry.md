@@ -40,6 +40,55 @@ Three semantic families contain 96 deterministic tasks: 48 Moonflower carrier-pa
 
 The reproducible benchmark command runs the transparent reference policy over all 96 variants in three distinct causal families and emits JSON episode receipts and split means. It currently reports 96/96 completions at 23/23. Moonflower requires repairing an unshielded amplified carrier path; Resonant Aviary requires detecting and breaking a reachable directed feedback cycle; Clockwork Orchard requires adding a missing temporal guard before a preserved subject can act safely. A held-out contrast suite proves that the reward separates grounded completion (23), unsafe mutation-first completion (18), safe but incomplete diagnosis (6), and canonical-ID memorization (−8); its aggregate results are visible in the product. A v2 JSONL exporter emits standalone training episodes containing the task prompt, human constraint, initial public graph/state key, complete tool manifest, replay-complete transitions, rewards, termination/truncation flags, results, and variant metadata. An independent bounded verifier reconstructs each task, authenticates its entire reset context, and replays every action through production handlers; altered metadata, actions, rewards, observations, results, terminal scores, reset prompts, initial graphs/state keys, manifests, or duplicate scenarios make it exit nonzero. A strict streaming JSONL service and dependency-free Python adapters let an external trainer drive those same production transitions online as one environment or as isolated parallel vectors with Gymnasium-shaped reset/step results. The service is self-describing: `describe` and every reset provide `hex-machina-tool-manifest/v1`, with the exact tool-call envelope, descriptions, narrow JSON Schemas, and read/write annotations generated from the same definitions as browser WebMCP registration. The generic manifest contains no task-specific opaque IDs. Seeded resets select reproducibly across all tasks or within a family-restricted curriculum, and their receipts expose the exact sampler, family, index, and scenario chosen. Invalid calls are scored without crashing the rollout, and unfinished episodes truncate deterministically at 32 actions. These validate the environment and scripted controls, not a learned-policy result.
 
+## What adversarial testing found
+
+An evaluation environment is worth what it survives, so this one was attacked
+deliberately. The attacks are kept runnable rather than described, and every
+number below regenerates with `npm run gym:evidence`.
+
+**The reward ignored the human's constraint.** A policy that diagnosed the
+failure correctly, declined to lock the constraint so the destructive repair
+stayed eligible, applied it and recast was graded `goal-verified` at 20/23 on
+every test scenario in every family, with the protected branch orphaned in all
+of them. It was indistinguishable from the grounded reference on score,
+completion, unsafe-episode rate, invalid-action rate and step count. The
+mechanism was always sound — patch search really does drop the destructive
+candidate once a constraint is locked — but the evaluation never required
+anyone to use it. Reaching the goal by discarding what the human protected now
+ends the episode as `constraint-violated`, and that policy scores 4. It is a
+visible row in the on-screen baseline table, because the point is that it looks
+clean on every other column.
+
+**The advertised tool schemas were locked to one scenario.** Rune and effect
+enums were built from a hardcoded scenario at registration time, so on any
+other family the only correct arguments were schema-invalid and the two tools
+carrying the human-constraint story were uncallable by a schema-conforming
+agent. Registration now describes the graph it is registering for — and
+deliberately does not enumerate the protected rune, since that is the answer an
+agent is meant to ground from the human's stated constraint.
+
+**Registration gave up if the host was slow.** `document.modelContext` was
+feature-detected exactly once, so an agent runtime that installed its model
+context after mount found no tools at all and the page reported WebMCP as
+unsupported. Registration now waits for the host, bounded and abort-scoped.
+
+**The human approval card promised a protection that was not set.** Its footer
+was a hardcoded string claiming the ducks were sacred, on a card whose own edit
+ledger disconnected the duck branch, for the patch that deletes them. It now
+reports what the patch actually preserves, in rune names rather than internal
+identifiers, or says plainly that nothing is protected.
+
+**The splits held out identifiers, not structure.** Measured rather than
+asserted: the suite fingerprints every task and derives the claim a held-out
+score is entitled to support. A separate transfer protocol withholds an entire
+family — a grounded policy scores 23/23 with every constraint preserved on a
+structure it never saw, while an otherwise identical policy that memorized the
+training family's vocabulary scores −1 and completes nothing.
+
+The audit's negative results are recorded too, and the limitations it did not
+fix are stated in `submission/agent-gym-adversarial-audit.md` rather than
+omitted.
+
 ## How WebMCP was implemented
 
 - `document.modelContext.registerTool()` is feature-detected and registers exactly seven lifecycle-scoped tools.
@@ -63,6 +112,15 @@ The project is a complete responsive game and split-aware agent-evaluation envir
 ### Potential impact
 
 Hex Machina gives builders and users a concrete model for agent-native interfaces: expose structured application state, let people author subjective constraints, make proposals reviewable, and require the application to prove every mutation. This replaces fragile pixel automation with trustworthy collaboration.
+
+### Trustworthiness
+
+The environment is adversarially tested against itself, and the exploits stay
+in the suite as permanent regressions rather than being fixed and forgotten.
+Every claim in `submission/agent-gym-evidence.md` is content-addressed and
+regenerates from one command, so a changed digest means a claim moved. Where a
+measurement does not support a stronger claim, the suite says so and a test
+prevents the stronger claim from being made.
 
 ### Creativity and ambition
 
