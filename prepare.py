@@ -443,6 +443,8 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "truncated",
             "serializeAgentGymDatasetJsonl",
             "hex-machina-agent-gym-episode/v1",
+            "verifyAgentGymDatasetJsonl",
+            "hex-machina-agent-gym-replay-verifier/v1",
             "hex-machina-agent-gym-policy-benchmark/v1",
             "benchmarkAgentGymPolicies",
             "AGENT_GYM_POLICY_BASELINES",
@@ -455,7 +457,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "trajectory",
             "rewardDelta",
         )
-    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists()
+    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists()
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -569,7 +571,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose rollout-safe reset/step, 72 variants across two causal families, contrast policies, replay observations, JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split families, or shared-handler instrumentation missing",
+            "shared handlers expose rollout-safe reset/step, 72 variants across two causal families, contrast policies, replay observations, independently verified JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split families, replay verifier, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

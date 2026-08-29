@@ -21,6 +21,7 @@ import {
   getAgentGymSplitManifest,
 } from "../src/scenarios/agent-gym-family.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
+import { verifyAgentGymDatasetJsonl } from "../src/eval/replay-verifier.ts";
 
 async function runReferenceEpisode(options) {
   const gym = createAgentGymEnvironment(options);
@@ -182,7 +183,8 @@ test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized
 
 test("dataset exporter emits replay-complete JSONL for a requested split", async () => {
   const episodes = await collectAgentGymDataset("test");
-  const lines = serializeAgentGymDatasetJsonl(episodes).trim().split("\n").map(JSON.parse);
+  const jsonl = serializeAgentGymDatasetJsonl(episodes);
+  const lines = jsonl.trim().split("\n").map(JSON.parse);
   assert.equal(lines.length, 12);
   assert.deepEqual(new Set(lines.map((line) => line.familyId)), new Set([
     AGENT_GYM_FAMILY_IDS.moonflower,
@@ -192,6 +194,7 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   assert.equal(lines.every((line) => line.split === "test" && line.score === 23), true);
   assert.equal(lines.every((line) => line.terminationReason === "goal-verified"), true);
   assert.equal(lines.every((line) => line.transitions.length === 9), true);
+  assert.equal(lines.every((line) => Number.isInteger(line.variantIndex)), true);
   assert.equal(lines.every((line) => line.transitions.every((transition) => (
     transition.observationBefore &&
     transition.observationAfter &&
@@ -201,6 +204,50 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
     /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyAfter)
   ))), true);
   assert.equal(lines.every((line) => !Object.hasOwn(line.transitions[0].result, "semantics")), true);
+
+  const verified = await verifyAgentGymDatasetJsonl(jsonl);
+  assert.deepEqual(verified, {
+    protocol: "hex-machina-agent-gym-replay-verifier/v1",
+    valid: true,
+    episodeCount: 12,
+    verifiedEpisodes: 12,
+    issueCount: 0,
+    issues: [],
+  });
+
+  const tampered = structuredClone(lines);
+  tampered[0].transitions[1].rewardDelta += 100;
+  const rejected = await verifyAgentGymDatasetJsonl(`${tampered.map(JSON.stringify).join("\n")}\n`);
+  assert.equal(rejected.valid, false);
+  assert.equal(rejected.verifiedEpisodes, 11);
+  assert.deepEqual(rejected.issues[0], {
+    line: 1,
+    scenarioId: "task-01-test-00",
+    transitionIndex: 1,
+    code: "transition-mismatch",
+    message: "Recorded transition differs from deterministic replay",
+  });
+
+  for (const mutate of [
+    (records) => { records[0].transitions[0].observationAfter.nodes[0].label = "forged rune"; },
+    (records) => { records[0].transitions[0].tool = "simulate_cast"; },
+  ]) {
+    const forged = structuredClone(lines);
+    mutate(forged);
+    const result = await verifyAgentGymDatasetJsonl(`${forged.map(JSON.stringify).join("\n")}\n`);
+    assert.equal(result.valid, false);
+    assert.equal(result.issues[0].code, "transition-mismatch");
+  }
+
+  const forgedMetadata = structuredClone(lines);
+  forgedMetadata[0].seed += 1;
+  const metadataResult = await verifyAgentGymDatasetJsonl(`${forgedMetadata.map(JSON.stringify).join("\n")}\n`);
+  assert.equal(metadataResult.valid, false);
+  assert.equal(metadataResult.issues[0].code, "metadata-mismatch");
+
+  const duplicateResult = await verifyAgentGymDatasetJsonl(`${[...lines, lines[0]].map(JSON.stringify).join("\n")}\n`);
+  assert.equal(duplicateResult.valid, false);
+  assert.equal(duplicateResult.issues[0].code, "duplicate-scenario");
 });
 
 test("memorized IDs from training fail safely on a held-out graph", async () => {

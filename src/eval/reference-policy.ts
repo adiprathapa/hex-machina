@@ -1,5 +1,6 @@
 import { createAgentGymEnvironment, type AgentGymSnapshot } from "./agent-gym.ts";
 import type { RuneNode } from "../domain/spell.ts";
+import { AGENT_GYM_DATASET_SCHEMA } from "./replay-verifier.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   type AgentGymFamilyId,
@@ -136,10 +137,11 @@ export async function collectAgentGymDataset(split?: AgentGymSplit) {
 
 export function serializeAgentGymDatasetJsonl(episodes: AgentGymSnapshot[]) {
   return `${episodes.map((episode) => JSON.stringify({
-    schema: "hex-machina-agent-gym-episode/v1",
+    schema: AGENT_GYM_DATASET_SCHEMA,
     familyId: episode.familyId,
     scenarioId: episode.scenarioId,
     split: episode.split,
+    variantIndex: episode.variantIndex,
     seed: episode.seed,
     objective: episode.objective,
     status: episode.status,

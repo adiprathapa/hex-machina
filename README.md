@@ -38,7 +38,15 @@ Export replay-complete JSONL for offline analysis or dataset prototyping:
 npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
 ```
 
-Omit `--split` to export all 72 episodes across both causal families. Each line contains one complete episode with its task metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
+Omit `--split` to export all 72 episodes across both causal families. Each line contains one complete episode with explicit family/split/variant metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
+
+Independently replay every episode before trusting a dataset:
+
+```bash
+npm run --silent gym:dataset -- --split=test | npm run --silent gym:verify
+```
+
+The verifier reconstructs each deterministic task and replays every recorded action through the production handlers. It exits nonzero if metadata, actions, rewards, observations, state keys, results, terminal scores, or scenario uniqueness differ from replay. Input is capped at 20 MiB and 1,000 episodes so untrusted JSONL cannot request an unbounded verification run.
 
 Drive live online rollouts from any process over a strict newline-delimited protocol:
 

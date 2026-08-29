@@ -18,6 +18,7 @@
     "gym:benchmark": "tsx scripts/benchmark-agent-gym.ts",
     "gym:policies": "tsx scripts/benchmark-agent-gym-policies.ts",
     "gym:dataset": "tsx scripts/export-agent-gym-dataset.ts",
+    "gym:verify": "tsx scripts/verify-agent-gym-dataset.ts",
     "gym:serve": "tsx scripts/serve-agent-gym.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },

@@ -67,6 +67,9 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /pre-cast diagnostic assertions/i);
   assert.match(copy, /not a learned-policy result/i);
   assert.match(copy, /JSONL exporter/i);
+  assert.match(copy, /independent bounded verifier/i);
+  assert.match(copy, /altered metadata, actions, rewards/i);
+  assert.match(copy, /duplicate scenarios/i);
   assert.match(copy, /termination\/truncation flags/i);
   assert.match(copy, /32 actions/i);
   assert.match(copy, /streaming JSONL service/i);
