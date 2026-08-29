@@ -293,6 +293,20 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       return { requestedId: sideEffectId, ...explanation };
     },
     set_sacred_constraint: async (input: unknown = {}) => {
+      const releaseConstraint = (before: SpellGraph, targetId: string) => {
+        const next = cloneGraph(before);
+        next.constraints = next.constraints.filter((constraint) => constraint.targetId !== targetId);
+        next.version += 1;
+        context.setGraph(next);
+        context.recordActivity("set_sacred_constraint", `Released ${targetId}.`, [targetId]);
+        context.presentResult?.({ tool: "set_sacred_constraint" });
+        return {
+          beforeVersion: before.version,
+          graphVersion: next.version,
+          before: before.constraints.map((constraint) => ({ ...constraint })),
+          after: next.constraints.map((constraint) => ({ ...constraint })),
+        };
+      };
       const parsed = requireToolInput(input, "set_sacred_constraint", ["targetId", "reason", "preserve"]);
       const targetId = requireString(parsed.targetId, "targetId");
       const preserve = parsed.preserve === undefined ? true : parsed.preserve;
@@ -300,6 +314,12 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       const before = context.getGraph();
       requireNode(before, targetId);
       if (targetId !== before.semantics.roles.subject) throw new Error(`Unsupported sacred target: ${targetId}`);
+      // `reason` records why the human wants a rune kept, so it is required to
+      // set a lock and meaningless to release one. Demanding it on release made
+      // an agent invent a justification that is immediately discarded.
+      if (!preserve && parsed.reason === undefined) {
+        return releaseConstraint(before, targetId);
+      }
       const reason = requireShortText(requireString(parsed.reason, "reason"), "Constraint reason", 180);
       const next = cloneGraph(before);
       const id = `sacred-${targetId}`;
@@ -321,7 +341,14 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       context.setGraph(next);
       context.recordActivity("set_sacred_constraint", !preserve ? `Released ${targetId}.` : `Protected ${targetId}: ${reason}`, [targetId]);
       context.presentResult?.({ tool: "set_sacred_constraint" });
-      return { graphVersion: next.version, before: before.constraints, after: next.constraints };
+      return {
+        beforeVersion: before.version,
+        graphVersion: next.version,
+        // Cloned: returning the live arrays let one result mutate another's,
+        // and shared mutable state is not "exact before/after evidence".
+        before: before.constraints.map((constraint) => ({ ...constraint })),
+        after: next.constraints.map((constraint) => ({ ...constraint })),
+      };
     },
     propose_spell_patch: async (input: unknown = {}) => {
       requireToolInput(input, "propose_spell_patch", []);
@@ -357,8 +384,16 @@ export function createSpellToolHandlers(context: SpellToolContext) {
           throw new Error("Invalid revert token");
         }
         const current = context.getGraph();
-        if (!reversiblePatch || revertToken !== reversiblePatch.token) {
-          throw new Error("Revert token is unavailable or has already been used");
+        if (!reversiblePatch) {
+          throw new Error("No patch is currently reversible; apply a patch before reverting one");
+        }
+        if (revertToken !== reversiblePatch.token) {
+          // The old message said the token was unavailable or used, which is
+          // misleading when a different, still-valid token exists: it tells an
+          // agent rollback is gone when rollback is available.
+          throw new Error(
+            "Revert token does not match the reversible patch; use the revertToken returned by the last apply_spell_patch",
+          );
         }
         if (current.version !== reversiblePatch.appliedVersion) {
           throw new Error(

@@ -264,7 +264,8 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(graph.constraints.some((constraint) => constraint.targetId === "summon-ducks"), true);
   await assert.rejects(
     handlers.apply_spell_patch({ revertToken: result.revertToken }),
-    /unavailable or has already been used/,
+    /No patch is currently reversible/,
+    "a consumed token must say nothing is reversible, not that the token is unrecognised",
   );
   assert.deepEqual(
     new Set(events.map((event) => event.tool)),
@@ -361,7 +362,7 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
   );
   await assert.rejects(
     handlers.apply_spell_patch({ revertToken: "revert-patch-direct-v1-after-v2" }),
-    /unavailable or has already been used/,
+    /No patch is currently reversible/,
   );
   await assert.rejects(
     handlers.apply_spell_patch({ patchId: "anything" }),
