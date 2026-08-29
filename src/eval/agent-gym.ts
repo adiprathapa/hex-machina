@@ -7,6 +7,7 @@ import {
 } from "../domain/spell.ts";
 import {
   generateAgentGymScenarioForFamily,
+  AGENT_GYM_FAMILY_IDS,
   type AgentGymScenarioVariant,
   type AgentGymFamilyId,
   type AgentGymSplit,
@@ -93,7 +94,7 @@ interface AgentGymSessionConfig {
 }
 
 const CANONICAL_SESSION: AgentGymSessionConfig = {
-  familyId: "moonflower-opaque-roles-v1",
+  familyId: AGENT_GYM_FAMILY_IDS.moonflower,
   scenarioId: "moonflower-01",
   seed: 12012,
   objective: "Diagnose and repair the spell while preserving the human's ducks.",
@@ -338,7 +339,7 @@ export function instrumentSpellToolHandlers(
 
 export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId; split: AgentGymSplit; index: number }) {
   const variant: AgentGymScenarioVariant | null = options
-    ? generateAgentGymScenarioForFamily(options.family ?? "moonflower-opaque-roles-v1", options.split, options.index)
+    ? generateAgentGymScenarioForFamily(options.family ?? AGENT_GYM_FAMILY_IDS.moonflower, options.split, options.index)
     : null;
   const initialGraph = variant?.graph ?? createMoonflowerScenario();
   let graph = cloneGraph(initialGraph);

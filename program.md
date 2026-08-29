@@ -48,7 +48,7 @@ Hex Machina is done only when all of the following are true:
 12. Unit, integration, production-build, and browser smoke tests pass through `python3 prepare.py`.
 13. The deployed experience has been tested in a WebMCP-capable in-app browser.
 14. A submission package exists with a concise description, architecture summary, tool list, repository instructions, screenshots, and a 60–90 second demo script.
-15. The same production handlers power a deterministic Agent Gym episode with reset/step semantics, explicit reward and termination flags, bounded rollouts, replayable public before/after observations, visible scoring, negative rewards for invalid or premature actions, exportable JSON/JSONL trajectories, streaming JSONL/Python adapters for online and vectorized training loops, and executable contrast policies proving reward separation. Private simulator roles and answer-key edges must never appear in agent observations. Patch IDs must be proposal-issued capabilities, never guessable write authorization.
+15. The same production handlers power a deterministic Agent Gym episode with reset/step semantics, explicit reward and termination flags, bounded rollouts, replayable public before/after observations, visible scoring, negative rewards for invalid or premature actions, exportable JSON/JSONL trajectories, streaming JSONL/Python adapters for online and vectorized training loops, and executable contrast policies proving reward separation. Private simulator roles, answer-key edges, rule-revealing metadata, and pre-cast diagnostic assertions must never appear in agent observations. Patch IDs must be proposal-issued capabilities, never guessable write authorization.
 
 ## Product boundaries
 

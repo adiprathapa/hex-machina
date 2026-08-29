@@ -15,6 +15,7 @@ import {
 } from "../src/eval/reference-policy.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_IDS,
   generateAgentGymScenario,
   generateAgentGymScenarioForFamily,
   getAgentGymSplitManifest,
@@ -55,7 +56,7 @@ test("Agent Gym reference policy earns a deterministic complete trajectory", asy
   const second = secondRollout.snapshot;
 
   assert.equal(first.readiness, "multi-family-prototype");
-  assert.equal(first.familyId, "moonflower-opaque-roles-v1");
+  assert.equal(first.familyId, AGENT_GYM_FAMILY_IDS.moonflower);
   assert.equal(first.split, "canonical");
   assert.equal(first.status, "complete");
   assert.equal(first.score, AGENT_GYM_MAX_SCORE);
@@ -87,12 +88,12 @@ test("Agent Gym reference policy earns a deterministic complete trajectory", asy
 
 test("scenario family creates deterministic disjoint train, validation, and test splits", () => {
   assert.deepEqual(getAgentGymSplitManifest(), [
-    { familyId: "moonflower-opaque-roles-v1", split: "train", count: 32, seedBase: 410000 },
-    { familyId: "moonflower-opaque-roles-v1", split: "validation", count: 8, seedBase: 520000 },
-    { familyId: "moonflower-opaque-roles-v1", split: "test", count: 8, seedBase: 630000 },
-    { familyId: "resonant-feedback-roles-v1", split: "train", count: 16, seedBase: 740000 },
-    { familyId: "resonant-feedback-roles-v1", split: "validation", count: 4, seedBase: 850000 },
-    { familyId: "resonant-feedback-roles-v1", split: "test", count: 4, seedBase: 960000 },
+    { familyId: "family-01-v1", split: "train", count: 32, seedBase: 410000 },
+    { familyId: "family-01-v1", split: "validation", count: 8, seedBase: 520000 },
+    { familyId: "family-01-v1", split: "test", count: 8, seedBase: 630000 },
+    { familyId: "family-02-v1", split: "train", count: 16, seedBase: 740000 },
+    { familyId: "family-02-v1", split: "validation", count: 4, seedBase: 850000 },
+    { familyId: "family-02-v1", split: "test", count: 4, seedBase: 960000 },
   ]);
 
   const seenSeeds = new Set();
@@ -118,7 +119,7 @@ test("scenario family creates deterministic disjoint train, validation, and test
 });
 
 test("resonant family is deterministic, opaque, structurally cyclic, and solvable", async () => {
-  const variant = generateAgentGymScenarioForFamily("resonant-feedback-roles-v1", "test", 3);
+  const variant = generateAgentGymScenarioForFamily(AGENT_GYM_FAMILY_IDS.resonantAviary, "test", 3);
   assert.deepEqual(validateSpellGraph(variant.graph), []);
   assert.equal(variant.graph.semantics.ruleId, "resonant-feedback-cycle");
   assert.equal(variant.graph.semantics.initialRouteEdgeIds.length, 5);
@@ -128,6 +129,7 @@ test("resonant family is deterministic, opaque, structurally cyclic, and solvabl
   assert.equal(episode.familyId, variant.familyId);
   assert.equal(episode.status, "complete");
   assert.equal(episode.score, 23);
+  assert.doesNotMatch(`${episode.familyId} ${episode.scenarioId}`, /moonflower|resonan|feedback|aviary/i);
 });
 
 test("inspection-driven policy solves held-out opaque-ID variants at full reward", async () => {
@@ -183,8 +185,8 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   const lines = serializeAgentGymDatasetJsonl(episodes).trim().split("\n").map(JSON.parse);
   assert.equal(lines.length, 12);
   assert.deepEqual(new Set(lines.map((line) => line.familyId)), new Set([
-    "moonflower-opaque-roles-v1",
-    "resonant-feedback-roles-v1",
+    AGENT_GYM_FAMILY_IDS.moonflower,
+    AGENT_GYM_FAMILY_IDS.resonantAviary,
   ]));
   assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v1"), true);
   assert.equal(lines.every((line) => line.split === "test" && line.score === 23), true);
@@ -253,6 +255,10 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   assert.equal(reset.info.protocol, "hex-machina-agent-gym/v1");
   assert.equal(reset.info.observationSchema, "hex-machina-public-spell-graph/v1");
   assert.equal(Object.hasOwn(reset.observation, "semantics"), false);
+  assert.doesNotMatch(
+    `${reset.episode.familyId} ${reset.episode.scenarioId} ${reset.observation.id} ${reset.observation.scenario}`,
+    /moonflower|resonan|feedback|aviary|carrier/i,
+  );
   assert.equal(reset.info.maxEpisodeSteps, 32);
   assert.deepEqual(reset.info.actionSpace, [
     "inspect_spell",

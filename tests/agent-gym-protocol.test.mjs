@@ -8,6 +8,7 @@ import {
   AGENT_GYM_JSONL_PROTOCOL,
   createAgentGymJsonlBridge,
 } from "../src/eval/jsonl-rollout.ts";
+import { AGENT_GYM_FAMILY_IDS } from "../src/scenarios/agent-gym-family.ts";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -42,9 +43,14 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.equal(description.ok, true, "a bad request must not poison the bridge");
   assert.equal(description.payload.maxEpisodeSteps, 32);
   assert.equal(description.payload.splitSizes.test, 8);
-  assert.equal(description.payload.familySplitSizes["resonant-feedback-roles-v1"].test, 4);
+  assert.equal(description.payload.familySplitSizes[AGENT_GYM_FAMILY_IDS.resonantAviary].test, 4);
+  assert.equal(
+    Object.keys(description.payload.familySplitSizes).every((familyId) => !/moonflower|resonan|feedback|aviary/i.test(familyId)),
+    true,
+  );
   assert.equal(description.payload.observationSpace.schema, "hex-machina-public-spell-graph/v1");
   assert.match(description.payload.observationSpace.excludes.join(" "), /role assignments/);
+  assert.match(description.payload.observationSpace.excludes.join(" "), /pre-cast diagnostic assertions/);
   assert.equal(description.payload.actionSpace.length, 7);
 
   const reset = JSON.parse(await bridge.handleLine(JSON.stringify({
@@ -54,18 +60,22 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
     index: 5,
   })));
   assert.equal(reset.ok, true);
-  assert.equal(reset.payload.info.scenarioId, "moonflower-test-05");
+  assert.equal(reset.payload.info.scenarioId, "task-01-test-05");
 
   const resonanceReset = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: "resonance",
     op: "reset",
-    family: "resonant-feedback-roles-v1",
+    family: AGENT_GYM_FAMILY_IDS.resonantAviary,
     split: "test",
     index: 3,
   })));
   assert.equal(resonanceReset.ok, true);
-  assert.equal(resonanceReset.payload.info.scenarioId, "resonance-test-03");
-  assert.equal(resonanceReset.payload.episode.familyId, "resonant-feedback-roles-v1");
+  assert.equal(resonanceReset.payload.info.scenarioId, "task-02-test-03");
+  assert.equal(resonanceReset.payload.episode.familyId, AGENT_GYM_FAMILY_IDS.resonantAviary);
+  assert.doesNotMatch(
+    `${resonanceReset.payload.episode.familyId} ${resonanceReset.payload.episode.scenarioId} ${resonanceReset.payload.observation.scenario}`,
+    /moonflower|resonan|feedback|aviary|carrier/i,
+  );
 
   const step = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: 3,
@@ -114,8 +124,8 @@ with HexMachinaEnv() as env:
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt, {
     tools: 7,
-    scenario: "moonflower-validation-03",
-    graph: "spell-moonflower-validation-03",
+    scenario: "task-01-validation-03",
+    graph: "spell-task-01-validation-03",
     reward: 1,
     terminated: false,
     truncated: false,
@@ -157,9 +167,9 @@ with HexMachinaVectorEnv(3) as envs:
         "test",
         [0, 0, 1],
         families=[
-            "moonflower-opaque-roles-v1",
-            "resonant-feedback-roles-v1",
-            "resonant-feedback-roles-v1",
+            "family-01-v1",
+            "family-02-v1",
+            "family-02-v1",
         ],
     )
     print(json.dumps({
@@ -180,14 +190,14 @@ with HexMachinaVectorEnv(3) as envs:
   assert.equal(result.code, 0, result.stderr);
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt.scenarioIds, [
-    "moonflower-train-00",
-    "moonflower-train-01",
-    "moonflower-train-02",
+    "task-01-train-00",
+    "task-01-train-01",
+    "task-01-train-02",
   ]);
   assert.deepEqual(receipt.graphIds, [
-    "spell-moonflower-train-00",
-    "spell-moonflower-train-01",
-    "spell-moonflower-train-02",
+    "spell-task-01-train-00",
+    "spell-task-01-train-01",
+    "spell-task-01-train-02",
   ]);
   assert.deepEqual(receipt.firstRewards, [1, 1, 1]);
   assert.deepEqual(receipt.firstSteps, [0, 0, 0]);
@@ -200,13 +210,13 @@ with HexMachinaVectorEnv(3) as envs:
     "split is required when indices are provided",
   ]);
   assert.deepEqual(receipt.mixedFamilies, [
-    "moonflower-opaque-roles-v1",
-    "resonant-feedback-roles-v1",
-    "resonant-feedback-roles-v1",
+    "family-01-v1",
+    "family-02-v1",
+    "family-02-v1",
   ]);
   assert.deepEqual(receipt.mixedScenarios, [
-    "moonflower-test-00",
-    "resonance-test-00",
-    "resonance-test-01",
+    "task-01-test-00",
+    "task-02-test-00",
+    "task-02-test-01",
   ]);
 });

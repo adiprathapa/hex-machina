@@ -5,6 +5,7 @@ import {
 } from "./agent-gym.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_IDS,
   type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
@@ -50,9 +51,9 @@ function parseRequest(line: string): RolloutRequest {
 
 function parseResetOptions(request: RolloutRequest) {
   if (request.family === undefined && request.split === undefined && request.index === undefined) return undefined;
-  const family = request.family ?? "moonflower-opaque-roles-v1";
+  const family = request.family ?? AGENT_GYM_FAMILY_IDS.moonflower;
   if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, family)) {
-    throw new Error("Reset family must be moonflower-opaque-roles-v1 or resonant-feedback-roles-v1");
+    throw new Error(`Reset family must be ${Object.values(AGENT_GYM_FAMILY_IDS).join(" or ")}`);
   }
   if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES[family], String(request.split))) {
     throw new Error("Reset split must be train, validation, or test");
@@ -109,11 +110,17 @@ export function createAgentGymJsonlBridge() {
             environmentProtocol: "hex-machina-agent-gym/v1",
             actionSpace: AGENT_GYM_TOOL_NAMES,
             familySplitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES,
-            splitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES["moonflower-opaque-roles-v1"],
+            splitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES[AGENT_GYM_FAMILY_IDS.moonflower],
             observationSpace: {
               schema: "hex-machina-public-spell-graph/v1",
               includes: ["nodes", "edges", "constraints", "desiredOutcome"],
-              excludes: ["simulator role assignments", "causal rule IDs", "answer-key edge IDs"],
+              excludes: [
+                "simulator role assignments",
+                "causal rule IDs",
+                "answer-key edge IDs",
+                "rule-revealing task identifiers",
+                "pre-cast diagnostic assertions",
+              ],
             },
             maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
             transport: "One JSON request and one JSON response per line on stdin/stdout.",

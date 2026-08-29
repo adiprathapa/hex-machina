@@ -161,10 +161,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         status: simulation.success ? "stable" as const : simulation.sideEffects.length ? "unstable" as const : "incomplete" as const,
         success: simulation.success,
         seed: simulation.seed,
-        summary: simulation.summary,
-        assertions: simulation.assertions,
         activeSideEffectIds: simulation.sideEffects.map((effect) => effect.id),
-        eventCount: simulation.events.length,
       };
       const filter = {
         applied: Boolean(nodeIds),

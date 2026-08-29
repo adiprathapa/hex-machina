@@ -287,7 +287,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.deepEqual(completeInspection.boundaryEdges, []);
     assert.equal(completeInspection.filter.applied, false);
     assert.equal(completeInspection.scenarioState.status, "unstable");
-    assert.equal(completeInspection.scenarioState.assertions.duckCount, 12);
+    assert.equal(Object.hasOwn(completeInspection.scenarioState, "assertions"), false, "inspection does not pre-solve the cast");
     assert.deepEqual(completeInspection.scenarioState.activeSideEffectIds, ["flooded-observatory"]);
     const focusedInspection = await invokeTool("inspect_spell", { nodeIds: ["multiply", "summon-ducks"] });
     assert.deepEqual(focusedInspection.edges.map((edge) => edge.id), ["e-multiply-ducks"]);

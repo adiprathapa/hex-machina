@@ -149,14 +149,9 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(inspection.scenarioState.status, "unstable");
   assert.equal(inspection.scenarioState.success, false);
   assert.deepEqual(inspection.scenarioState.activeSideEffectIds, ["flooded-observatory"]);
-  assert.deepEqual(inspection.scenarioState.assertions, {
-    ducksPresent: true,
-    duckCount: 12,
-    roomFlooded: true,
-    flowerWatered: false,
-    flowerBloomed: false,
-  });
-  assert.equal(inspection.scenarioState.eventCount, 3);
+  assert.equal(Object.hasOwn(inspection.scenarioState, "assertions"), false);
+  assert.equal(Object.hasOwn(inspection.scenarioState, "summary"), false);
+  assert.equal(Object.hasOwn(inspection.scenarioState, "eventCount"), false);
   assert.equal(JSON.stringify(graph), graphBeforeInspection, "inspection and derived scenario state must not mutate the graph");
   const failed = await handlers.simulate_cast();
   assert.equal(failed.success, false);

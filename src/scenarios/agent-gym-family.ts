@@ -3,7 +3,11 @@ import { createMoonflowerScenario } from "./moonflower.ts";
 import { createResonantAviaryScenario } from "./resonant-aviary.ts";
 
 export type AgentGymSplit = "train" | "validation" | "test";
-export type AgentGymFamilyId = "moonflower-opaque-roles-v1" | "resonant-feedback-roles-v1";
+export const AGENT_GYM_FAMILY_IDS = {
+  moonflower: "family-01-v1",
+  resonantAviary: "family-02-v1",
+} as const;
+export type AgentGymFamilyId = typeof AGENT_GYM_FAMILY_IDS[keyof typeof AGENT_GYM_FAMILY_IDS];
 
 export const AGENT_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
   train: 32,
@@ -18,8 +22,8 @@ export const RESONANCE_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
 };
 
 export const AGENT_GYM_FAMILY_SPLIT_SIZES: Record<AgentGymFamilyId, Record<AgentGymSplit, number>> = {
-  "moonflower-opaque-roles-v1": AGENT_GYM_SPLIT_SIZES,
-  "resonant-feedback-roles-v1": RESONANCE_GYM_SPLIT_SIZES,
+  [AGENT_GYM_FAMILY_IDS.moonflower]: AGENT_GYM_SPLIT_SIZES,
+  [AGENT_GYM_FAMILY_IDS.resonantAviary]: RESONANCE_GYM_SPLIT_SIZES,
 };
 
 const SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
@@ -116,7 +120,7 @@ export function generateAgentGymScenarioForFamily(
     throw new Error(`${split} scenario index must be an integer from 0 to ${size - 1}`);
   }
 
-  const resonance = familyId === "resonant-feedback-roles-v1";
+  const resonance = familyId === AGENT_GYM_FAMILY_IDS.resonantAviary;
   const seedBase = resonance ? RESONANCE_SPLIT_SEED_BASE : SPLIT_SEED_BASE;
   const seed = seedBase[split] + index * 7919;
   const next = createPrng(seed);
@@ -155,9 +159,9 @@ export function generateAgentGymScenarioForFamily(
   const constraints = resonance ? RESONANCE_CONSTRAINTS : CONSTRAINTS;
   const objective = objectives[next() % objectives.length];
   const humanConstraint = constraints[next() % constraints.length];
-  const scenarioId = `${resonance ? "resonance" : "moonflower"}-${split}-${String(index).padStart(2, "0")}`;
+  const scenarioId = `task-${resonance ? "02" : "01"}-${split}-${String(index).padStart(2, "0")}`;
   graph.id = `spell-${scenarioId}`;
-  graph.scenario = resonance ? "resonant-aviary-eval" : "moonflower-eval";
+  graph.scenario = resonance ? "eval-family-02" : "eval-family-01";
   graph.seed = seed;
   graph.desiredOutcome = objective;
 
@@ -181,7 +185,7 @@ export function generateAgentGymScenarioForFamily(
 }
 
 export function generateAgentGymScenario(split: AgentGymSplit, index: number) {
-  return generateAgentGymScenarioForFamily("moonflower-opaque-roles-v1", split, index);
+  return generateAgentGymScenarioForFamily(AGENT_GYM_FAMILY_IDS.moonflower, split, index);
 }
 
 export function getAgentGymSplitManifest() {
@@ -190,7 +194,7 @@ export function getAgentGymSplitManifest() {
       familyId,
       split,
       count: AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split],
-      seedBase: familyId === "resonant-feedback-roles-v1"
+      seedBase: familyId === AGENT_GYM_FAMILY_IDS.resonantAviary
         ? RESONANCE_SPLIT_SEED_BASE[split]
         : SPLIT_SEED_BASE[split],
     })),

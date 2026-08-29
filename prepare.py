@@ -426,6 +426,8 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "AGENT_GYM_MAX_SCORE",
             "AGENT_GYM_SPLIT_SIZES",
             "AGENT_GYM_FAMILY_SPLIT_SIZES",
+            "AGENT_GYM_FAMILY_IDS",
+            "family-01-v1",
             "resonant-feedback-cycle",
             "opaque-node-ids",
             "opaque-edge-ids",
