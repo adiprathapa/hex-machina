@@ -9,6 +9,7 @@ Every number here is regenerable:
 ```
 npm run gym:evidence      # every claim, one document
 npm run gym:constraint    # constraint-preservation audit
+npm run gym:transfer      # structural holdout: train on one family, evaluate on another
 npm run gym:dataset       # export trajectories
 npm run gym:replay        # replay every exported episode
 ```
@@ -87,7 +88,7 @@ the conformance test reads each `requireToolInput` allowlist out of the
 production source and asserts exact set equality, so drift is caught in both
 directions.
 
-## 3. What the splits actually hold out
+## 3. What the splits actually hold out — and holding out a structure
 
 The splits are genuinely disjoint by identifier: 72 distinct seeds, zero reused
 node or edge IDs. It is easy to read that as 72 distinct tasks.
@@ -110,9 +111,64 @@ evidence of robustness to identifier and layout perturbation — which is real,
 and is what defeats ID memorization — not of structural generalization.
 
 Rather than restate that caveat in prose where it can drift, the suite computes
-it and derives the claim the score is entitled to support from the number. The
-scope widens on its own once a test structure is genuinely unseen in training,
-and a structural-generalization claim can never be made while none is.
+it and derives the claim the score is entitled to support from the number.
+
+Then it earns the stronger claim. A **transfer protocol** withholds a whole
+scenario family: each family is held out in turn, the training pool becomes
+every other family, and evaluation runs only on the held-out family's test
+split. Families differ in topology, rune vocabulary, failure rule, and the
+identity of the protected subject — ducks flooding an observatory against
+thunderbirds shattering a glass dome — so a score here is about structure.
+
+A holdout means nothing if nothing can fail it, so it runs as a contrast: the
+grounded policy against one identical in every respect except that it grounds
+the protected subject by recalling a rune label from the training family.
+
+| Held out | Trained on | Grounded | Memorizing |
+| --- | --- | --- | --- |
+| family-01 | family-02 | **23 / 23, 100% complete** | **−1, 0% complete** |
+| family-02 | family-01 | **23 / 23, 100% complete** | **−1, 0% complete** |
+
+Grounding transfers to a structure it never saw, at full reward, with every
+constraint preserved and zero invalid actions. Memorization does not, and is
+rejected rather than silently accepted. The tests recompute that no training
+label names a held-out protected subject rather than asserting it.
+
+The diversity measurement reports `structural` for this protocol on its own,
+from the same fingerprinting that reports `identifier-and-layout` for the
+default splits — the scope tracking the measurement, as it was built to.
+
+`npm run gym:transfer`
+
+## 4. State keys and dataset completeness
+
+Two defects an external trainer would hit, both found by probing rather than
+review.
+
+**The state key was not a state.** It was a 32-bit FNV-1a over the serialized
+graph. `set_sacred_constraint` accepts 180 characters of free text that lands in
+that serialization, and a search over six-character reasons found two distinct,
+agent-reachable states sharing a key after ~455,000 candidates — 32 bits expects
+a first collision near 65,000 states, well inside what a rollout produces.
+
+Worse, `propose_spell_patch` issues the capability authorizing a later apply
+*without touching the graph*, so an identical graph key preceded both a rejected
+apply and an accepted one. A value function keyed on it would be keyed on
+something that does not determine the transition.
+
+Keys are now 64-bit, and each step also carries an episode state key folding in
+the milestones banked and whether a patch capability is currently issued. The
+test pins exactly that case: same graph key, different episode key, opposite
+outcomes.
+
+**The dataset dropped the human's constraint.** `humanConstraint` was never on
+the episode, only in the reset payload, so the exporter could not emit it. It
+survived in reference trajectories only because that policy echoes it into a
+tool argument; any episode that never calls `set_sacred_constraint` lost half
+its task specification. It is now part of the episode, exported with every
+record, and checked by the replay verifier's metadata comparison — the test
+falsifies the field and asserts rejection, so the check is not merely tolerating
+it.
 
 ## What was probed and found sound
 
@@ -139,22 +195,19 @@ Negative results matter as much as findings. All measured, not assumed.
 
 Stated because they are real, not because they are comfortable.
 
-- **No structure is held out.** See §3. The credible next step is to hold out an
-  entire scenario family from training rather than adding more families to both
-  sides of the split.
 - **Role is recoverable from labels by design.** Node labels are not perturbed,
   so an agent can ground the protected subject by reading them. That is the
   grounding the family intends to reward, but it means the opaque-ID
   perturbation is not the only thing an agent could be exploiting.
-- **`stateKey` is a 32-bit graph-content hash, not an episode state identity.** A
-  collision is reachable through the free-text constraint `reason` field (found
-  after ~455k candidates), and it does not capture episode state:
-  `propose_spell_patch` mints the apply capability without changing the graph,
-  so an identical `stateKey` can precede a rejected or an accepted apply. Do not
-  key a value function or a replay cache on it.
 - **Graph serialization is canonical in array order but not in object-key order
   or optional-field presence.** Not reachable through the seven gym tools;
   reachable from the editor path.
+- **The default splits still hold out only identifiers.** The transfer protocol
+  above holds out structure, but it is a separate evaluation; a score quoted
+  from the default splits still means identifier-and-layout robustness.
+- **Two families is a small basis for a transfer claim.** Each protocol
+  evaluates one held-out structure. The separation is unambiguous, but it is
+  evidence from two structures, not a learning curve.
 - **A constraint-violating episode still terminates.** It ends as
   `constraint-violated` at a heavily penalized score rather than aborting
   mid-episode, so completion rate still needs reading alongside
