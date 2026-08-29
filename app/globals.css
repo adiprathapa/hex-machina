@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 :root {
+  /* Type roles. Monospace is reserved for machine data: identifiers, ledgers,
+     scores. Everything a person reads as prose or as a label uses the UI face,
+     because caps-locked monospace chrome reads as a terminal, not a product. */
+
   --ink: #111827;
   --muted: #4b5563;
   --subtle: #576574;
@@ -107,10 +111,8 @@ summary:focus-visible {
 .eyebrow,
 .section-kicker {
   margin: 0 0 4px;
-  color: var(--blue-dark);
-  font: 500 10px/1.25 var(--font-fira-code), monospace;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  color: var(--subtle);
+  font: 600 11px/1.25 var(--font-poppins), Arial, sans-serif;
 }
 
 .mission-chip {
@@ -127,9 +129,7 @@ summary:focus-visible {
 
 .mission-chip span {
   color: var(--blue);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .mission-chip strong {
@@ -143,7 +143,7 @@ summary:focus-visible {
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .status-dot {
@@ -221,7 +221,7 @@ summary:focus-visible {
 
 .quest-steps li > span {
   color: var(--subtle);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .quest-steps li strong,
@@ -337,9 +337,7 @@ kbd {
   display: block;
   margin-bottom: 5px;
   color: var(--subtle);
-  font: 500 8px/1 var(--font-fira-code), monospace;
-  letter-spacing: .07em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .wish.active {
@@ -380,9 +378,7 @@ kbd {
   border-radius: 3px;
   color: var(--subtle);
   background: var(--panel);
-  font: 500 10px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .cast-state::before {
@@ -515,9 +511,7 @@ kbd {
   border: 1px solid var(--line);
   background: rgba(255,255,255,.92);
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .graph-legend span {
@@ -665,10 +659,8 @@ kbd {
   background: #ffffff;
   color: var(--lilac);
   font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .04em;
   text-align: center;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -684,9 +676,7 @@ kbd {
   bottom: 10px;
   margin: 0;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
   pointer-events: none;
 }
 
@@ -704,7 +694,7 @@ kbd {
   border-radius: 3px;
   background: var(--panel);
   color: var(--blue);
-  font: 500 16px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .rune-modifier .rune-glyph {
@@ -722,16 +712,15 @@ kbd {
 }
 
 .rune-copy strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .rune-copy small {
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  font: 500 10px/1.2 var(--font-poppins), Arial, sans-serif;
 }
 
 .sacred-pin {
@@ -745,8 +734,7 @@ kbd {
   border-radius: 2px;
   color: #ffffff;
   background: var(--blue);
-  font: 500 7px/1 var(--font-fira-code), monospace;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 /* The cast verdict reads as a status bar under the canvas. As an overlay it
@@ -779,7 +767,6 @@ kbd {
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .01em;
 }
 
 .vision-success .vision-symbol {
@@ -822,7 +809,7 @@ kbd {
   border: 1px solid var(--line-strong);
   border-radius: 3px;
   color: var(--blue);
-  font-family: var(--font-fira-code), monospace;
+  font-family: var(--font-poppins), Arial, sans-serif;
 }
 
 .node-inspector small,
@@ -832,9 +819,7 @@ kbd {
 
 .node-inspector small {
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .07em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .node-inspector strong {
@@ -905,8 +890,7 @@ kbd {
   align-items: center;
   gap: 5px;
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .connection-editor select {
@@ -980,9 +964,7 @@ kbd {
 .preview-verdict span,
 .preview-verdict small {
   color: var(--subtle);
-  font: 500 9px/1.2 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 500 10px/1.2 var(--font-poppins), Arial, sans-serif;
 }
 
 .preview-verdict strong {
@@ -1019,12 +1001,11 @@ kbd {
 .patch-card dt,
 .patch-card dd {
   margin: 0;
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .patch-card dt {
   color: var(--subtle);
-  text-transform: uppercase;
 }
 
 .patch-preflight {
@@ -1039,8 +1020,6 @@ kbd {
 .patch-preflight span {
   color: var(--lilac);
   font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
 }
 
 .patch-preflight strong {
@@ -1124,8 +1103,6 @@ kbd {
   color: var(--ink);
   cursor: pointer;
   font: 500 10px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
 }
 
 .patch-ledger ol {
@@ -1198,9 +1175,7 @@ kbd {
   border: 1px solid var(--line-strong);
   border-radius: 2px;
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .familiar-signal ol {
@@ -1235,12 +1210,12 @@ kbd {
 .familiar-signal li button b {
   margin-right: 7px;
   color: var(--lilac);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .familiar-signal li button > strong {
   color: var(--blue);
-  font: 500 11px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .signal-meter {
@@ -1291,9 +1266,7 @@ kbd {
   border: 1px solid var(--line-strong);
   color: var(--blue-dark);
   background: #ffffff;
-  font: 600 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 600 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .agent-gym-heading > span.complete {
@@ -1317,7 +1290,7 @@ kbd {
 .gym-score > span,
 .gym-foot small {
   color: var(--subtle);
-  font: 500 9px/1.35 var(--font-fira-code), monospace;
+  font: 500 10px/1.35 var(--font-poppins), Arial, sans-serif;
 }
 
 .gym-meter {
@@ -1352,8 +1325,6 @@ kbd {
   padding: 6px 0 4px;
   color: var(--subtle);
   font: 600 8px/1.2 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
 }
 
 .policy-baseline {
@@ -1408,9 +1379,7 @@ kbd {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-fira-code), monospace;
-  letter-spacing: .07em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .activity-header small {
@@ -1438,12 +1407,12 @@ kbd {
   border: 1px solid var(--line-strong);
   border-radius: 2px;
   color: var(--blue);
-  font: 500 9px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .activity-list strong {
   color: var(--ink);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .activity-list p,
@@ -1485,8 +1454,6 @@ kbd {
 .tool-console summary strong {
   color: var(--ink);
   font: 500 10px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
 }
 
 .tool-console summary small {
@@ -1550,8 +1517,6 @@ kbd {
 .tool-console-grid button small {
   color: var(--subtle);
   font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .04em;
-  text-transform: uppercase;
 }
 
 .console-result-header {
@@ -1560,9 +1525,7 @@ kbd {
   padding: 8px 0;
   border-top: 1px solid var(--line);
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
 }
 
 .console-result-header small {
