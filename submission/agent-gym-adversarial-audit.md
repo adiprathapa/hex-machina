@@ -10,6 +10,7 @@ Every number here is regenerable:
 npm run gym:evidence      # every claim, one document
 npm run gym:constraint    # constraint-preservation audit
 npm run gym:transfer      # structural holdout: train on one family, evaluate on another
+npm test                  # includes the WebMCP contract and review-card regressions
 npm run gym:dataset       # export trajectories
 npm run gym:replay        # replay every exported episode
 ```
@@ -170,10 +171,74 @@ record, and checked by the replay verifier's metadata comparison — the test
 falsifies the field and asserts rejection, so the check is not merely tolerating
 it.
 
+## 5. The WebMCP surface itself
+
+The gym is the differentiator; the WebMCP registration is the product. Auditing
+it found the most serious defect in the entry.
+
+**The tool schemas were locked to one scenario.** Rune and effect identifiers
+were constrained by closed enums built from `createMoonflowerScenario()` once at
+module load, and registration never receives a graph, so the enums could not
+track the live scenario. On any other family the only correct arguments were
+schema-invalid:
+
+| Tool | Callable on a second family, before |
+| --- | --- |
+| `explain_side_effect` | no — required field, one-value enum |
+| `set_sacred_constraint` | no — the tool carrying the entire human-constraint story |
+| `trace_effect` | no, either argument |
+| `inspect_spell` | no, with node IDs |
+| `simulate_cast`, `propose_spell_patch`, `apply_spell_patch` | yes |
+
+The handlers accepted every one of those calls. Only the advertised contract
+refused them — and the shipped patch-ID pattern already covered all families, so
+just the enums were left behind.
+
+Enumerating identifiers was the wrong contract twice over: it must be
+regenerated whenever a scenario changes, and it publishes the answer an
+evaluated agent is meant to recover from the graph. Identifiers are now
+constrained by shape, with descriptions naming where a valid value comes from.
+The boundary is unchanged — the handlers always validated identifiers and reject
+unknown ones by name.
+
+**The human approval card promised a protection that was not set.** Its footer
+was the literal string "Locked: ducks remain sacred", with no dependency on
+`graph.constraints` or `patch.preserves`. On a fresh graph the top-ranked repair
+is the one that deletes the ducks — six edits against eight — and its own
+`tradeoffs` say "The ducks disappear from the spell". Those tradeoffs went to the
+agent and were never rendered for the human, and neither was the empty
+`preserves` list. So the person clicking **Apply patch & recast** read a promise
+that the ducks were safe, on a card whose own edit ledger disconnects the duck
+branch. For an entry about humans approving constraint-preserving repairs, that
+is the worst possible place for a false assurance. The card now reports what the
+patch actually preserves, or says plainly that nothing is protected, and shows
+the tradeoffs where the approval happens.
+
+**Three smaller contract defects.** A pre-aborted lifecycle signal aborted the
+internal controller and then registered all seven tools anyway, returning
+`true`; against a host that only listens for the abort event — which never fires
+on an already-aborted signal — they stayed live and bound to an unmounted
+component. `withExecutionSignal` optional-chained the options bag but not the
+signal, so a host passing `{}` got a `TypeError` instead of a tool result, and a
+string abort reason was re-thrown unwrapped. And `set_sacred_constraint`
+returned its `before` array by reference, so one result could be edited through
+another — not "exact before/after evidence" — while requiring a `reason` to
+*release* a lock that the release path then discarded.
+
 ## What was probed and found sound
 
 Negative results matter as much as findings. All measured, not assumed.
 
+- **The WebMCP capability and cancellation boundaries.** A pre-cancelled call
+  provably never reaches either mutating handler — no graph change, no activity
+  record. Patch IDs cannot be used before `propose_spell_patch` issues them,
+  revert tokens are single-use and stale-safe, unknown-field rejection names the
+  tool and the field on all seven tools, and `simulate_cast` is byte-identical
+  read-only on the graph including the patch-preview path. Every annotation
+  matches measured mutation behavior.
+- **The sacred-constraint mechanism.** With a lock set, the destructive patch is
+  never issued, and a forged one is independently refused for loss of source
+  reachability — a second gate that does not depend on the solver.
 - **Determinism.** All episodes hash identically across two runs, and the full
   dataset export is byte-identical across processes, time zones, and locales.
 - **Patch capabilities.** Patch IDs are format-guessable, but the gate is the
