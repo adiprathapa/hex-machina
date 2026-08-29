@@ -43,6 +43,8 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.equal(description.payload.maxEpisodeSteps, 32);
   assert.equal(description.payload.splitSizes.test, 8);
   assert.equal(description.payload.familySplitSizes["resonant-feedback-roles-v1"].test, 4);
+  assert.equal(description.payload.observationSpace.schema, "hex-machina-public-spell-graph/v1");
+  assert.match(description.payload.observationSpace.excludes.join(" "), /role assignments/);
   assert.equal(description.payload.actionSpace.length, 7);
 
   const reset = JSON.parse(await bridge.handleLine(JSON.stringify({
@@ -104,6 +106,7 @@ with HexMachinaEnv() as env:
         "step": info["stepIndex"],
         "resultNodes": len(info["result"]["nodes"]),
         "snapshotSteps": len(env.snapshot()["trajectory"]),
+        "semanticsExposed": "semantics" in observation,
     }))
 `;
   const result = await run("python3", ["-c", script]);
@@ -119,6 +122,7 @@ with HexMachinaEnv() as env:
     step: 0,
     resultNodes: 12,
     snapshotSteps: 1,
+    semanticsExposed: false,
   });
 });
 

@@ -70,6 +70,9 @@ export interface SpellGraph {
   constraints: SacredConstraint[];
 }
 
+/** Trainer- and tool-visible graph state. Simulator role assignments stay private. */
+export type SpellObservation = Omit<SpellGraph, "semantics">;
+
 export type PatchOperation =
   | { op: "add_edge"; edge: SpellEdge }
   | { op: "remove_edge"; edgeId: string }
@@ -194,6 +197,12 @@ export function validateSpellGraph(graph: SpellGraph): string[] {
 
 export function cloneGraph(graph: SpellGraph): SpellGraph {
   return JSON.parse(JSON.stringify(graph)) as SpellGraph;
+}
+
+export function observeSpellGraph(graph: SpellGraph): SpellObservation {
+  const observation: Partial<SpellGraph> = cloneGraph(graph);
+  delete observation.semantics;
+  return observation as SpellObservation;
 }
 
 export function connectRunes(

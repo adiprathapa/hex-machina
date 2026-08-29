@@ -61,6 +61,8 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /Public YouTube demo with audio/);
   assert.match(copy, /72 deterministic tasks/i);
   assert.match(copy, /cross-rule grounding evidence/i);
+  assert.match(copy, /omit the simulator's role map/i);
+  assert.match(copy, /natural-language constraints plus inspected rune text/i);
   assert.match(copy, /not a learned-policy result/i);
   assert.match(copy, /JSONL exporter/i);
   assert.match(copy, /termination\/truncation flags/i);

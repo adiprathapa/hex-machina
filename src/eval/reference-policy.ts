@@ -1,9 +1,46 @@
 import { createAgentGymEnvironment, type AgentGymSnapshot } from "./agent-gym.ts";
+import type { RuneNode } from "../domain/spell.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
+
+const GROUNDING_STOP_WORDS = new Set([
+  "all", "and", "are", "around", "branch", "desired", "do", "every", "final",
+  "human", "in", "is", "keep", "must", "not", "of", "outcome", "part", "preserve",
+  "remain", "repair", "so", "stay", "the", "their", "they", "to", "values",
+]);
+
+function lexicalTerms(text: string) {
+  return new Set(
+    text.toLowerCase().match(/[a-z0-9]+/g)?.flatMap((term) => {
+      if (GROUNDING_STOP_WORDS.has(term)) return [];
+      if (term.endsWith("ies") && term.length > 4) return [term, `${term.slice(0, -3)}y`];
+      if (term.endsWith("s") && term.length > 4) return [term, term.slice(0, -1)];
+      return [term];
+    }) ?? [],
+  );
+}
+
+/** Transparent baseline grounding: match protected intent to inspected rune text, never hidden roles. */
+export function groundConstraintTarget(nodes: RuneNode[], humanConstraint: string) {
+  const intentTerms = lexicalTerms(humanConstraint);
+  const ranked = nodes
+    .filter((node) => node.kind === "verb" && !node.dormant)
+    .map((node) => {
+      const labelTerms = lexicalTerms(node.label);
+      const descriptionTerms = lexicalTerms(node.description);
+      const labelMatches = [...intentTerms].filter((term) => labelTerms.has(term)).length;
+      const descriptionMatches = [...intentTerms].filter((term) => descriptionTerms.has(term)).length;
+      return { node, score: labelMatches * 4 + descriptionMatches };
+    })
+    .sort((left, right) => right.score - left.score || left.node.id.localeCompare(right.node.id));
+  if (!ranked[0] || ranked[0].score <= 0) {
+    throw new Error("Reference policy could not ground the protected subject from inspected rune evidence");
+  }
+  return ranked[0].node;
+}
 
 export async function runInspectionReferencePolicy(options?: {
   family?: AgentGymFamilyId;
@@ -13,9 +50,8 @@ export async function runInspectionReferencePolicy(options?: {
   const gym = createAgentGymEnvironment(options);
   const reset = gym.reset();
   const inspection = await gym.step({ tool: "inspect_spell" });
-  const subjectId = inspection.observation.semantics.roles.subject;
-  const subject = inspection.observation.nodes.find((node) => node.id === subjectId);
-  if (!subject) throw new Error("Reference policy could not ground the protected subject from inspection");
+  const inspected = inspection.result as { nodes?: RuneNode[] };
+  const subject = groundConstraintTarget(inspected.nodes ?? [], reset.task.humanConstraint);
 
   const failedCast = await gym.step({ tool: "simulate_cast" });
   const castResult = failedCast.result as { sideEffects?: Array<{ id: string }> };

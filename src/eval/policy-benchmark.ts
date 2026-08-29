@@ -1,5 +1,6 @@
 import { createAgentGymEnvironment, type AgentGymSnapshot } from "./agent-gym.ts";
-import { runInspectionReferencePolicy } from "./reference-policy.ts";
+import { groundConstraintTarget, runInspectionReferencePolicy } from "./reference-policy.ts";
+import type { RuneNode } from "../domain/spell.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   type AgentGymFamilyId,
@@ -29,10 +30,10 @@ async function runMutationFirstPolicy(options: PolicyOptions) {
   const gym = createAgentGymEnvironment(options);
   const reset = gym.reset();
   const inspection = await gym.step({ tool: "inspect_spell" });
-  const subject = inspection.observation.nodes.find((node) =>
-    node.id === inspection.observation.semantics.roles.subject
+  const subject = groundConstraintTarget(
+    (inspection.result as { nodes?: RuneNode[] }).nodes ?? [],
+    reset.task.humanConstraint,
   );
-  if (!subject) throw new Error("Mutation-first policy could not find its subject");
 
   await gym.step({
     tool: "set_sacred_constraint",

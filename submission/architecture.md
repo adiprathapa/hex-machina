@@ -14,7 +14,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 
 ## Modules
 
-- `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, and atomic patch application.
+- `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, public observation projection, and atomic patch application.
 - `src/domain/patch-preview.ts`: deterministic translation from structural operations to the human-review ledger and canvas overlay.
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
 - `src/scenarios/agent-gym-family.ts`: 72 seeded variants across two causal families, with opaque role/edge/effect IDs, stable shuffling, layout jitter, prompt paraphrases, and disjoint train/validation/test splits.
@@ -34,7 +34,7 @@ The application has no database, object-storage binding, account surface, analyt
 
 ## Agent Gym protocol
 
-The evaluation protocol does not reimplement game logic. It wraps the same seven `createSpellToolHandlers` functions used by local controls and WebMCP registration. Each step returns a post-action observation, scalar reward, `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The recorded transition contains complete before/after graphs, deterministic FNV-1a state keys, graph versions, mutation evidence, and explained reward deltas. The headless environment owns a canonical graph and exposes `reset()`, `step()`, and `snapshot()`; the browser uses the same session recorder to make progress visible and export JSON locally.
+The evaluation protocol does not reimplement game logic. It wraps the same seven `createSpellToolHandlers` functions used by local controls and WebMCP registration. Each step returns a post-action observation, scalar reward, `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The recorded transition contains complete public before/after graphs, deterministic FNV-1a state keys, graph versions, mutation evidence, and explained reward deltas. A single projection removes private simulator role assignments, causal rule IDs, and answer-key edge IDs from reset, step, inspection, replay, JSONL, and Python surfaces. The headless environment owns a private canonical graph and exposes `reset()`, `step()`, and `snapshot()`; the browser uses the same session recorder to make progress visible and export JSON locally.
 
 Invalid tool names and malformed/stale valid-tool inputs become −2 transitions without crashing the rollout, while the underlying production handlers still throw normally for UI/WebMCP error boundaries. Unfinished episodes truncate after 32 actions with `terminationReason: "step-limit"`; completed episodes terminate with `terminationReason: "goal-verified"`. Calls after either terminal state are rejected as zero-reward no-ops until reset.
 
@@ -42,7 +42,7 @@ The reference trajectory has nine milestones and a maximum score of 23: inspect,
 
 Patch IDs are bounded capabilities, not write authorization by convention. A handler instance records the exact patch IDs returned by `propose_spell_patch` for the current graph version. Preview and application reject even syntactically valid, otherwise available IDs unless they were issued by that proposal; any intervening graph mutation invalidates the issued set. This closes a shortcut found by the behavioral benchmark, where an ID-memorizing policy initially guessed `patch-umbrella-v1` without review.
 
-The family generators prevent a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after discovering their live IDs through `inspect_spell`; reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. Moonflower's 48 variants use an unshielded carrier failure, while Resonant Aviary's 24 variants use a reachable feedback-cycle failure. All 72 variants validate and reproduce byte-identically from family, split, and index.
+The family generators prevent a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after grounding protected intent from natural-language constraints and inspected rune text; neither the policy nor `inspect_spell` receives the private semantic role map. Reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. Moonflower's 48 variants use an unshielded carrier failure, while Resonant Aviary's 24 variants use a reachable feedback-cycle failure. All 72 variants validate and reproduce byte-identically from family, split, and index.
 
 `npm run --silent gym:benchmark` executes the transparent inspection-driven reference policy across both families and all splits and emits a machine-readable receipt. The expected baseline is 72/72 completed episodes, nine steps each, and a mean score of 23 in every split. This is a reproducibility check for the environment, not evidence of a learned policy.
 

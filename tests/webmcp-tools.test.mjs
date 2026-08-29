@@ -133,6 +133,7 @@ test("tool handlers preserve human intent through a verified write", async () =>
 
   const graphBeforeInspection = JSON.stringify(graph);
   const inspection = await handlers.inspect_spell({ nodeIds: ["multiply", "summon-ducks"] });
+  assert.equal(Object.hasOwn(inspection, "semantics"), false, "inspection must not expose simulator role assignments");
   assert.deepEqual(inspection.nodes.map((node) => node.id), ["multiply", "summon-ducks"]);
   assert.equal(inspection.graphVersion, 1);
   assert.deepEqual(inspection.edges.map((edge) => edge.id), ["e-multiply-ducks"]);

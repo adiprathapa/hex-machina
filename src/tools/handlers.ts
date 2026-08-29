@@ -1,6 +1,7 @@
 import {
   applyPatch,
   cloneGraph,
+  observeSpellGraph,
   type SacredConstraint,
   type SpellGraph,
   type SpellPatch,
@@ -143,6 +144,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         }
       }
       const graph = cloneGraph(context.getGraph());
+      const observation = observeSpellGraph(graph);
       nodeIds?.forEach((nodeId) => requireNode(graph, nodeId));
       const selected = nodeIds
         ? graph.nodes.filter((node) => nodeIds.includes(node.id))
@@ -178,7 +180,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         selected.map((node) => node.id),
       );
       return {
-        ...graph,
+        ...observation,
         graphVersion: graph.version,
         nodes: selected,
         edges,

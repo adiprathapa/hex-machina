@@ -1,4 +1,10 @@
-import { cloneGraph, serializeSpellGraph, type SpellGraph } from "../domain/spell.ts";
+import {
+  cloneGraph,
+  observeSpellGraph,
+  serializeSpellGraph,
+  type SpellGraph,
+  type SpellObservation,
+} from "../domain/spell.ts";
 import {
   generateAgentGymScenarioForFamily,
   type AgentGymScenarioVariant,
@@ -43,8 +49,8 @@ export interface AgentGymStep {
   index: number;
   tool: string;
   input: unknown;
-  observationBefore: SpellGraph;
-  observationAfter: SpellGraph;
+  observationBefore: SpellObservation;
+  observationAfter: SpellObservation;
   stateKeyBefore: string;
   stateKeyAfter: string;
   graphVersionBefore: number;
@@ -259,8 +265,8 @@ export class AgentGymSession {
       index: this.trajectory.length,
       tool,
       input,
-      observationBefore: cloneGraph(before),
-      observationAfter: cloneGraph(after),
+      observationBefore: observeSpellGraph(before),
+      observationAfter: observeSpellGraph(after),
       stateKeyBefore: stateKey(before),
       stateKeyAfter: stateKey(after),
       graphVersionBefore: graphVersion(before),
@@ -278,7 +284,7 @@ export class AgentGymSession {
 }
 
 export interface AgentGymTransition {
-  observation: SpellGraph;
+  observation: SpellObservation;
   reward: number;
   terminated: boolean;
   truncated: boolean;
@@ -363,7 +369,7 @@ export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId;
       session.reset();
       rebuildHandlers();
       return {
-        observation: cloneGraph(graph),
+        observation: observeSpellGraph(graph),
         task: {
           objective: variant?.objective ?? CANONICAL_SESSION.objective,
           humanConstraint: variant?.humanConstraint ?? "The ducks are funny. They stay.",
@@ -371,6 +377,7 @@ export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId;
         episode: session.snapshot(),
         info: {
           protocol: "hex-machina-agent-gym/v1" as const,
+          observationSchema: "hex-machina-public-spell-graph/v1" as const,
           scenarioId: session.snapshot().scenarioId,
           actionSpace: AGENT_GYM_TOOL_NAMES,
           maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
@@ -381,7 +388,7 @@ export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId;
       const beforeEpisode = session.snapshot();
       if (beforeEpisode.status !== "running") {
         return {
-          observation: cloneGraph(graph),
+          observation: observeSpellGraph(graph),
           reward: 0,
           terminated: beforeEpisode.status === "complete",
           truncated: beforeEpisode.status === "truncated",
@@ -420,7 +427,7 @@ export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId;
       const episode = session.snapshot();
       const step = episode.trajectory.at(-1)!;
       return {
-        observation: cloneGraph(graph),
+        observation: observeSpellGraph(graph),
         reward: step.rewardDelta,
         terminated: episode.status === "complete",
         truncated: episode.status === "truncated",

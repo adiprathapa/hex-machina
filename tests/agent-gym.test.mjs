@@ -10,6 +10,7 @@ import {
 import {
   benchmarkAgentGymFamily,
   collectAgentGymDataset,
+  groundConstraintTarget,
   serializeAgentGymDatasetJsonl,
 } from "../src/eval/reference-policy.ts";
 import {
@@ -30,7 +31,7 @@ async function runReferenceEpisode(options) {
     return transition;
   };
   const inspection = await takeStep({ tool: "inspect_spell" });
-  const subjectId = inspection.observation.semantics.roles.subject;
+  const subjectId = groundConstraintTarget(inspection.result.nodes, reset.task.humanConstraint).id;
   const failedCast = await takeStep({ tool: "simulate_cast" });
   const effectId = failedCast.result.sideEffects[0].id;
   await takeStep({ tool: "trace_effect", input: { effectId } });
@@ -192,9 +193,12 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   assert.equal(lines.every((line) => line.transitions.every((transition) => (
     transition.observationBefore &&
     transition.observationAfter &&
+    !Object.hasOwn(transition.observationBefore, "semantics") &&
+    !Object.hasOwn(transition.observationAfter, "semantics") &&
     /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyBefore) &&
     /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyAfter)
   ))), true);
+  assert.equal(lines.every((line) => !Object.hasOwn(line.transitions[0].result, "semantics")), true);
 });
 
 test("memorized IDs from training fail safely on a held-out graph", async () => {
@@ -247,6 +251,8 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   const gym = createAgentGymEnvironment({ split: "test", index: 1 });
   const reset = gym.reset();
   assert.equal(reset.info.protocol, "hex-machina-agent-gym/v1");
+  assert.equal(reset.info.observationSchema, "hex-machina-public-spell-graph/v1");
+  assert.equal(Object.hasOwn(reset.observation, "semantics"), false);
   assert.equal(reset.info.maxEpisodeSteps, 32);
   assert.deepEqual(reset.info.actionSpace, [
     "inspect_spell",
@@ -264,9 +270,12 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   assert.equal(inspection.truncated, false);
   assert.equal(inspection.info.actionAccepted, true);
   assert.equal(inspection.info.mutated, false);
+  assert.equal(Object.hasOwn(inspection.result, "semantics"), false);
   const recorded = inspection.episode.trajectory[0];
   assert.deepEqual(recorded.observationBefore, reset.observation);
   assert.deepEqual(recorded.observationAfter, inspection.observation);
+  assert.equal(Object.hasOwn(recorded.observationBefore, "semantics"), false);
+  assert.equal(Object.hasOwn(recorded.observationAfter, "semantics"), false);
   assert.match(recorded.stateKeyBefore, /^fnv1a32:[a-f0-9]{8}$/);
   assert.equal(recorded.stateKeyBefore, recorded.stateKeyAfter);
   inspection.episode.trajectory[0].observationBefore.nodes[0].label = "tampered outside session";

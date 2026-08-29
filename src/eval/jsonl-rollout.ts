@@ -110,6 +110,11 @@ export function createAgentGymJsonlBridge() {
             actionSpace: AGENT_GYM_TOOL_NAMES,
             familySplitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES,
             splitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES["moonflower-opaque-roles-v1"],
+            observationSpace: {
+              schema: "hex-machina-public-spell-graph/v1",
+              includes: ["nodes", "edges", "constraints", "desiredOutcome"],
+              excludes: ["simulator role assignments", "causal rule IDs", "answer-key edge IDs"],
+            },
             maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
             transport: "One JSON request and one JSON response per line on stdin/stdout.",
           });

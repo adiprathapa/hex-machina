@@ -280,6 +280,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     );
 
     const completeInspection = await invokeTool("inspect_spell");
+    assert.equal(Object.hasOwn(completeInspection, "semantics"), false, "registered inspection hides simulator roles");
     assert.equal(completeInspection.graphVersion, 1);
     assert.equal(completeInspection.nodes.length, 12);
     assert.equal(completeInspection.edges.length, 4);
