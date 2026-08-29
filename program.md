@@ -8,7 +8,7 @@ The product thesis is:
 
 > Graph interfaces let humans and agents negotiate executable intent.
 
-The game is also a legible agent-evaluation environment. Its typed graph is the observation, the seven semantic tools are the action space, application-owned handlers define deterministic transitions, and the human-constraint-preserving journey supplies a reproducible reward signal. The canonical lesson remains the judge-facing demonstration; an Agent Gym protocol exposes reset, step, score, and an exportable trajectory for evaluating tool-using policies. A deterministic scenario family adds 48 opaque-ID and prompt variants across disjoint train, validation, and test splits. This is honestly scoped as within-family robustness evidence, not a claim that the application already trains models or generalizes to unrelated tasks.
+The game is also a legible agent-evaluation environment. Its typed graph is the observation, the seven semantic tools are the action space, application-owned handlers define deterministic transitions, and the human-constraint-preserving journey supplies a reproducible reward signal. The canonical lesson remains the judge-facing demonstration; an Agent Gym protocol exposes reset, step, score, and an exportable trajectory for evaluating tool-using policies. Two deterministic causal families now provide 72 opaque-ID and prompt variants across disjoint train, validation, and test splits: Moonflower tests an unshielded amplified carrier path, while Resonant Aviary tests a reachable directed feedback cycle. This is evidence that a grounded policy transfers across two simulator rules, not a claim that the application already trains models or generalizes broadly.
 
 The player creates spells from typed rune nodes and directed edges. Casting executes the graph. Incorrect or unstable graphs create funny, visible side effects. The browser agent uses semantic WebMCP tools to inspect the same live spell, explain causal paths, preserve the player's subjective constraints, propose minimal repairs, and apply approved patches.
 
@@ -65,7 +65,7 @@ Hex Machina is done only when all of the following are true:
 
 ### Nice to have after the core passes
 
-- A second compact spell puzzle.
+- Additional task families beyond the two implemented causal rules.
 - A seeded spell generator.
 - Export/import of a spell graph as JSON.
 - Shareable replay URL.

@@ -30,5 +30,5 @@ The recast is Stable: the room is dry and all twelve ducks remain.
 
 7
 00:01:08,000 --> 00:01:15,000
-Forty-eight variants and contrast policies separate grounded agents
-from unsafe shortcuts. Hex Machina is a deterministic gym for safer agents.
+Two causal rules and seventy-two variants separate grounded agents
+from unsafe shortcuts. Hex Machina is a deterministic gym.

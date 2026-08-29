@@ -1,7 +1,8 @@
 import { cloneGraph, serializeSpellGraph, type SpellGraph } from "../domain/spell.ts";
 import {
-  generateAgentGymScenario,
+  generateAgentGymScenarioForFamily,
   type AgentGymScenarioVariant,
+  type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
@@ -57,8 +58,8 @@ export interface AgentGymStep {
 
 export interface AgentGymSnapshot {
   protocol: "hex-machina-agent-gym/v1";
-  readiness: "scenario-family-prototype";
-  familyId: "moonflower-opaque-roles-v1";
+  readiness: "multi-family-prototype";
+  familyId: AgentGymFamilyId;
   scenarioId: string;
   split: AgentGymSplit | "canonical";
   variantIndex: number | null;
@@ -76,6 +77,7 @@ export interface AgentGymSnapshot {
 }
 
 interface AgentGymSessionConfig {
+  familyId: AgentGymFamilyId;
   scenarioId: string;
   seed: number;
   objective: string;
@@ -85,6 +87,7 @@ interface AgentGymSessionConfig {
 }
 
 const CANONICAL_SESSION: AgentGymSessionConfig = {
+  familyId: "moonflower-opaque-roles-v1",
   scenarioId: "moonflower-01",
   seed: 12012,
   objective: "Diagnose and repair the spell while preserving the human's ducks.",
@@ -150,8 +153,8 @@ export class AgentGymSession {
   snapshot(): AgentGymSnapshot {
     return {
       protocol: "hex-machina-agent-gym/v1",
-      readiness: "scenario-family-prototype",
-      familyId: "moonflower-opaque-roles-v1",
+      readiness: "multi-family-prototype",
+      familyId: this.config.familyId,
       scenarioId: this.config.scenarioId,
       split: this.config.split,
       variantIndex: this.config.variantIndex,
@@ -327,13 +330,14 @@ export function instrumentSpellToolHandlers(
   };
 }
 
-export function createAgentGymEnvironment(options?: { split: AgentGymSplit; index: number }) {
+export function createAgentGymEnvironment(options?: { family?: AgentGymFamilyId; split: AgentGymSplit; index: number }) {
   const variant: AgentGymScenarioVariant | null = options
-    ? generateAgentGymScenario(options.split, options.index)
+    ? generateAgentGymScenarioForFamily(options.family ?? "moonflower-opaque-roles-v1", options.split, options.index)
     : null;
   const initialGraph = variant?.graph ?? createMoonflowerScenario();
   let graph = cloneGraph(initialGraph);
   const session = new AgentGymSession(variant ? {
+    familyId: variant.familyId,
     scenarioId: variant.scenarioId,
     seed: variant.seed,
     objective: variant.objective,

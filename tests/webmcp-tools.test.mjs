@@ -63,7 +63,7 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
   const simulateTool = definitions.find((item) => item.name === "simulate_cast");
   assert.equal(simulateTool.inputSchema.properties.patchId.type, "string");
-  assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|direct)-v[0-9]+$");
+  assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|dampener|direct)-v[0-9]+$");
   const traceTool = definitions.find((item) => item.name === "trace_effect");
   assert.deepEqual(traceTool.inputSchema.properties.sourceId.enum, ["moonwell"]);
   assert.equal(traceTool.inputSchema.properties.maxDepth.maximum, 12);

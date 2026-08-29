@@ -44,6 +44,7 @@ export interface SacredConstraint {
 
 export interface SpellSemantics {
   effectId: string;
+  ruleId: "unshielded-amplified-carrier" | "resonant-feedback-cycle";
   roles: {
     source: string;
     multiplier: string;
@@ -54,7 +55,7 @@ export interface SpellSemantics {
     goalTarget: string;
     goalSink: string;
   };
-  initialRouteEdgeIds: [string, string, string, string];
+  initialRouteEdgeIds: string[];
 }
 
 export interface SpellGraph {

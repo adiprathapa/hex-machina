@@ -9,6 +9,7 @@ export function createMoonflowerScenario(): SpellGraph {
     desiredOutcome: "Water the moonflower without flooding the room.",
     semantics: {
       effectId: "flooded-observatory",
+      ruleId: "unshielded-amplified-carrier",
       roles: {
         source: "moonwell",
         multiplier: "multiply",

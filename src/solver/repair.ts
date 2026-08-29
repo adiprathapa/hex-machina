@@ -6,7 +6,7 @@ import {
 } from "../domain/spell.ts";
 import { simulateCast } from "../simulator/cast.ts";
 
-export function explainFlood(graph: SpellGraph) {
+export function explainSideEffect(graph: SpellGraph) {
   const { effectId, roles, initialRouteEdgeIds } = graph.semantics;
   const result = simulateCast(graph);
   const effect = result.sideEffects.find((item) => item.id === effectId);
@@ -14,13 +14,13 @@ export function explainFlood(graph: SpellGraph) {
     return {
       sideEffectId: effectId,
       present: false,
-      explanation: "The current graph does not produce the observatory flood.",
+      explanation: "The current graph does not produce the tracked side effect.",
       nodeIds: [],
       edgeIds: [],
       subgraph: { graphVersion: graph.version, nodes: [], edges: [] },
       causalSteps: [],
       ruleEvidence: {
-        ruleId: "unshielded-water-route-targets-room",
+        ruleId: graph.semantics.ruleId,
         conclusion: { sideEffectId: effectId, observed: false },
         premises: [],
         allPremisesSatisfied: false,
@@ -58,7 +58,13 @@ export function explainFlood(graph: SpellGraph) {
       statement: `${from?.label ?? edge.from} ${edge.type.replace("_", " ")} ${to?.label ?? edge.to}.`,
     };
   });
-  const premiseSpecs = [
+  const premiseSpecs = graph.semantics.ruleId === "resonant-feedback-cycle" ? [
+    { id: "storm-enters-echo", nodeIds: [roles.source, roles.multiplier], edgeIds: [initialRouteEdgeIds[0]] },
+    { id: "echo-summons-thunderbirds", nodeIds: [roles.multiplier, roles.subject], edgeIds: [initialRouteEdgeIds[1]] },
+    { id: "thunderbirds-release-song", nodeIds: [roles.subject, roles.action], edgeIds: [initialRouteEdgeIds[2]] },
+    { id: "song-feeds-back-into-echo", nodeIds: [roles.action, roles.multiplier], edgeIds: [initialRouteEdgeIds[3]] },
+    { id: "runaway-song-targets-dome", nodeIds: [roles.action, roles.failureTarget], edgeIds: [initialRouteEdgeIds[4]] },
+  ] : [
     {
       id: "water-enters-multiplier",
       nodeIds: [roles.source, roles.multiplier],
@@ -90,7 +96,9 @@ export function explainFlood(graph: SpellGraph) {
   const premises = [
     ...positivePremises,
     {
-      id: "no-protective-umbrella-route",
+      id: graph.semantics.ruleId === "resonant-feedback-cycle"
+        ? "no-feedback-dampener-route"
+        : "no-protective-umbrella-route",
       nodeIds: [roles.safeguard],
       edgeIds: [],
       absentConnections: [
@@ -118,8 +126,9 @@ export function explainFlood(graph: SpellGraph) {
   return {
     sideEffectId: effect.id,
     present: true,
-    explanation:
-      "Multiply executes before a target is bounded. It amplifies Summon ducks, and Pour still targets the entire room.",
+    explanation: graph.semantics.ruleId === "resonant-feedback-cycle"
+      ? "The source reaches Echo, summons the thunderbirds, and Sing closes a directed cycle back into Echo before targeting the glass dome."
+      : "Multiply executes before a target is bounded. It amplifies Summon ducks, and Pour still targets the entire room.",
     nodeIds: effect.responsibleNodeIds,
     edgeIds: effect.responsibleEdgeIds,
     subgraph: {
@@ -129,7 +138,7 @@ export function explainFlood(graph: SpellGraph) {
     },
     causalSteps,
     ruleEvidence: {
-      ruleId: "unshielded-water-route-targets-room",
+      ruleId: graph.semantics.ruleId,
       conclusion: { sideEffectId: effect.id, observed: true },
       premises,
       allPremisesSatisfied: premises.every((premise) => premise.satisfied),
@@ -147,6 +156,9 @@ export function explainFlood(graph: SpellGraph) {
   };
 }
 
+/** Backward-compatible canonical-scenario name used by existing integrations. */
+export const explainFlood = explainSideEffect;
+
 export function proposePatches(graph: SpellGraph): SpellPatch[] {
   if (simulateCast(graph).success) return [];
 
@@ -155,7 +167,7 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
     ? canonical
     : `e-${graph.seed.toString(36)}-${suffix}`;
 
-  const rawCandidates: Array<Omit<SpellPatch, "preconditions">> = [
+  const carrierCandidates: Array<Omit<SpellPatch, "preconditions">> = [
     {
       id: `patch-umbrella-v${graph.version}`,
       title: "Give the ducks umbrellas",
@@ -227,6 +239,48 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
       },
     },
   ];
+  const resonanceCandidates: Array<Omit<SpellPatch, "preconditions">> = [
+    {
+      id: `patch-dampener-v${graph.version}`,
+      title: "Break the echo with a dampener",
+      rationale: "Preserve the thunderbirds, break the feedback cycle, and route their controlled song to the crystal bell.",
+      expectedVersion: graph.version,
+      operations: [
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[4] },
+        { op: "activate_node", nodeId: roles.safeguard },
+        { op: "add_edge", edge: { id: edgeId("e-birds-dampener", "subject-safeguard"), from: roles.subject, to: roles.safeguard, type: "flows_to" } },
+        { op: "add_edge", edge: { id: edgeId("e-dampener-sing", "safeguard-action"), from: roles.safeguard, to: roles.action, type: "flows_to" } },
+        { op: "add_edge", edge: { id: edgeId("e-sing-bell", "action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" } },
+        { op: "activate_node", nodeId: roles.goalSink },
+        { op: "add_edge", edge: { id: edgeId("e-bell-harmony", "goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" } },
+      ],
+      preserves: [roles.subject, "thunderbirds-present"],
+      tradeoffs: ["Keeps all seven thunderbirds", "Activates the dormant Dampener rune"],
+      searchEvidence: { rank: 0, editCount: 0, candidateCount: 0, eligibleCandidateCount: 0, constraintsSatisfied: [] },
+    },
+    {
+      id: `patch-direct-v${graph.version}`,
+      title: "Bypass the resonant branch",
+      rationale: "Disconnect Echo from Stormcall and route the source directly to the crystal bell.",
+      expectedVersion: graph.version,
+      operations: [
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[0] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[4] },
+        { op: "add_edge", edge: { id: edgeId("e-storm-sing", "source-action"), from: roles.source, to: roles.action, type: "flows_to" } },
+        { op: "add_edge", edge: { id: edgeId("e-direct-sing-bell", "direct-action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" } },
+        { op: "activate_node", nodeId: roles.goalSink },
+        { op: "add_edge", edge: { id: edgeId("e-direct-bell-harmony", "direct-goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" } },
+      ],
+      preserves: [],
+      tradeoffs: ["The thunderbirds disappear from the spell"],
+      searchEvidence: { rank: 0, editCount: 0, candidateCount: 0, eligibleCandidateCount: 0, constraintsSatisfied: [] },
+    },
+  ];
+  const rawCandidates = graph.semantics.ruleId === "resonant-feedback-cycle"
+    ? resonanceCandidates
+    : carrierCandidates;
 
   const preserveConstraints = graph.constraints.filter((constraint) => constraint.requirement === "preserve");
   const candidates: SpellPatch[] = rawCandidates.map((patch) => ({

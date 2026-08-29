@@ -4,7 +4,8 @@ import {
   createAgentGymEnvironment,
 } from "./agent-gym.ts";
 import {
-  AGENT_GYM_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_SPLIT_SIZES,
+  type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 
@@ -16,6 +17,7 @@ interface RolloutRequest {
   id: RequestId;
   op: "describe" | "reset" | "step" | "snapshot";
   split?: AgentGymSplit;
+  family?: AgentGymFamilyId;
   index?: number;
   action?: { tool: string; input?: unknown };
 }
@@ -47,13 +49,17 @@ function parseRequest(line: string): RolloutRequest {
 }
 
 function parseResetOptions(request: RolloutRequest) {
-  if (request.split === undefined && request.index === undefined) return undefined;
-  if (!Object.hasOwn(AGENT_GYM_SPLIT_SIZES, String(request.split))) {
+  if (request.family === undefined && request.split === undefined && request.index === undefined) return undefined;
+  const family = request.family ?? "moonflower-opaque-roles-v1";
+  if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, family)) {
+    throw new Error("Reset family must be moonflower-opaque-roles-v1 or resonant-feedback-roles-v1");
+  }
+  if (!Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES[family], String(request.split))) {
     throw new Error("Reset split must be train, validation, or test");
   }
   const index = request.index ?? 0;
   if (!Number.isInteger(index)) throw new Error("Reset index must be an integer");
-  return { split: request.split!, index };
+  return { family, split: request.split!, index };
 }
 
 function parseAction(request: RolloutRequest) {
@@ -102,7 +108,8 @@ export function createAgentGymJsonlBridge() {
           return response(request.id, request.op, true, {
             environmentProtocol: "hex-machina-agent-gym/v1",
             actionSpace: AGENT_GYM_TOOL_NAMES,
-            splitSizes: AGENT_GYM_SPLIT_SIZES,
+            familySplitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES,
+            splitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES["moonflower-opaque-roles-v1"],
             maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
             transport: "One JSON request and one JSON response per line on stdin/stdout.",
           });

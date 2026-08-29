@@ -37,7 +37,7 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /Agent Gym · evaluation mode/);
   assert.match(html, /Scored, replayable episode/);
   assert.match(html, /reward plus before\/after graph observations/);
-  assert.match(html, /48 variants · vector \+ offline rollouts/);
+  assert.match(html, /72 variants · 2 causal families · vector \+ offline rollouts/);
   assert.match(html, /Held-out policy/);
   assert.match(html, /Memorized IDs/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/);

@@ -28,7 +28,10 @@ class HexMachinaEnv:
     ) -> None:
         repository = Path(__file__).resolve().parents[1]
         self._cwd = Path(cwd) if cwd is not None else repository
-        self._command = list(command or ("npm", "run", "--silent", "gym:serve"))
+        self._command = list(command or (
+            str(repository / "node_modules" / ".bin" / "tsx"),
+            "scripts/serve-agent-gym.ts",
+        ))
         self._process: subprocess.Popen[str] | None = None
         self._request_id = 0
 
@@ -70,12 +73,19 @@ class HexMachinaEnv:
     def describe(self) -> Mapping[str, Any]:
         return self._request("describe")
 
-    def reset(self, split: str | None = None, index: int | None = None):
+    def reset(
+        self,
+        split: str | None = None,
+        index: int | None = None,
+        family: str | None = None,
+    ):
         values: dict[str, Any] = {}
         if split is not None:
             values["split"] = split
         if index is not None:
             values["index"] = index
+        if family is not None:
+            values["family"] = family
         payload = self._request("reset", **values)
         info = dict(payload["info"])
         info["task"] = payload["task"]
@@ -165,6 +175,8 @@ class HexMachinaVectorEnv:
         self,
         split: str | None = None,
         indices: Sequence[int] | None = None,
+        family: str | None = None,
+        families: Sequence[str] | None = None,
     ):
         self._ensure_open()
         if indices is None:
@@ -176,15 +188,23 @@ class HexMachinaVectorEnv:
                 raise ValueError("split is required when indices are provided")
             selected_indices = self._require_batch(indices, "indices")
 
-        def reset_slot(values: tuple[HexMachinaEnv, int | None]):
-            env, index = values
-            return env.reset(split=split, index=index)
+        if family is not None and families is not None:
+            raise ValueError("family and families are mutually exclusive")
+        selected_families: list[str | None] = (
+            self._require_batch(families, "families")
+            if families is not None
+            else [family] * self.num_envs
+        )
+
+        def reset_slot(values: tuple[HexMachinaEnv, int | None, str | None]):
+            env, index, selected_family = values
+            return env.reset(split=split, index=index, family=selected_family)
 
         results = list(self._executor.map(
             reset_slot,
-            zip(self._environments, selected_indices, strict=True),
+            zip(self._environments, selected_indices, selected_families),
         ))
-        observations, infos = zip(*results, strict=True)
+        observations, infos = zip(*results)
         return list(observations), list(infos)
 
     def step(self, actions: Sequence[Mapping[str, Any]]):
@@ -199,9 +219,9 @@ class HexMachinaVectorEnv:
 
         results = list(self._executor.map(
             step_slot,
-            zip(self._environments, selected_actions, strict=True),
+            zip(self._environments, selected_actions),
         ))
-        observations, rewards, terminated, truncated, infos = zip(*results, strict=True)
+        observations, rewards, terminated, truncated, infos = zip(*results)
         return (
             list(observations),
             list(rewards),

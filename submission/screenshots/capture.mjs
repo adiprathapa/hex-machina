@@ -143,6 +143,8 @@ try {
   await page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }).waitFor();
   await capture(page, "02-constraint-aware-patch.jpg");
 
+  await page.getByRole("button", { name: "Simulate patch safely", exact: true }).click();
+  await page.getByText("Unapplied simulation", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
   await page.getByText("Stable", { exact: true }).waitFor();
   await page.locator(".cast-vision").getByText(/twelve umbrella-equipped ducks/).waitFor();

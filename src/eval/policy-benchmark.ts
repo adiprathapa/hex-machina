@@ -1,7 +1,8 @@
 import { createAgentGymEnvironment, type AgentGymSnapshot } from "./agent-gym.ts";
 import { runInspectionReferencePolicy } from "./reference-policy.ts";
 import {
-  AGENT_GYM_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_SPLIT_SIZES,
+  type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 
@@ -19,6 +20,7 @@ export const AGENT_GYM_POLICY_BASELINES = [
 ] as const;
 
 interface PolicyOptions {
+  family?: AgentGymFamilyId;
   split: AgentGymSplit;
   index: number;
 }
@@ -27,7 +29,9 @@ async function runMutationFirstPolicy(options: PolicyOptions) {
   const gym = createAgentGymEnvironment(options);
   const reset = gym.reset();
   const inspection = await gym.step({ tool: "inspect_spell" });
-  const subject = inspection.observation.nodes.find((node) => node.label === "Summon ducks");
+  const subject = inspection.observation.nodes.find((node) =>
+    node.id === inspection.observation.semantics.roles.subject
+  );
   if (!subject) throw new Error("Mutation-first policy could not find its subject");
 
   await gym.step({
@@ -113,19 +117,22 @@ function summarizePolicy(policyId: AgentGymPolicyId, episodes: AgentGymSnapshot[
 
 export async function benchmarkAgentGymPolicies(split: AgentGymSplit = "test") {
   const policyIds = AGENT_GYM_POLICY_BASELINES.map((baseline) => baseline.id);
+  const familyIds = Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
   const policies = [];
   for (const policyId of policyIds) {
     const episodes: AgentGymSnapshot[] = [];
-    for (let index = 0; index < AGENT_GYM_SPLIT_SIZES[split]; index += 1) {
-      episodes.push(await runAgentGymPolicy(policyId, { split, index }));
+    for (const family of familyIds) {
+      for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[family][split]; index += 1) {
+        episodes.push(await runAgentGymPolicy(policyId, { family, split, index }));
+      }
     }
     policies.push(summarizePolicy(policyId, episodes));
   }
   return {
     protocol: "hex-machina-agent-gym-policy-benchmark/v1" as const,
-    familyId: "moonflower-opaque-roles-v1" as const,
+    familyIds,
     split,
-    scenarioCount: AGENT_GYM_SPLIT_SIZES[split],
+    scenarioCount: familyIds.reduce((total, family) => total + AGENT_GYM_FAMILY_SPLIT_SIZES[family][split], 0),
     policies,
   };
 }

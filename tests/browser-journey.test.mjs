@@ -204,7 +204,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v3/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
     await assertVisible(page.locator(".agent-gym-heading .complete"), "apply and recast completes the visible evaluation episode");
-    assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*22\s*\/\s*23/i);
+    assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*23\s*\/\s*23/i);
     const [episodeDownload] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Export episode JSON" }).click(),
@@ -215,7 +215,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     const exportedEpisode = JSON.parse(await readFile(episodePath, "utf8"));
     assert.equal(exportedEpisode.status, "complete");
     assert.equal(exportedEpisode.terminationReason, "goal-verified");
-    assert.equal(exportedEpisode.trajectory.length, 8);
+    assert.equal(exportedEpisode.trajectory.length, 9);
     assert.equal(exportedEpisode.trajectory.every((transition) => (
       transition.observationBefore &&
       transition.observationAfter &&

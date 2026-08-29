@@ -4,6 +4,7 @@ import test from "node:test";
 import { buildPatchPreview } from "../src/domain/patch-preview.ts";
 import { applyPatch, cloneGraph, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
+import { createResonantAviaryScenario } from "../src/scenarios/resonant-aviary.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { explainFlood, proposePatches } from "../src/solver/repair.ts";
 import { traceSpellGraph } from "../src/solver/trace.ts";
@@ -27,6 +28,51 @@ test("initial spell deterministically floods the room", () => {
   assert.equal(first.sideEffects[0].id, "flooded-observatory");
   assert.deepEqual(first.sideEffects[0].responsibleNodeIds, ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
   assert.deepEqual(first.sideEffects[0].responsibleEdgeIds, ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
+});
+
+test("resonant aviary exposes a minimal feedback-cycle failure and preserving repair", () => {
+  const graph = createResonantAviaryScenario();
+  assert.deepEqual(validateSpellGraph(graph), []);
+  const failed = simulateCast(graph);
+  assert.equal(failed.success, false);
+  assert.equal(failed.assertions.thunderbirdsPresent, true);
+  assert.equal(failed.assertions.feedbackLoopActive, true);
+  assert.equal(failed.assertions.domeShattered, true);
+  assert.equal(failed.sideEffects[0].responsibleEdgeIds.length, 5);
+
+  const explanation = explainFlood(graph);
+  assert.equal(explanation.ruleEvidence.ruleId, "resonant-feedback-cycle");
+  assert.equal(explanation.ruleEvidence.allPremisesSatisfied, true);
+  assert.equal(explanation.minimality.everyResponsibleEdgeNecessary, true);
+  assert.equal(explanation.ruleEvidence.premises.some((premise) => premise.id === "song-feeds-back-into-echo"), true);
+
+  graph.constraints.push({
+    id: "keep-thunderbirds",
+    targetId: graph.semantics.roles.subject,
+    targetType: "node",
+    requirement: "preserve",
+    reason: "The thunderbirds are the choir. They stay.",
+  });
+  const patches = proposePatches(graph);
+  assert.equal(patches.length, 1);
+  assert.match(patches[0].id, /^patch-dampener/);
+  const repaired = simulateCast(applyPatch(graph, patches[0]));
+  assert.equal(repaired.success, true);
+  assert.equal(repaired.assertions.thunderbirdsPresent, true);
+  assert.equal(repaired.assertions.feedbackLoopActive, false);
+  assert.equal(repaired.assertions.harmonyComplete, true);
+});
+
+test("resonant direct repair removes the cyclic choir when it is not sacred", () => {
+  const graph = createResonantAviaryScenario();
+  const patch = proposePatches(graph)[0];
+  assert.match(patch.id, /^patch-direct/);
+  assert.equal(patch.operations.length, 7);
+  const repaired = simulateCast(applyPatch(graph, patch));
+  assert.equal(repaired.success, true);
+  assert.equal(repaired.assertions.thunderbirdsPresent, false);
+  assert.equal(repaired.assertions.feedbackLoopActive, false);
+  assert.equal(repaired.assertions.harmonyComplete, true);
 });
 
 test("side-effect explanation proves a typed edge-minimal causal subgraph", () => {

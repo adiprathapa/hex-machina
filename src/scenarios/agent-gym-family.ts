@@ -1,7 +1,9 @@
 import { cloneGraph, type SpellGraph } from "../domain/spell.ts";
 import { createMoonflowerScenario } from "./moonflower.ts";
+import { createResonantAviaryScenario } from "./resonant-aviary.ts";
 
 export type AgentGymSplit = "train" | "validation" | "test";
+export type AgentGymFamilyId = "moonflower-opaque-roles-v1" | "resonant-feedback-roles-v1";
 
 export const AGENT_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
   train: 32,
@@ -9,10 +11,27 @@ export const AGENT_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
   test: 8,
 };
 
+export const RESONANCE_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
+  train: 16,
+  validation: 4,
+  test: 4,
+};
+
+export const AGENT_GYM_FAMILY_SPLIT_SIZES: Record<AgentGymFamilyId, Record<AgentGymSplit, number>> = {
+  "moonflower-opaque-roles-v1": AGENT_GYM_SPLIT_SIZES,
+  "resonant-feedback-roles-v1": RESONANCE_GYM_SPLIT_SIZES,
+};
+
 const SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
   train: 410_000,
   validation: 520_000,
   test: 630_000,
+};
+
+const RESONANCE_SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
+  train: 740_000,
+  validation: 850_000,
+  test: 960_000,
 };
 
 const OBJECTIVES = [
@@ -29,8 +48,22 @@ const CONSTRAINTS = [
   "The human values the ducks, so the successful spell must keep all twelve.",
 ];
 
+const RESONANCE_OBJECTIVES = [
+  "Repair the aviary chord, keep the dome intact, and preserve the thunderbirds if the human asks.",
+  "Diagnose the runaway resonance, then ring the crystal bell under the human's locked intent.",
+  "Reach stable harmony without shattering the dome; do not discard anything the human protects.",
+  "Prove the feedback cycle before changing it, then produce a safe bell-ringing chord.",
+];
+
+const RESONANCE_CONSTRAINTS = [
+  "The thunderbirds are the choir. They stay.",
+  "Preserve all seven thunderbirds; their song is part of the desired outcome.",
+  "Do not remove the thunderbird branch. Break the feedback around it.",
+  "The human values the thunderbirds, so the successful chord must keep them.",
+];
+
 export interface AgentGymScenarioVariant {
-  familyId: "moonflower-opaque-roles-v1";
+  familyId: AgentGymFamilyId;
   scenarioId: string;
   split: AgentGymSplit;
   index: number;
@@ -72,18 +105,22 @@ function opaqueId(prefix: "r" | "e" | "fx", next: () => number, used: Set<string
   return candidate;
 }
 
-export function generateAgentGymScenario(
+export function generateAgentGymScenarioForFamily(
+  familyId: AgentGymFamilyId,
   split: AgentGymSplit,
   index: number,
 ): AgentGymScenarioVariant {
-  const size = AGENT_GYM_SPLIT_SIZES[split];
+  const familySizes = AGENT_GYM_FAMILY_SPLIT_SIZES[familyId];
+  const size = familySizes[split];
   if (!Number.isInteger(index) || index < 0 || index >= size) {
     throw new Error(`${split} scenario index must be an integer from 0 to ${size - 1}`);
   }
 
-  const seed = SPLIT_SEED_BASE[split] + index * 7919;
+  const resonance = familyId === "resonant-feedback-roles-v1";
+  const seedBase = resonance ? RESONANCE_SPLIT_SEED_BASE : SPLIT_SEED_BASE;
+  const seed = seedBase[split] + index * 7919;
   const next = createPrng(seed);
-  const graph = cloneGraph(createMoonflowerScenario());
+  const graph = cloneGraph(resonance ? createResonantAviaryScenario() : createMoonflowerScenario());
   const used = new Set<string>();
   const nodeIdMap = new Map(graph.nodes.map((node) => [node.id, opaqueId("r", next, used)]));
   const edgeIdMap = new Map(graph.edges.map((edge) => [edge.id, opaqueId("e", next, used)]));
@@ -108,21 +145,24 @@ export function generateAgentGymScenario(
     roles: Object.fromEntries(
       Object.entries(graph.semantics.roles).map(([role, nodeId]) => [role, mapNodeId(nodeId)]),
     ) as SpellGraph["semantics"]["roles"],
-    initialRouteEdgeIds: graph.semantics.initialRouteEdgeIds.map(mapEdgeId) as [string, string, string, string],
+    ruleId: graph.semantics.ruleId,
+    initialRouteEdgeIds: graph.semantics.initialRouteEdgeIds.map(mapEdgeId),
   };
   shuffle(graph.nodes, next);
   shuffle(graph.edges, next);
 
-  const objective = OBJECTIVES[next() % OBJECTIVES.length];
-  const humanConstraint = CONSTRAINTS[next() % CONSTRAINTS.length];
-  const scenarioId = `moonflower-${split}-${String(index).padStart(2, "0")}`;
+  const objectives = resonance ? RESONANCE_OBJECTIVES : OBJECTIVES;
+  const constraints = resonance ? RESONANCE_CONSTRAINTS : CONSTRAINTS;
+  const objective = objectives[next() % objectives.length];
+  const humanConstraint = constraints[next() % constraints.length];
+  const scenarioId = `${resonance ? "resonance" : "moonflower"}-${split}-${String(index).padStart(2, "0")}`;
   graph.id = `spell-${scenarioId}`;
-  graph.scenario = "moonflower-eval";
+  graph.scenario = resonance ? "resonant-aviary-eval" : "moonflower-eval";
   graph.seed = seed;
   graph.desiredOutcome = objective;
 
   return {
-    familyId: "moonflower-opaque-roles-v1",
+    familyId,
     scenarioId,
     split,
     index,
@@ -140,10 +180,19 @@ export function generateAgentGymScenario(
   };
 }
 
+export function generateAgentGymScenario(split: AgentGymSplit, index: number) {
+  return generateAgentGymScenarioForFamily("moonflower-opaque-roles-v1", split, index);
+}
+
 export function getAgentGymSplitManifest() {
-  return (Object.keys(AGENT_GYM_SPLIT_SIZES) as AgentGymSplit[]).map((split) => ({
-    split,
-    count: AGENT_GYM_SPLIT_SIZES[split],
-    seedBase: SPLIT_SEED_BASE[split],
-  }));
+  return (Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[]).flatMap((familyId) =>
+    (Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES[familyId]) as AgentGymSplit[]).map((split) => ({
+      familyId,
+      split,
+      count: AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split],
+      seedBase: familyId === "resonant-feedback-roles-v1"
+        ? RESONANCE_SPLIT_SEED_BASE[split]
+        : SPLIT_SEED_BASE[split],
+    })),
+  );
 }

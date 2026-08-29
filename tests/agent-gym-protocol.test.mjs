@@ -42,6 +42,7 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.equal(description.ok, true, "a bad request must not poison the bridge");
   assert.equal(description.payload.maxEpisodeSteps, 32);
   assert.equal(description.payload.splitSizes.test, 8);
+  assert.equal(description.payload.familySplitSizes["resonant-feedback-roles-v1"].test, 4);
   assert.equal(description.payload.actionSpace.length, 7);
 
   const reset = JSON.parse(await bridge.handleLine(JSON.stringify({
@@ -52,6 +53,17 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   })));
   assert.equal(reset.ok, true);
   assert.equal(reset.payload.info.scenarioId, "moonflower-test-05");
+
+  const resonanceReset = JSON.parse(await bridge.handleLine(JSON.stringify({
+    id: "resonance",
+    op: "reset",
+    family: "resonant-feedback-roles-v1",
+    split: "test",
+    index: 3,
+  })));
+  assert.equal(resonanceReset.ok, true);
+  assert.equal(resonanceReset.payload.info.scenarioId, "resonance-test-03");
+  assert.equal(resonanceReset.payload.episode.familyId, "resonant-feedback-roles-v1");
 
   const step = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: 3,
@@ -137,6 +149,15 @@ with HexMachinaVectorEnv(3) as envs:
         {"tool": "inspect_spell"},
     ])
     snapshots = envs.snapshots()
+    mixed_observations, mixed_info = envs.reset(
+        "test",
+        [0, 0, 1],
+        families=[
+            "moonflower-opaque-roles-v1",
+            "resonant-feedback-roles-v1",
+            "resonant-feedback-roles-v1",
+        ],
+    )
     print(json.dumps({
         "scenarioIds": [info["scenarioId"] for info in reset_info],
         "graphIds": [observation["id"] for observation in observations],
@@ -147,6 +168,8 @@ with HexMachinaVectorEnv(3) as envs:
         "trajectoryLengths": [len(snapshot["trajectory"]) for snapshot in snapshots],
         "stateKeys": [snapshot["trajectory"][0]["stateKeyBefore"] for snapshot in snapshots],
         "validationErrors": validationErrors,
+        "mixedFamilies": [info["episode"]["familyId"] for info in mixed_info],
+        "mixedScenarios": [info["scenarioId"] for info in mixed_info],
     }))
 `;
   const result = await run("python3", ["-c", script]);
@@ -171,5 +194,15 @@ with HexMachinaVectorEnv(3) as envs:
   assert.deepEqual(receipt.validationErrors, [
     "actions must contain exactly 3 items; received 1",
     "split is required when indices are provided",
+  ]);
+  assert.deepEqual(receipt.mixedFamilies, [
+    "moonflower-opaque-roles-v1",
+    "resonant-feedback-roles-v1",
+    "resonant-feedback-roles-v1",
+  ]);
+  assert.deepEqual(receipt.mixedScenarios, [
+    "moonflower-test-00",
+    "resonance-test-00",
+    "resonance-test-01",
   ]);
 });

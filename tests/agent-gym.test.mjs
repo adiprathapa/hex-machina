@@ -13,8 +13,9 @@ import {
   serializeAgentGymDatasetJsonl,
 } from "../src/eval/reference-policy.ts";
 import {
-  AGENT_GYM_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_SPLIT_SIZES,
   generateAgentGymScenario,
+  generateAgentGymScenarioForFamily,
   getAgentGymSplitManifest,
 } from "../src/scenarios/agent-gym-family.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
@@ -29,7 +30,7 @@ async function runReferenceEpisode(options) {
     return transition;
   };
   const inspection = await takeStep({ tool: "inspect_spell" });
-  const subjectId = inspection.result.nodes.find((node) => node.label === "Summon ducks").id;
+  const subjectId = inspection.observation.semantics.roles.subject;
   const failedCast = await takeStep({ tool: "simulate_cast" });
   const effectId = failedCast.result.sideEffects[0].id;
   await takeStep({ tool: "trace_effect", input: { effectId } });
@@ -52,7 +53,7 @@ test("Agent Gym reference policy earns a deterministic complete trajectory", asy
   const first = firstRollout.snapshot;
   const second = secondRollout.snapshot;
 
-  assert.equal(first.readiness, "scenario-family-prototype");
+  assert.equal(first.readiness, "multi-family-prototype");
   assert.equal(first.familyId, "moonflower-opaque-roles-v1");
   assert.equal(first.split, "canonical");
   assert.equal(first.status, "complete");
@@ -85,29 +86,47 @@ test("Agent Gym reference policy earns a deterministic complete trajectory", asy
 
 test("scenario family creates deterministic disjoint train, validation, and test splits", () => {
   assert.deepEqual(getAgentGymSplitManifest(), [
-    { split: "train", count: 32, seedBase: 410000 },
-    { split: "validation", count: 8, seedBase: 520000 },
-    { split: "test", count: 8, seedBase: 630000 },
+    { familyId: "moonflower-opaque-roles-v1", split: "train", count: 32, seedBase: 410000 },
+    { familyId: "moonflower-opaque-roles-v1", split: "validation", count: 8, seedBase: 520000 },
+    { familyId: "moonflower-opaque-roles-v1", split: "test", count: 8, seedBase: 630000 },
+    { familyId: "resonant-feedback-roles-v1", split: "train", count: 16, seedBase: 740000 },
+    { familyId: "resonant-feedback-roles-v1", split: "validation", count: 4, seedBase: 850000 },
+    { familyId: "resonant-feedback-roles-v1", split: "test", count: 4, seedBase: 960000 },
   ]);
 
   const seenSeeds = new Set();
   const seenScenarioIds = new Set();
-  for (const [split, count] of Object.entries(AGENT_GYM_SPLIT_SIZES)) {
-    for (let index = 0; index < count; index += 1) {
-      const first = generateAgentGymScenario(split, index);
-      const second = generateAgentGymScenario(split, index);
-      assert.equal(serializeSpellGraph(first.graph), serializeSpellGraph(second.graph));
-      assert.deepEqual(validateSpellGraph(first.graph), []);
-      assert.equal(simulateCast(first.graph).success, false);
-      assert.equal(first.graph.nodes.some((node) => node.id === "summon-ducks"), false);
-      assert.equal(seenSeeds.has(first.seed), false, `duplicate seed ${first.seed}`);
-      assert.equal(seenScenarioIds.has(first.scenarioId), false, `duplicate scenario ${first.scenarioId}`);
-      seenSeeds.add(first.seed);
-      seenScenarioIds.add(first.scenarioId);
+  for (const [familyId, splitSizes] of Object.entries(AGENT_GYM_FAMILY_SPLIT_SIZES)) {
+    for (const [split, count] of Object.entries(splitSizes)) {
+      for (let index = 0; index < count; index += 1) {
+        const first = generateAgentGymScenarioForFamily(familyId, split, index);
+        const second = generateAgentGymScenarioForFamily(familyId, split, index);
+        assert.equal(serializeSpellGraph(first.graph), serializeSpellGraph(second.graph));
+        assert.deepEqual(validateSpellGraph(first.graph), []);
+        assert.equal(simulateCast(first.graph).success, false);
+        assert.equal(first.graph.nodes.some((node) => ["summon-ducks", "thunderbirds"].includes(node.id)), false);
+        assert.equal(seenSeeds.has(first.seed), false, `duplicate seed ${first.seed}`);
+        assert.equal(seenScenarioIds.has(first.scenarioId), false, `duplicate scenario ${first.scenarioId}`);
+        seenSeeds.add(first.seed);
+        seenScenarioIds.add(first.scenarioId);
+      }
     }
   }
-  assert.equal(seenSeeds.size, 48);
-  assert.equal(seenScenarioIds.size, 48);
+  assert.equal(seenSeeds.size, 72);
+  assert.equal(seenScenarioIds.size, 72);
+});
+
+test("resonant family is deterministic, opaque, structurally cyclic, and solvable", async () => {
+  const variant = generateAgentGymScenarioForFamily("resonant-feedback-roles-v1", "test", 3);
+  assert.deepEqual(validateSpellGraph(variant.graph), []);
+  assert.equal(variant.graph.semantics.ruleId, "resonant-feedback-cycle");
+  assert.equal(variant.graph.semantics.initialRouteEdgeIds.length, 5);
+  assert.equal(simulateCast(variant.graph).assertions.feedbackLoopActive, true);
+  assert.equal(variant.graph.nodes.some((node) => node.id === "thunderbirds"), false);
+  const episode = (await runReferenceEpisode({ family: variant.familyId, split: "test", index: 3 })).snapshot;
+  assert.equal(episode.familyId, variant.familyId);
+  assert.equal(episode.status, "complete");
+  assert.equal(episode.score, 23);
 });
 
 test("inspection-driven policy solves held-out opaque-ID variants at full reward", async () => {
@@ -124,11 +143,11 @@ test("inspection-driven policy solves held-out opaque-ID variants at full reward
   assert.notEqual(validation.trajectory[4].input.targetId, testEpisode.trajectory[4].input.targetId);
 });
 
-test("benchmark runner completes all 48 split episodes", async () => {
+test("benchmark runner completes all 72 split episodes across two causal families", async () => {
   const benchmark = await benchmarkAgentGymFamily();
   assert.equal(benchmark.protocol, "hex-machina-agent-gym-benchmark/v1");
-  assert.equal(benchmark.episodeCount, 48);
-  assert.equal(benchmark.completedCount, 48);
+  assert.equal(benchmark.episodeCount, 72);
+  assert.equal(benchmark.completedCount, 72);
   assert.equal(benchmark.meanScore, 23);
   assert.deepEqual(benchmark.splitScores, { train: 23, validation: 23, test: 23 });
   assert.equal(benchmark.episodes.every((episode) => episode.steps === 9), true);
@@ -137,7 +156,7 @@ test("benchmark runner completes all 48 split episodes", async () => {
 test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized policies", async () => {
   const benchmark = await benchmarkAgentGymPolicies("test");
   assert.equal(benchmark.protocol, "hex-machina-agent-gym-policy-benchmark/v1");
-  assert.equal(benchmark.scenarioCount, 8);
+  assert.equal(benchmark.scenarioCount, 12);
   assert.deepEqual(benchmark.policies.map((policy) => ({
     policyId: policy.policyId,
     completionRate: policy.completionRate,
@@ -161,7 +180,11 @@ test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized
 test("dataset exporter emits replay-complete JSONL for a requested split", async () => {
   const episodes = await collectAgentGymDataset("test");
   const lines = serializeAgentGymDatasetJsonl(episodes).trim().split("\n").map(JSON.parse);
-  assert.equal(lines.length, 8);
+  assert.equal(lines.length, 12);
+  assert.deepEqual(new Set(lines.map((line) => line.familyId)), new Set([
+    "moonflower-opaque-roles-v1",
+    "resonant-feedback-roles-v1",
+  ]));
   assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v1"), true);
   assert.equal(lines.every((line) => line.split === "test" && line.score === 23), true);
   assert.equal(lines.every((line) => line.terminationReason === "goal-verified"), true);

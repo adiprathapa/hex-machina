@@ -17,7 +17,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/domain/spell.ts`: graph types, allowed connections, validation, stable serialization, cloning, and atomic patch application.
 - `src/domain/patch-preview.ts`: deterministic translation from structural operations to the human-review ledger and canvas overlay.
 - `src/scenarios/moonflower.ts`: canonical deterministic fixture with stable IDs and layout coordinates.
-- `src/scenarios/agent-gym-family.ts`: 48 seeded variants with opaque role/edge/effect IDs, stable shuffling, layout jitter, prompt paraphrases, and disjoint 32/8/8 train/validation/test splits.
+- `src/scenarios/agent-gym-family.ts`: 72 seeded variants across two causal families, with opaque role/edge/effect IDs, stable shuffling, layout jitter, prompt paraphrases, and disjoint train/validation/test splits.
 - `src/simulator/cast.ts`: pure spell execution producing ordered events, side effects, assertions, and success state.
 - `src/solver/repair.ts`: failure explanation, bounded candidate generation, constraint filtering, edit-count ranking, and patch preview.
 - `src/solver/trace.ts`: deterministic bounded directed traversal, ordered path evidence, cycle detection, and structural type diagnostics.
@@ -42,11 +42,11 @@ The reference trajectory has nine milestones and a maximum score of 23: inspect,
 
 Patch IDs are bounded capabilities, not write authorization by convention. A handler instance records the exact patch IDs returned by `propose_spell_patch` for the current graph version. Preview and application reject even syntactically valid, otherwise available IDs unless they were issued by that proposal; any intervening graph mutation invalidates the issued set. This closes a shortcut found by the behavioral benchmark, where an ID-memorizing policy initially guessed `patch-umbrella-v1` without review.
 
-The family generator prevents a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after discovering their live IDs through `inspect_spell`; reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. All 48 variants validate and reproduce byte-identically from their split and index.
+The family generators prevent a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after discovering their live IDs through `inspect_spell`; reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. Moonflower's 48 variants use an unshielded carrier failure, while Resonant Aviary's 24 variants use a reachable feedback-cycle failure. All 72 variants validate and reproduce byte-identically from family, split, and index.
 
-`npm run --silent gym:benchmark` executes the transparent inspection-driven reference policy across all splits and emits a machine-readable receipt. The expected baseline is 48/48 completed episodes, nine steps each, and a mean score of 23 in every split. This is a reproducibility check for the environment, not evidence of a learned policy.
+`npm run --silent gym:benchmark` executes the transparent inspection-driven reference policy across both families and all splits and emits a machine-readable receipt. The expected baseline is 72/72 completed episodes, nine steps each, and a mean score of 23 in every split. This is a reproducibility check for the environment, not evidence of a learned policy.
 
-`npm run --silent gym:dataset -- --split=test` emits newline-delimited `hex-machina-agent-gym-episode/v1` records. Each episode contains replay-complete transition observations and state keys; omitting the split exports all 48 baseline rollouts without writing files or contacting an external service.
+`npm run --silent gym:dataset -- --split=test` emits newline-delimited `hex-machina-agent-gym-episode/v1` records. Each episode contains replay-complete transition observations and state keys; omitting the split exports all 72 baseline rollouts without writing files or contacting an external service.
 
 `npm run --silent gym:serve` exposes the same environment as a stateful newline-delimited subprocess protocol. Correlated `describe`, `reset`, `step`, and `snapshot` operations keep transport failures distinct from scored agent mistakes and never write logs to stdout. The dependency-free Python adapter exposes Gymnasium-shaped return signatures while delegating every transition to the TypeScript process, avoiding a second simulator or reward implementation. Cross-process tests drive a held-out validation scenario through this exact path.
 
@@ -54,7 +54,7 @@ The family generator prevents a policy from succeeding by memorizing canonical I
 
 `npm run --silent gym:policies` runs four deterministic controls over all held-out test variants. Grounded reference behavior scores 23 with 100% completion and no unsafe episodes; mutation-before-explanation also completes but scores 18 with a 100% unsafe-episode rate; diagnosis-only stops safely at 6; canonical-ID memorization records four invalid actions and scores −8. The product renders these checked aggregate rewards as a compact separation table. This is evidence that the rubric responds to grounding, safety, and completeness—not a claim about learned models.
 
-This makes Hex Machina useful as a within-family online evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, distributed rollout orchestration, and learned-policy experiments remain subsequent research work.
+This makes Hex Machina useful as a cross-rule online evaluation harness and trajectory generator today. It is not yet a general RL training service: broader semantic diversity, distributed rollout orchestration, and learned-policy experiments remain subsequent research work.
 
 ## Mutation protocol
 

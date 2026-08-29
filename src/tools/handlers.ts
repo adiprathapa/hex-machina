@@ -7,7 +7,7 @@ import {
 } from "../domain/spell.ts";
 import { buildPatchPreview, type PatchPreviewEntry } from "../domain/patch-preview.ts";
 import { simulateCast, type CastResult } from "../simulator/cast.ts";
-import { explainFlood, previewPatch, proposePatches } from "../solver/repair.ts";
+import { explainSideEffect, previewPatch, proposePatches } from "../solver/repair.ts";
 import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS, traceSpellGraph } from "../solver/trace.ts";
 
 export const MAX_INSPECT_NODES = 12;
@@ -229,7 +229,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       const graph = context.getGraph();
       if (parsed.patchId !== undefined) {
         const patchId = requireString(parsed.patchId, "patchId");
-        if (!/^patch-(umbrella|direct)-v[0-9]+$/.test(patchId)) {
+        if (!/^patch-(umbrella|dampener|direct)-v[0-9]+$/.test(patchId)) {
           throw new Error(`Invalid patch ID: ${patchId}`);
         }
         requireIssuedPatch(graph, patchId);
@@ -278,11 +278,11 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       if (sideEffectId !== context.getGraph().semantics.effectId) {
         throw new Error(`Unknown side effect: ${sideEffectId}`);
       }
-      const explanation = explainFlood(context.getGraph());
+      const explanation = explainSideEffect(context.getGraph());
       context.recordActivity(
         "explain_side_effect",
         explanation.present
-          ? `Proved a ${explanation.subgraph.edges.length}-edge minimal causal subgraph for the flood.`
+          ? `Proved a ${explanation.subgraph.edges.length}-edge minimal causal subgraph for the side effect.`
           : explanation.explanation,
         explanation.nodeIds,
       );
@@ -349,7 +349,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
 
       if (hasRevertToken) {
         const revertToken = requireString(parsed.revertToken, "revertToken");
-        if (!/^revert-patch-(umbrella|direct)-v[0-9]+-after-v[0-9]+$/.test(revertToken)) {
+        if (!/^revert-patch-(umbrella|dampener|direct)-v[0-9]+-after-v[0-9]+$/.test(revertToken)) {
           throw new Error("Invalid revert token");
         }
         const current = context.getGraph();
@@ -390,7 +390,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
 
       const patchId = requireString(parsed.patchId, "patchId");
-      if (!/^patch-(umbrella|direct)-v[0-9]+$/.test(patchId)) {
+      if (!/^patch-(umbrella|dampener|direct)-v[0-9]+$/.test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
       const before = context.getGraph();

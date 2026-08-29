@@ -191,6 +191,7 @@ export function HexMachina() {
 
   const castSpell = async () => {
     setRevertToken(null);
+    await handlers.inspect_spell();
     await handlers.simulate_cast();
   };
 
@@ -710,7 +711,7 @@ export function HexMachina() {
               ))}
             </div>
             <div className="gym-foot">
-              <small>48 variants · vector + offline rollouts</small>
+              <small>72 variants · 2 causal families · vector + offline rollouts</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>

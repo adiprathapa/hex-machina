@@ -62,7 +62,7 @@
 
 **Reference capture:** `screenshots/03-successful-recast.jpg`
 
-**Voiceover:** “Forty-eight split variants test whether agents inspect instead of memorize. Hex Machina turns a magical game into a deterministic gym for safer agents.”
+**Voiceover:** “Two causal rules and seventy-two variants separate grounded agents from unsafe shortcuts. Hex Machina turns a magical game into a deterministic gym.”
 
 ## Judge prompt
 

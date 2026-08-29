@@ -1,17 +1,20 @@
 import { createAgentGymEnvironment, type AgentGymSnapshot } from "./agent-gym.ts";
 import {
-  AGENT_GYM_SPLIT_SIZES,
+  AGENT_GYM_FAMILY_SPLIT_SIZES,
+  type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 
 export async function runInspectionReferencePolicy(options?: {
+  family?: AgentGymFamilyId;
   split: AgentGymSplit;
   index: number;
 }): Promise<AgentGymSnapshot> {
   const gym = createAgentGymEnvironment(options);
   const reset = gym.reset();
   const inspection = await gym.step({ tool: "inspect_spell" });
-  const subject = inspection.observation.nodes.find((node) => node.label === "Summon ducks");
+  const subjectId = inspection.observation.semantics.roles.subject;
+  const subject = inspection.observation.nodes.find((node) => node.id === subjectId);
   if (!subject) throw new Error("Reference policy could not ground the protected subject from inspection");
 
   const failedCast = await gym.step({ tool: "simulate_cast" });
@@ -38,6 +41,7 @@ export async function runInspectionReferencePolicy(options?: {
 
 export async function benchmarkAgentGymFamily() {
   const episodes: Array<{
+    familyId: AgentGymFamilyId;
     scenarioId: string;
     split: AgentGymSplit;
     score: number;
@@ -46,28 +50,31 @@ export async function benchmarkAgentGymFamily() {
     steps: number;
   }> = [];
 
-  for (const split of Object.keys(AGENT_GYM_SPLIT_SIZES) as AgentGymSplit[]) {
-    for (let index = 0; index < AGENT_GYM_SPLIT_SIZES[split]; index += 1) {
-      const episode = await runInspectionReferencePolicy({ split, index });
-      episodes.push({
-        scenarioId: episode.scenarioId,
-        split,
-        score: episode.score,
-        maxScore: episode.maxScore,
-        status: episode.status,
-        steps: episode.trajectory.length,
-      });
+  for (const familyId of Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[]) {
+    for (const split of Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES[familyId]) as AgentGymSplit[]) {
+      for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split]; index += 1) {
+        const episode = await runInspectionReferencePolicy({ family: familyId, split, index });
+        episodes.push({
+          familyId: episode.familyId,
+          scenarioId: episode.scenarioId,
+          split,
+          score: episode.score,
+          maxScore: episode.maxScore,
+          status: episode.status,
+          steps: episode.trajectory.length,
+        });
+      }
     }
   }
 
   return {
     protocol: "hex-machina-agent-gym-benchmark/v1" as const,
-    familyId: "moonflower-opaque-roles-v1" as const,
+    familyIds: Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[],
     episodeCount: episodes.length,
     completedCount: episodes.filter((episode) => episode.status === "complete").length,
     meanScore: episodes.reduce((total, episode) => total + episode.score, 0) / episodes.length,
     splitScores: Object.fromEntries(
-      (Object.keys(AGENT_GYM_SPLIT_SIZES) as AgentGymSplit[]).map((split) => {
+      (["train", "validation", "test"] as AgentGymSplit[]).map((split) => {
         const selected = episodes.filter((episode) => episode.split === split);
         return [split, selected.reduce((total, episode) => total + episode.score, 0) / selected.length];
       }),
@@ -79,11 +86,13 @@ export async function benchmarkAgentGymFamily() {
 export async function collectAgentGymDataset(split?: AgentGymSplit) {
   const splits = split
     ? [split]
-    : Object.keys(AGENT_GYM_SPLIT_SIZES) as AgentGymSplit[];
+    : ["train", "validation", "test"] as AgentGymSplit[];
   const episodes: AgentGymSnapshot[] = [];
-  for (const selectedSplit of splits) {
-    for (let index = 0; index < AGENT_GYM_SPLIT_SIZES[selectedSplit]; index += 1) {
-      episodes.push(await runInspectionReferencePolicy({ split: selectedSplit, index }));
+  for (const familyId of Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[]) {
+    for (const selectedSplit of splits) {
+      for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][selectedSplit]; index += 1) {
+        episodes.push(await runInspectionReferencePolicy({ family: familyId, split: selectedSplit, index }));
+      }
     }
   }
   return episodes;

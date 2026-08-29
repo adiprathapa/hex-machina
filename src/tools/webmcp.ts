@@ -135,7 +135,7 @@ export async function registerWebMCPTools(
           patchId: {
             type: "string",
             description: "Optional current patch ID from propose_spell_patch to simulate as an unapplied preview.",
-            pattern: "^patch-(umbrella|direct)-v[0-9]+$",
+            pattern: "^patch-(umbrella|dampener|direct)-v[0-9]+$",
           },
         },
         additionalProperties: false,
@@ -209,12 +209,12 @@ export async function registerWebMCPTools(
           patchId: {
             type: "string",
             description: "A current patch ID returned by propose_spell_patch.",
-            pattern: "^patch-(umbrella|direct)-v[0-9]+$",
+            pattern: "^patch-(umbrella|dampener|direct)-v[0-9]+$",
           },
           revertToken: {
             type: "string",
             description: "The one-use token returned by the latest unchanged patch application.",
-            pattern: "^revert-patch-(umbrella|direct)-v[0-9]+-after-v[0-9]+$",
+            pattern: "^revert-patch-(umbrella|dampener|direct)-v[0-9]+-after-v[0-9]+$",
           },
         },
         oneOf: [
