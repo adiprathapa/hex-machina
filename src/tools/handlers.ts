@@ -461,7 +461,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         };
       }
 
-      const patchId = requireString(parsed.patchId, "patchId", "simulate_cast");
+      const patchId = requireString(parsed.patchId, "patchId", "apply_spell_patch");
       if (!new RegExp(SPELL_PATCH_ID_PATTERN).test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
