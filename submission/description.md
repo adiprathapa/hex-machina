@@ -26,7 +26,7 @@ The graph is the observation, the seven WebMCP tools are the action space, and t
 
 The research layer contains 48 deterministic variants across disjoint 32/8/8 train, validation, and test splits. Every variant remaps opaque IDs, order, layout, effect ID, and prompt wording. An inspection-driven policy still earns 23/23 on held-out variants, while a memorized training ID fails safely. This demonstrates within-family grounding, not generalized RL training; different simulator rules and semantic families remain the next research step.
 
-A reproducible benchmark command runs the transparent reference policy across all 48 tasks and emits per-episode JSON receipts plus split means. This makes environment drift visible without presenting the scripted baseline as a learned result.
+A reproducible benchmark command runs the transparent reference policy across all 48 tasks and emits per-episode JSON receipts plus split means. A separate JSONL exporter produces replay-complete transitions with scalar rewards, terminal flags, before/after graphs, and stable state keys for offline analysis. This makes environment drift visible without presenting the scripted baseline as a learned result.
 
 ## Technical highlights
 

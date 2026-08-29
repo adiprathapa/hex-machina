@@ -34,13 +34,17 @@ The application has no database, object-storage binding, account surface, analyt
 
 ## Agent Gym protocol
 
-The evaluation protocol does not reimplement game logic. It wraps the same seven `createSpellToolHandlers` functions used by local controls and WebMCP registration. Each step records the action and input, graph version before and after, whether state mutated, structured result or error, and an explained reward delta. The headless environment owns a canonical graph and exposes `reset()`, `step()`, and `snapshot()`; the browser uses the same session recorder to make progress visible and export JSON locally.
+The evaluation protocol does not reimplement game logic. It wraps the same seven `createSpellToolHandlers` functions used by local controls and WebMCP registration. Each step returns a post-action observation, scalar reward, `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The recorded transition contains complete before/after graphs, deterministic FNV-1a state keys, graph versions, mutation evidence, and explained reward deltas. The headless environment owns a canonical graph and exposes `reset()`, `step()`, and `snapshot()`; the browser uses the same session recorder to make progress visible and export JSON locally.
+
+Invalid tool names and malformed/stale valid-tool inputs become −2 transitions without crashing the rollout, while the underlying production handlers still throw normally for UI/WebMCP error boundaries. Unfinished episodes truncate after 32 actions with `terminationReason: "step-limit"`; completed episodes terminate with `terminationReason: "goal-verified"`. Calls after either terminal state are rejected as zero-reward no-ops until reset.
 
 The reference trajectory has nine milestones and a maximum score of 23: inspect, observe failure, trace, explain, preserve intent, propose, preview safely, apply, and verify. Invalid or stale actions score −2, while mutation before explanation scores an additional −5. Repeated milestones receive a small efficiency penalty. Completion requires a successful cast after an applied repair. Because the scenario and handlers are deterministic, identical policies serialize to identical trajectories.
 
 The family generator prevents a policy from succeeding by memorizing canonical IDs. Unit tests solve held-out validation and test variants only after discovering their live IDs through `inspect_spell`; reusing a training variant's protected-node ID on a test graph fails safely and records a negative reward. All 48 variants validate and reproduce byte-identically from their split and index.
 
 `npm run --silent gym:benchmark` executes the transparent inspection-driven reference policy across all splits and emits a machine-readable receipt. The expected baseline is 48/48 completed episodes, nine steps each, and a mean score of 23 in every split. This is a reproducibility check for the environment, not evidence of a learned policy.
+
+`npm run --silent gym:dataset -- --split=test` emits newline-delimited `hex-machina-agent-gym-episode/v1` records. Each episode contains replay-complete transition observations and state keys; omitting the split exports all 48 baseline rollouts without writing files or contacting an external service.
 
 This makes Hex Machina useful as a within-family evaluation harness and trajectory generator today. It is not yet a general RL training service: genuinely different simulator rules, held-out semantic families, rollout infrastructure, and learned-policy experiments remain subsequent research work.
 

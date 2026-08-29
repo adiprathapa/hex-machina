@@ -42,6 +42,8 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
   assert.match(client, /Same handlers · structured JSON/);
   assert.match(client, /Agent Gym · evaluation mode/);
+  assert.match(client, /Scored, replayable episode/);
+  assert.match(client, /before\/after graph observations/);
   assert.match(client, /instrumentSpellToolHandlers/);
   assert.match(client, /Export episode JSON/);
   assert.match(client, /48 variants · held-out test split/i);

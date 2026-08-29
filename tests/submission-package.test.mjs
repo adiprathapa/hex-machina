@@ -62,6 +62,9 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /48 deterministic tasks/i);
   assert.match(copy, /within-family grounding evidence/i);
   assert.match(copy, /not a learned-policy result/i);
+  assert.match(copy, /JSONL exporter/i);
+  assert.match(copy, /termination\/truncation flags/i);
+  assert.match(copy, /32 actions/i);
 });
 
 test("release evidence truthfully records local proof and unresolved external gates", async () => {

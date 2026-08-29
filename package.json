@@ -16,6 +16,7 @@
     "test:submission": "node --test tests/submission-package.test.mjs",
     "capture:submission": "npm run build && node submission/screenshots/capture.mjs",
     "gym:benchmark": "tsx scripts/benchmark-agent-gym.ts",
+    "gym:dataset": "tsx scripts/export-agent-gym-dataset.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {

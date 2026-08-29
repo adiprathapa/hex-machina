@@ -10,7 +10,7 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 ## Agent Gym protocol
 
-The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Each transition records before/after graph versions, mutation evidence, structured results or errors, reward deltas, and reward reasons. A reference policy earns 23/23 by grounding itself, observing the failure, proving its cause, encoding the human constraint, safely previewing and applying the repair, and recasting successfully. Invalid calls lose points; changing state before explanation loses more.
+The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Every step returns the post-action observation, scalar `reward`, Gym-style `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The episode records full before/after graph observations, stable state keys, mutation evidence, reward deltas, and reward reasons. Invalid calls become negative-reward transitions instead of crashing a rollout; changing state before explanation loses more. Episodes truncate deterministically at 32 steps and require reset.
 
 The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. The first scenario family contains 48 deterministic variants across 32 train, eight validation, and eight test tasks. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, and paraphrases the prompt. Tests prove an inspection-driven policy reaches 23/23 on held-out variants while memorized training IDs fail safely without mutation.
 
@@ -23,6 +23,14 @@ npm run --silent gym:benchmark
 ```
 
 The command emits a JSON benchmark receipt with per-episode scores and aggregate split means. The checked-in reference policy discovers task-specific IDs through inspection; it is a transparency baseline, not a learned model.
+
+Export replay-complete JSONL for offline analysis or dataset prototyping:
+
+```bash
+npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
+```
+
+Omit `--split` to export all 48 episodes. Each line contains one complete episode with its task metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
 
 ## Run locally
 

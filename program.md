@@ -48,7 +48,7 @@ Hex Machina is done only when all of the following are true:
 12. Unit, integration, production-build, and browser smoke tests pass through `python3 prepare.py`.
 13. The deployed experience has been tested in a WebMCP-capable in-app browser.
 14. A submission package exists with a concise description, architecture summary, tool list, repository instructions, screenshots, and a 60–90 second demo script.
-15. The same production handlers power a deterministic Agent Gym episode with reset/step semantics, visible scoring, negative rewards for invalid or premature actions, and exportable JSON trajectories.
+15. The same production handlers power a deterministic Agent Gym episode with reset/step semantics, explicit reward and termination flags, bounded rollouts, replayable before/after observations, visible scoring, negative rewards for invalid or premature actions, and exportable JSON/JSONL trajectories.
 
 ## Product boundaries
 

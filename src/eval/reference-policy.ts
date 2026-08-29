@@ -75,3 +75,32 @@ export async function benchmarkAgentGymFamily() {
     episodes,
   };
 }
+
+export async function collectAgentGymDataset(split?: AgentGymSplit) {
+  const splits = split
+    ? [split]
+    : Object.keys(AGENT_GYM_SPLIT_SIZES) as AgentGymSplit[];
+  const episodes: AgentGymSnapshot[] = [];
+  for (const selectedSplit of splits) {
+    for (let index = 0; index < AGENT_GYM_SPLIT_SIZES[selectedSplit]; index += 1) {
+      episodes.push(await runInspectionReferencePolicy({ split: selectedSplit, index }));
+    }
+  }
+  return episodes;
+}
+
+export function serializeAgentGymDatasetJsonl(episodes: AgentGymSnapshot[]) {
+  return `${episodes.map((episode) => JSON.stringify({
+    schema: "hex-machina-agent-gym-episode/v1",
+    familyId: episode.familyId,
+    scenarioId: episode.scenarioId,
+    split: episode.split,
+    seed: episode.seed,
+    objective: episode.objective,
+    status: episode.status,
+    terminationReason: episode.terminationReason,
+    score: episode.score,
+    maxScore: episode.maxScore,
+    transitions: episode.trajectory,
+  })).join("\n")}\n`;
+}

@@ -690,10 +690,10 @@ export function HexMachina() {
 
           <section className="agent-gym" aria-label="Agent Gym evaluation">
             <div className="agent-gym-heading">
-              <div><p className="section-kicker">Agent Gym · evaluation mode</p><h3>Scored semantic episode</h3></div>
+              <div><p className="section-kicker">Agent Gym · evaluation mode</p><h3>Scored, replayable episode</h3></div>
               <span className={gymSnapshot.status}>{gymSnapshot.status}</span>
             </div>
-            <p>Every site-tool call is a scored transition over the live graph. The interface and visiting agents use the same handlers.</p>
+            <p>Every site-tool call records reward plus before/after graph observations. The interface and visiting agents use the same handlers.</p>
             <div className="gym-score" aria-live="polite">
               <strong>{gymSnapshot.score}<small> / {gymSnapshot.maxScore}</small></strong>
               <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>

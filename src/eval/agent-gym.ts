@@ -1,4 +1,4 @@
-import { cloneGraph, type SpellGraph } from "../domain/spell.ts";
+import { cloneGraph, serializeSpellGraph, type SpellGraph } from "../domain/spell.ts";
 import {
   generateAgentGymScenario,
   type AgentGymScenarioVariant,
@@ -8,6 +8,7 @@ import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
 import { createSpellToolHandlers, type SpellToolHandlers } from "../tools/handlers.ts";
 
 export const AGENT_GYM_MAX_SCORE = 23;
+export const AGENT_GYM_MAX_EPISODE_STEPS = 32;
 export const AGENT_GYM_TOOL_NAMES = [
   "inspect_spell",
   "trace_effect",
@@ -39,8 +40,12 @@ interface RewardEvent {
 
 export interface AgentGymStep {
   index: number;
-  tool: AgentGymToolName;
+  tool: string;
   input: unknown;
+  observationBefore: SpellGraph;
+  observationAfter: SpellGraph;
+  stateKeyBefore: string;
+  stateKeyAfter: string;
   graphVersionBefore: number;
   graphVersionAfter: number;
   mutated: boolean;
@@ -62,7 +67,9 @@ export interface AgentGymSnapshot {
   objective: string;
   score: number;
   maxScore: typeof AGENT_GYM_MAX_SCORE;
-  status: "running" | "complete";
+  status: "running" | "complete" | "truncated";
+  terminationReason: "goal-verified" | "step-limit" | null;
+  maxEpisodeSteps: typeof AGENT_GYM_MAX_EPISODE_STEPS;
   completedMilestones: Milestone[];
   availableTools: readonly AgentGymToolName[];
   trajectory: AgentGymStep[];
@@ -104,13 +111,28 @@ function recordOf(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function cloneSerializable<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 function graphVersion(graph: SpellGraph) {
   return graph.version;
+}
+
+function stateKey(graph: SpellGraph) {
+  const serialized = serializeSpellGraph(graph);
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
 }
 
 export class AgentGymSession {
   private score = 0;
   private complete = false;
+  private truncated = false;
   private milestones = new Set<Milestone>();
   private trajectory: AgentGymStep[] = [];
 
@@ -119,6 +141,7 @@ export class AgentGymSession {
   reset() {
     this.score = 0;
     this.complete = false;
+    this.truncated = false;
     this.milestones.clear();
     this.trajectory = [];
     return this.snapshot();
@@ -132,15 +155,17 @@ export class AgentGymSession {
       scenarioId: this.config.scenarioId,
       split: this.config.split,
       variantIndex: this.config.variantIndex,
-      perturbations: this.config.perturbations,
+      perturbations: [...this.config.perturbations],
       seed: this.config.seed,
       objective: this.config.objective,
       score: this.score,
       maxScore: AGENT_GYM_MAX_SCORE,
-      status: this.complete ? "complete" : "running",
+      status: this.complete ? "complete" : this.truncated ? "truncated" : "running",
+      terminationReason: this.complete ? "goal-verified" : this.truncated ? "step-limit" : null,
+      maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
       completedMilestones: [...this.milestones],
       availableTools: AGENT_GYM_TOOL_NAMES,
-      trajectory: this.trajectory.map((step) => ({ ...step })),
+      trajectory: cloneSerializable(this.trajectory),
     };
   }
 
@@ -156,7 +181,7 @@ export class AgentGymSession {
   }
 
   recordError(
-    tool: AgentGymToolName,
+    tool: string,
     input: unknown,
     before: SpellGraph,
     after: SpellGraph,
@@ -217,7 +242,7 @@ export class AgentGymSession {
   }
 
   private pushStep(
-    tool: AgentGymToolName,
+    tool: string,
     input: unknown,
     before: SpellGraph,
     after: SpellGraph,
@@ -231,6 +256,10 @@ export class AgentGymSession {
       index: this.trajectory.length,
       tool,
       input,
+      observationBefore: cloneGraph(before),
+      observationAfter: cloneGraph(after),
+      stateKeyBefore: stateKey(before),
+      stateKeyAfter: stateKey(after),
       graphVersionBefore: graphVersion(before),
       graphVersionAfter: graphVersion(after),
       mutated: graphVersion(before) !== graphVersion(after),
@@ -239,7 +268,28 @@ export class AgentGymSession {
       ...(result === undefined ? {} : { result }),
       ...(error === undefined ? {} : { error }),
     });
+    if (!this.complete && this.trajectory.length >= AGENT_GYM_MAX_EPISODE_STEPS) {
+      this.truncated = true;
+    }
   }
+}
+
+export interface AgentGymTransition {
+  observation: SpellGraph;
+  reward: number;
+  terminated: boolean;
+  truncated: boolean;
+  result?: unknown;
+  error?: { name: string; message: string };
+  episode: AgentGymSnapshot;
+  info: {
+    scenarioId: string;
+    stepIndex: number | null;
+    graphVersion: number;
+    mutated: boolean;
+    rewardReasons: string[];
+    actionAccepted: boolean;
+  };
 }
 
 export function instrumentSpellToolHandlers(
@@ -315,12 +365,77 @@ export function createAgentGymEnvironment(options?: { split: AgentGymSplit; inde
           humanConstraint: variant?.humanConstraint ?? "The ducks are funny. They stay.",
         },
         episode: session.snapshot(),
+        info: {
+          protocol: "hex-machina-agent-gym/v1" as const,
+          scenarioId: session.snapshot().scenarioId,
+          actionSpace: AGENT_GYM_TOOL_NAMES,
+          maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
+        },
       };
     },
-    async step(action: { tool: AgentGymToolName; input?: unknown }) {
-      if (!AGENT_GYM_TOOL_NAMES.includes(action.tool)) throw new Error(`Unknown Agent Gym tool: ${action.tool}`);
-      const result = await handlers[action.tool](action.input ?? {});
-      return { observation: cloneGraph(graph), result, episode: session.snapshot() };
+    async step(action: { tool: string; input?: unknown }): Promise<AgentGymTransition> {
+      const beforeEpisode = session.snapshot();
+      if (beforeEpisode.status !== "running") {
+        return {
+          observation: cloneGraph(graph),
+          reward: 0,
+          terminated: beforeEpisode.status === "complete",
+          truncated: beforeEpisode.status === "truncated",
+          error: {
+            name: "EpisodeStateError",
+            message: `Episode is ${beforeEpisode.status}; call reset before another action`,
+          },
+          episode: beforeEpisode,
+          info: {
+            scenarioId: beforeEpisode.scenarioId,
+            stepIndex: null,
+            graphVersion: graph.version,
+            mutated: false,
+            rewardReasons: [],
+            actionAccepted: false,
+          },
+        };
+      }
+
+      const input = action.input ?? {};
+      let result: unknown;
+      let caught: unknown;
+      if (!AGENT_GYM_TOOL_NAMES.includes(action.tool as AgentGymToolName)) {
+        const error = new Error(`Unknown Agent Gym tool: ${action.tool}`);
+        session.recordError(action.tool, input, cloneGraph(graph), cloneGraph(graph), error);
+        caught = error;
+      } else {
+        try {
+          const tool = action.tool as AgentGymToolName;
+          result = await handlers[tool](input);
+        } catch (error) {
+          caught = error;
+        }
+      }
+
+      const episode = session.snapshot();
+      const step = episode.trajectory.at(-1)!;
+      return {
+        observation: cloneGraph(graph),
+        reward: step.rewardDelta,
+        terminated: episode.status === "complete",
+        truncated: episode.status === "truncated",
+        ...(caught === undefined ? { result } : {
+          error: {
+            name: caught instanceof Error ? caught.name : "Error",
+            message: caught instanceof Error ? caught.message : "Tool execution failed",
+          },
+        }),
+        episode,
+        info: {
+          scenarioId: episode.scenarioId,
+          stepIndex: step.index,
+          graphVersion: graph.version,
+          mutated: step.mutated,
+          rewardReasons: step.rewardReasons,
+          actionAccepted: caught === undefined,
+        },
+      };
     },
     snapshot: () => session.snapshot(),
   };

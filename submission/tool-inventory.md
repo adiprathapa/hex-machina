@@ -12,7 +12,7 @@
 
 All seven handlers are instrumented once by the Agent Gym layer before they are given to either the interface or WebMCP registration. Each invocation therefore records the same action input, before/after graph versions, mutation flag, result or error, and explained reward delta. The instrumenter observes behavior but never replaces validation, simulation, or mutation logic.
 
-The headless family benchmark invokes these handlers directly across 48 deterministic split variants. It never uses a parallel mock tool surface; the same validation, solver, simulator, reward recorder, and stale-write protection remain in force.
+The headless family benchmark and JSONL exporter invoke these handlers directly across 48 deterministic split variants. They never use a parallel mock tool surface; the same validation, solver, simulator, reward recorder, and stale-write protection remain in force. The environment catches handler failures only at its rollout boundary, converting them into replayable negative-reward transitions while preserving normal UI/WebMCP error behavior.
 
 ## Safety properties
 

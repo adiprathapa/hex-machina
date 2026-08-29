@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { once } from "node:events";
 import path from "node:path";
@@ -205,6 +205,23 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
     await assertVisible(page.locator(".agent-gym-heading .complete"), "apply and recast completes the visible evaluation episode");
     assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*22\s*\/\s*23/i);
+    const [episodeDownload] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Export episode JSON" }).click(),
+    ]);
+    assert.equal(episodeDownload.suggestedFilename(), "hex-machina-agent-gym-episode.json");
+    const episodePath = await episodeDownload.path();
+    assert.ok(episodePath, "the browser produced a local episode artifact");
+    const exportedEpisode = JSON.parse(await readFile(episodePath, "utf8"));
+    assert.equal(exportedEpisode.status, "complete");
+    assert.equal(exportedEpisode.terminationReason, "goal-verified");
+    assert.equal(exportedEpisode.trajectory.length, 8);
+    assert.equal(exportedEpisode.trajectory.every((transition) => (
+      transition.observationBefore &&
+      transition.observationAfter &&
+      /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyBefore) &&
+      /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyAfter)
+    )), true, "the visible export contains replay-complete transitions");
 
     await page.getByRole("button", { name: "Undo agent patch", exact: true }).click();
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "undo restores the failed spell");
