@@ -15,18 +15,11 @@ import {
 } from "../scenarios/agent-gym-family.ts";
 import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
 import { createSpellToolHandlers, type SpellToolHandlers } from "../tools/handlers.ts";
+import { createSpellToolManifest, SPELL_TOOL_NAMES } from "../tools/definitions.ts";
 
 export const AGENT_GYM_MAX_SCORE = 23;
 export const AGENT_GYM_MAX_EPISODE_STEPS = 32;
-export const AGENT_GYM_TOOL_NAMES = [
-  "inspect_spell",
-  "trace_effect",
-  "simulate_cast",
-  "explain_side_effect",
-  "set_sacred_constraint",
-  "propose_spell_patch",
-  "apply_spell_patch",
-] as const;
+export const AGENT_GYM_TOOL_NAMES = SPELL_TOOL_NAMES;
 
 export type AgentGymToolName = typeof AGENT_GYM_TOOL_NAMES[number];
 
@@ -399,6 +392,7 @@ export function createAgentGymEnvironment(options?: AgentGymEnvironmentOptions) 
           observationSchema: "hex-machina-public-spell-graph/v1" as const,
           scenarioId: session.snapshot().scenarioId,
           actionSpace: AGENT_GYM_TOOL_NAMES,
+          actionManifest: createSpellToolManifest(),
           maxEpisodeSteps: AGENT_GYM_MAX_EPISODE_STEPS,
           ...(sampledTask ? { sampledTask } : {}),
         },

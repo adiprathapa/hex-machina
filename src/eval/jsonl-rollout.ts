@@ -11,6 +11,7 @@ import {
   type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
+import { createSpellToolManifest } from "../tools/definitions.ts";
 
 export const AGENT_GYM_JSONL_PROTOCOL = "hex-machina-agent-gym/jsonl-v1" as const;
 
@@ -120,6 +121,7 @@ export function createAgentGymJsonlBridge() {
           return response(request.id, request.op, true, {
             environmentProtocol: "hex-machina-agent-gym/v1",
             actionSpace: AGENT_GYM_TOOL_NAMES,
+            actionManifest: createSpellToolManifest(),
             familySplitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES,
             splitSizes: AGENT_GYM_FAMILY_SPLIT_SIZES[AGENT_GYM_FAMILY_IDS.moonflower],
             observationSpace: {

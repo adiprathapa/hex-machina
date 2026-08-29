@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
+import {
+  createSpellToolManifest,
+  SPELL_PATCH_ID_PATTERN,
+  SPELL_REVERT_TOKEN_PATTERN,
+} from "../src/tools/definitions.ts";
 import { createSpellToolHandlers } from "../src/tools/handlers.ts";
 import { registerWebMCPTools } from "../src/tools/webmcp.ts";
 
@@ -26,6 +31,26 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   const supported = await registerWebMCPTools(handlers);
   assert.equal(supported, true);
   assert.equal(definitions.length, 7);
+  const canonical = createMoonflowerScenario();
+  const expectedManifest = createSpellToolManifest({
+    runeIds: canonical.nodes.map((node) => node.id),
+    sourceIds: canonical.nodes.filter((node) => node.kind === "source").map((node) => node.id),
+    effectIds: [canonical.semantics.effectId],
+    sacredTargetIds: [canonical.semantics.roles.subject],
+    patchIdPattern: SPELL_PATCH_ID_PATTERN,
+    revertTokenPattern: SPELL_REVERT_TOKEN_PATTERN,
+  });
+  assert.deepEqual(
+    definitions.map((definition) => ({
+      name: definition.name,
+      title: definition.title,
+      description: definition.description,
+      inputSchema: definition.inputSchema,
+      annotations: definition.annotations,
+    })),
+    expectedManifest.tools,
+    "browser registration must be derived from the shared serializable manifest",
+  );
   assert.equal(registrationOptions.every((options) => options.signal instanceof AbortSignal), true);
   assert.equal(definitions.every((item) => typeof item.title === "string" && item.title.length > 0), true);
   assert.deepEqual(
@@ -61,6 +86,8 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.equal(inspectNodeIds.minItems, 1);
   assert.equal(typeof inspectNodeIds.description, "string");
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
+  const sacredTool = definitions.find((item) => item.name === "set_sacred_constraint");
+  assert.deepEqual(sacredTool.inputSchema.properties.targetId.enum, ["summon-ducks"]);
   const simulateTool = definitions.find((item) => item.name === "simulate_cast");
   assert.equal(simulateTool.inputSchema.properties.patchId.type, "string");
   assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$");

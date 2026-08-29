@@ -60,6 +60,27 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.match(description.payload.observationSpace.excludes.join(" "), /role assignments/);
   assert.match(description.payload.observationSpace.excludes.join(" "), /pre-cast diagnostic assertions/);
   assert.equal(description.payload.actionSpace.length, 7);
+  const manifest = description.payload.actionManifest;
+  assert.equal(manifest.protocol, "hex-machina-tool-manifest/v1");
+  assert.deepEqual(manifest.actionFormat.properties.tool.enum, description.payload.actionSpace);
+  assert.equal(manifest.tools.length, 7);
+  assert.deepEqual(manifest.tools.map((tool) => tool.name), description.payload.actionSpace);
+  assert.equal(manifest.tools.filter((tool) => tool.annotations.readOnlyHint).length, 5);
+  assert.equal(manifest.tools.every((tool) => tool.inputSchema.additionalProperties === false), true);
+  const manifestByName = Object.fromEntries(manifest.tools.map((tool) => [tool.name, tool]));
+  assert.equal("enum" in manifestByName.inspect_spell.inputSchema.properties.nodeIds.items, false);
+  assert.equal("enum" in manifestByName.trace_effect.inputSchema.properties.effectId, false);
+  assert.equal("enum" in manifestByName.trace_effect.inputSchema.properties.sourceId, false);
+  assert.equal("enum" in manifestByName.set_sacred_constraint.inputSchema.properties.targetId, false);
+  assert.equal(
+    manifestByName.simulate_cast.inputSchema.properties.patchId.pattern,
+    "^patch-[a-z0-9-]{1,96}-v[0-9]+$",
+  );
+  assert.equal(
+    manifestByName.apply_spell_patch.inputSchema.properties.revertToken.pattern,
+    "^revert-patch-[a-z0-9-]{1,96}-v[0-9]+-after-v[0-9]+$",
+  );
+  assert.doesNotMatch(JSON.stringify(manifest), /semantics|role assignments|answer-key/i);
 
   const reset = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: 2,
@@ -69,6 +90,7 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   })));
   assert.equal(reset.ok, true);
   assert.equal(reset.payload.info.scenarioId, "task-01-test-05");
+  assert.deepEqual(reset.payload.info.actionManifest, manifest);
 
   const sampledReset = JSON.parse(await bridge.handleLine(JSON.stringify({
     id: "sampled",
@@ -161,6 +183,7 @@ with HexMachinaEnv() as env:
     observation, reward, terminated, truncated, info = env.step({"tool": "inspect_spell"})
     print(json.dumps({
         "tools": len(description["actionSpace"]),
+        "manifestProtocol": description["actionManifest"]["protocol"],
         "scenario": reset_info["scenarioId"],
         "graph": observation["id"],
         "reward": reward,
@@ -181,6 +204,7 @@ with HexMachinaEnv() as env:
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt, {
     tools: 7,
+    manifestProtocol: "hex-machina-tool-manifest/v1",
     scenario: "task-01-validation-03",
     graph: "spell-task-01-validation-03",
     reward: 1,

@@ -10,7 +10,7 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 ## Agent Gym protocol
 
-The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Every step returns the post-action observation, scalar `reward`, Gym-style `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The episode records full public before/after graph observations, stable state keys, mutation evidence, reward deltas, and reward reasons. Simulator role assignments, causal rule IDs, and answer-key route edges are excluded from reset, step, inspection, replay, JSONL, and Python observations. Invalid calls become negative-reward transitions instead of crashing a rollout; changing state before explanation loses more. Episodes truncate deterministically at 32 steps and require reset.
+The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Every reset includes a versioned, serializable action manifest with each tool's description, JSON Schema, and read/write annotation, so an LLM runner can construct tool calls without a hand-maintained adapter. The manifest and browser WebMCP registrations are generated from the same definitions, while task-specific opaque IDs are deliberately absent from the headless manifest. Every step returns the post-action observation, scalar `reward`, Gym-style `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The episode records full public before/after graph observations, stable state keys, mutation evidence, reward deltas, and reward reasons. Simulator role assignments, causal rule IDs, and answer-key route edges are excluded from reset, step, inspection, replay, JSONL, and Python observations. Invalid calls become negative-reward transitions instead of crashing a rollout; changing state before explanation loses more. Episodes truncate deterministically at 32 steps and require reset.
 
 The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Three causal families contain 96 deterministic variants: Moonflower has 32/8/8 train/validation/test tasks, while Resonant Aviary and Clockwork Orchard each have 16/4/4. They test an unshielded amplified carrier, reachable feedback cycle, and missing temporal guard respectively. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, paraphrases the prompt, and activates a seeded one-to-three-edge decoy subgraph. The decoys are valid typed structures but causally irrelevant to the tracked failure, producing at least three distinct topologies per family without changing the answer-key route. Tests prove an inspection-driven policy reaches 23/23 on held-out variants from all three rules while memorized training IDs fail safely without mutation.
 
@@ -54,7 +54,7 @@ Drive live online rollouts from any process over a strict newline-delimited prot
 npm run --silent gym:serve
 ```
 
-Write one JSON request per line to stdin and read one correlated response per line from stdout. The operations are `describe`, `reset`, `step`, and `snapshot`; transport errors stay separate from scored agent mistakes, so a bad action cannot crash or desynchronize a training run. For example:
+Write one JSON request per line to stdin and read one correlated response per line from stdout. The operations are `describe`, `reset`, `step`, and `snapshot`; transport errors stay separate from scored agent mistakes, so a bad action cannot crash or desynchronize a training run. `describe` returns `hex-machina-tool-manifest/v1`, including the exact `{tool, input}` action envelope, all seven schemas, and five-read/two-write safety annotations. For example:
 
 ```json
 {"id":1,"op":"reset","split":"test","index":0}
@@ -146,7 +146,7 @@ The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages th
 - `src/scenarios/agent-gym-family.ts` — seeded opaque-ID variants and disjoint evaluation splits
 - `src/simulator/` — cast execution and ordered event traces
 - `src/solver/` — causal diagnosis and constraint-aware repair search
-- `src/tools/` — shared semantic handlers and guarded WebMCP registration
+- `src/tools/` — shared semantic handlers, versioned tool manifest, and guarded WebMCP registration
 - `src/familiar/` — optional deterministic message-passing suspect ranking
 - `src/eval/` — deterministic Agent Gym reset/step protocol, rewards, trajectory capture, and JSONL rollout bridge
 - `adapters/` — dependency-free Python client with Gymnasium-shaped signatures

@@ -370,6 +370,11 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
     "propose_spell_patch",
     "apply_spell_patch",
   ]);
+  assert.equal(reset.info.actionManifest.protocol, "hex-machina-tool-manifest/v1");
+  assert.deepEqual(
+    reset.info.actionManifest.tools.map((tool) => tool.name),
+    reset.info.actionSpace,
+  );
 
   const inspection = await gym.step({ tool: "inspect_spell" });
   assert.equal(inspection.reward, 1);
@@ -397,6 +402,40 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   assert.equal(unknown.info.actionAccepted, false);
   assert.equal(unknown.info.mutated, false);
   assert.match(unknown.error.message, /Unknown Agent Gym tool/);
+});
+
+test("temporal-family patch capability can be applied and reverted through its advertised schema", async () => {
+  const gym = createAgentGymEnvironment({
+    family: AGENT_GYM_FAMILY_IDS.clockworkOrchard,
+    split: "test",
+    index: 0,
+  });
+  const reset = gym.reset();
+  const inspection = await gym.step({ tool: "inspect_spell" });
+  const subjectId = groundConstraintTarget(inspection.result.nodes, reset.task.humanConstraint).id;
+  const failure = await gym.step({ tool: "simulate_cast" });
+  const effectId = failure.result.sideEffects[0].id;
+  await gym.step({ tool: "trace_effect", input: { effectId } });
+  await gym.step({ tool: "explain_side_effect", input: { sideEffectId: effectId } });
+  await gym.step({
+    tool: "set_sacred_constraint",
+    input: { targetId: subjectId, reason: reset.task.humanConstraint },
+  });
+  const proposal = await gym.step({ tool: "propose_spell_patch" });
+  const patchId = proposal.result.patches[0].id;
+  assert.match(patchId, /^patch-temporal-guard-v[0-9]+$/);
+  const beforeApply = proposal.observation;
+  const applied = await gym.step({ tool: "apply_spell_patch", input: { patchId } });
+  assert.match(applied.result.revertToken, /^revert-patch-temporal-guard-v[0-9]+-after-v[0-9]+$/);
+  const reverted = await gym.step({
+    tool: "apply_spell_patch",
+    input: { revertToken: applied.result.revertToken },
+  });
+  assert.equal(reverted.result.action, "revert");
+  assert.equal(reverted.result.reverted, true);
+  assert.deepEqual(reverted.observation.nodes, beforeApply.nodes);
+  assert.deepEqual(reverted.observation.edges, beforeApply.edges);
+  assert.deepEqual(reverted.observation.constraints, beforeApply.constraints);
 });
 
 test("episodes truncate at a deterministic step limit and require reset", async () => {

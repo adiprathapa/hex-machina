@@ -10,8 +10,13 @@ import { buildPatchPreview, type PatchPreviewEntry } from "../domain/patch-previ
 import { simulateCast, type CastResult } from "../simulator/cast.ts";
 import { explainSideEffect, previewPatch, proposePatches } from "../solver/repair.ts";
 import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS, traceSpellGraph } from "../solver/trace.ts";
+import {
+  MAX_INSPECT_NODES,
+  SPELL_PATCH_ID_PATTERN,
+  SPELL_REVERT_TOKEN_PATTERN,
+} from "./definitions.ts";
 
-export const MAX_INSPECT_NODES = 12;
+export { MAX_INSPECT_NODES } from "./definitions.ts";
 
 type ToolInput = Record<string, unknown>;
 
@@ -228,7 +233,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       const graph = context.getGraph();
       if (parsed.patchId !== undefined) {
         const patchId = requireString(parsed.patchId, "patchId");
-        if (!/^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$/.test(patchId)) {
+        if (!new RegExp(SPELL_PATCH_ID_PATTERN).test(patchId)) {
           throw new Error(`Invalid patch ID: ${patchId}`);
         }
         requireIssuedPatch(graph, patchId);
@@ -348,7 +353,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
 
       if (hasRevertToken) {
         const revertToken = requireString(parsed.revertToken, "revertToken");
-        if (!/^revert-patch-(umbrella|dampener|direct)-v[0-9]+-after-v[0-9]+$/.test(revertToken)) {
+        if (!new RegExp(SPELL_REVERT_TOKEN_PATTERN).test(revertToken)) {
           throw new Error("Invalid revert token");
         }
         const current = context.getGraph();
@@ -389,7 +394,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
 
       const patchId = requireString(parsed.patchId, "patchId");
-      if (!/^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$/.test(patchId)) {
+      if (!new RegExp(SPELL_PATCH_ID_PATTERN).test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
       const before = context.getGraph();

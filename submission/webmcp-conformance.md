@@ -4,7 +4,7 @@ Audited 2026-08-27 against the [WebMCP Draft Community Group Report](https://web
 
 | Current draft contract | Hex Machina evidence |
 |---|---|
-| Tools register imperatively through `document.modelContext.registerTool()`. | `src/tools/webmcp.ts` feature-detects the method and registers seven definitions. |
+| Tools register imperatively through `document.modelContext.registerTool()`. | `src/tools/webmcp.ts` feature-detects the method and registers seven definitions generated from the versioned serializable factory in `src/tools/definitions.ts`. The headless Agent Gym protocol exposes the identifier-neutral form of that same contract. |
 | Tool names are stable, non-empty identifiers of at most 128 allowed characters. | All seven names are short lowercase ASCII identifiers; contract tests compare the exact set. |
 | Definitions include a description, optional human-facing title, JSON-serializable input schema, and asynchronous execute callback. | Every definition has a title and task-specific description. Tests inspect schemas, and production Chrome invokes each callback. |
 | Input schemas are JSON Schema objects. | Every schema is a bounded object with `additionalProperties: false`; IDs use enums or anchored patterns, arrays are bounded and unique, and human text is length-limited. Every agent-facing parameter has a description. `inspect_spell` requires one to twelve unique known IDs when filtering. `trace_effect` makes source/effect selection mutually exclusive and caps depth at 12 and paths at five. `simulate_cast` accepts only an optional current application-generated patch ID, never arbitrary candidate state. |
