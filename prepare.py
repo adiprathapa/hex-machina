@@ -410,6 +410,10 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         marker in combined
         for marker in ("expectedGraphVersion", "requiredEdgeIds", "requiredDormantNodeIds", "requiredConstraintIds", "validatedPreconditions")
     )
+    proposal_issued_patches = all(
+        marker in combined
+        for marker in ("issuedPatches", "requireIssuedPatch", "call propose_spell_patch first")
+    )
     sacred_reachability = all(
         marker in combined
         for marker in ("Sacred constraint", "no longer reachable from a source")
@@ -432,6 +436,9 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "truncated",
             "serializeAgentGymDatasetJsonl",
             "hex-machina-agent-gym-episode/v1",
+            "hex-machina-agent-gym-policy-benchmark/v1",
+            "benchmarkAgentGymPolicies",
+            "AGENT_GYM_POLICY_BASELINES",
             "hex-machina-agent-gym/jsonl-v1",
             "createAgentGymJsonlBridge",
             "HexMachinaEnv",
@@ -542,6 +549,11 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "version, live-edge, dormant-rune, and sacred-lock facts are explicit and revalidated before mutation" if validated_patch_preconditions else "explicit structural patch preconditions are missing",
         ),
         Check(
+            "proposal-issued patch capabilities",
+            proposal_issued_patches,
+            "preview and mutation require a patch ID issued for the current graph version" if proposal_issued_patches else "guessable patch IDs can bypass proposal review",
+        ),
+        Check(
             "sacred reachability invariant",
             sacred_reachability,
             "atomic patches fail closed when sacred reachability is lost" if sacred_reachability else "sacred reachability guard missing",
@@ -549,7 +561,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose rollout-safe reset/step, 48 split variants, replay observations, rewards, JSONL datasets, and live Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
+            "shared handlers expose rollout-safe reset/step, 48 split variants, contrast policies, replay observations, JSONL datasets, and live Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split family, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

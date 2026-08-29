@@ -1299,6 +1299,56 @@ kbd {
   transition: width .2s ease;
 }
 
+.policy-baselines {
+  margin: 10px 0;
+  border-top: 1px solid #bfd2dd;
+  border-bottom: 1px solid #bfd2dd;
+}
+
+.policy-baselines-heading,
+.policy-baseline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.policy-baselines-heading {
+  padding: 6px 0 4px;
+  color: var(--subtle);
+  font: 600 8px/1.2 var(--font-fira-code), monospace;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.policy-baseline {
+  min-height: 27px;
+  border-top: 1px solid rgb(191 210 221 / 55%);
+  color: var(--ink);
+  font: 600 9px/1.1 var(--font-fira-code), monospace;
+}
+
+.policy-baseline > span {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.policy-baseline small {
+  color: var(--subtle);
+  font-size: 7px;
+  font-weight: 500;
+}
+
+.policy-baseline strong {
+  color: var(--aqua);
+  font-size: 10px;
+}
+
+.policy-baseline strong.negative {
+  color: var(--ember);
+}
+
 .gym-foot button {
   min-height: 36px;
   padding: 0 9px;

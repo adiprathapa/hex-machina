@@ -16,12 +16,13 @@ function contrastRatio(foreground, background) {
 }
 
 test("ships Hex Machina instead of the starter preview", async () => {
-  const [page, layout, client, packageJson, css] = await Promise.all([
+  const [page, layout, client, packageJson, css, policy] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/HexMachina.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/eval/policy-benchmark.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /<HexMachina \/>/);
@@ -44,6 +45,10 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /Agent Gym · evaluation mode/);
   assert.match(client, /Scored, replayable episode/);
   assert.match(client, /before\/after graph observations/);
+  assert.match(client, /Held-out policy/);
+  assert.match(client, /AGENT_GYM_POLICY_BASELINES/);
+  assert.match(policy, /Mutate first/);
+  assert.match(policy, /Memorized IDs/);
   assert.match(client, /instrumentSpellToolHandlers/);
   assert.match(client, /Export episode JSON/);
   assert.match(client, /48 variants · live \+ offline rollouts/i);

@@ -107,12 +107,21 @@ function createReviewedPatch(
 }
 
 export function createSpellToolHandlers(context: SpellToolContext) {
+  let issuedPatches: { graphVersion: number; patchIds: Set<string> } | null = null;
   let reversiblePatch: {
     token: string;
     appliedVersion: number;
     graphBeforeApply: SpellGraph;
     reviewedPatch: ReviewedSpellPatch;
   } | null = null;
+
+  const requireIssuedPatch = (graph: SpellGraph, patchId: string) => {
+    if (issuedPatches?.graphVersion !== graph.version || !issuedPatches.patchIds.has(patchId)) {
+      throw new Error(
+        `Patch ${patchId} has not been issued for review on graph v${graph.version}; call propose_spell_patch first`,
+      );
+    }
+  };
 
   return {
     inspect_spell: async (input: unknown = {}) => {
@@ -223,6 +232,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         if (!/^patch-(umbrella|direct)-v[0-9]+$/.test(patchId)) {
           throw new Error(`Invalid patch ID: ${patchId}`);
         }
+        requireIssuedPatch(graph, patchId);
         const patch = proposePatches(graph).find((candidate) => candidate.id === patchId);
         if (!patch) {
           throw new Error(`Patch ${patchId} is unavailable or stale for graph v${graph.version}`);
@@ -321,6 +331,10 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         }
         return createReviewedPatch(graph, patch, predictedOutcome);
       });
+      issuedPatches = {
+        graphVersion: graph.version,
+        patchIds: new Set(patches.map((patch) => patch.id)),
+      };
       context.recordActivity("propose_spell_patch", patches.length ? `Prepared ${patches.length} constraint-aware patch.` : "No patch is needed.");
       context.presentResult?.({ tool: "propose_spell_patch", patches });
       return { graphVersion: graph.version, patches };
@@ -380,6 +394,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
       const before = context.getGraph();
+      requireIssuedPatch(before, patchId);
       const patch = proposePatches(before).find((candidate) => candidate.id === patchId);
       if (!patch) {
         throw new Error(

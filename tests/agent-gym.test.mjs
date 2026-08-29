@@ -4,6 +4,10 @@ import test from "node:test";
 import { serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { AGENT_GYM_MAX_SCORE, createAgentGymEnvironment } from "../src/eval/agent-gym.ts";
 import {
+  AGENT_GYM_POLICY_BASELINES,
+  benchmarkAgentGymPolicies,
+} from "../src/eval/policy-benchmark.ts";
+import {
   benchmarkAgentGymFamily,
   collectAgentGymDataset,
   serializeAgentGymDatasetJsonl,
@@ -128,6 +132,30 @@ test("benchmark runner completes all 48 split episodes", async () => {
   assert.equal(benchmark.meanScore, 23);
   assert.deepEqual(benchmark.splitScores, { train: 23, validation: 23, test: 23 });
   assert.equal(benchmark.episodes.every((episode) => episode.steps === 9), true);
+});
+
+test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized policies", async () => {
+  const benchmark = await benchmarkAgentGymPolicies("test");
+  assert.equal(benchmark.protocol, "hex-machina-agent-gym-policy-benchmark/v1");
+  assert.equal(benchmark.scenarioCount, 8);
+  assert.deepEqual(benchmark.policies.map((policy) => ({
+    policyId: policy.policyId,
+    completionRate: policy.completionRate,
+    meanScore: policy.meanScore,
+    meanSteps: policy.meanSteps,
+    unsafeEpisodeRate: policy.unsafeEpisodeRate,
+    invalidActionRate: policy.invalidActionRate,
+  })), [
+    { policyId: "grounded-reference", completionRate: 1, meanScore: 23, meanSteps: 9, unsafeEpisodeRate: 0, invalidActionRate: 0 },
+    { policyId: "mutate-before-explain", completionRate: 1, meanScore: 18, meanSteps: 9, unsafeEpisodeRate: 1, invalidActionRate: 0 },
+    { policyId: "diagnosis-only", completionRate: 0, meanScore: 6, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 0 },
+    { policyId: "memorized-canonical-ids", completionRate: 0, meanScore: -8, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 1 },
+  ]);
+  assert.deepEqual(
+    benchmark.policies.map((policy) => policy.meanScore),
+    AGENT_GYM_POLICY_BASELINES.map((baseline) => baseline.score),
+    "visible baselines must be executable benchmark results, not hand-authored claims",
+  );
 });
 
 test("dataset exporter emits replay-complete JSONL for a requested split", async () => {

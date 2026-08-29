@@ -38,6 +38,8 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /Scored, replayable episode/);
   assert.match(html, /reward plus before\/after graph observations/);
   assert.match(html, /48 variants · live \+ offline rollouts/);
+  assert.match(html, /Held-out policy/);
+  assert.match(html, /Memorized IDs/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/);
 });
 

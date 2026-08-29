@@ -317,7 +317,7 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
   await assert.rejects(handlers.simulate_cast({ patchId: "anything" }), /Invalid patch ID/);
   await assert.rejects(
     handlers.simulate_cast({ patchId: "patch-umbrella-v999" }),
-    /unavailable or stale/,
+    /has not been issued for review/,
   );
   await assert.rejects(handlers.propose_spell_patch({ limit: 99 }), /unknown field: limit/);
   await assert.rejects(
@@ -346,9 +346,39 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
   );
   await assert.rejects(
     handlers.apply_spell_patch({ patchId: "patch-umbrella-v999" }),
-    /unavailable or stale/,
+    /has not been issued for review/,
   );
   assert.equal(JSON.stringify(graph), initialGraph);
+});
+
+test("valid-looking patch IDs cannot bypass proposal review", async () => {
+  let graph = createMoonflowerScenario();
+  const handlers = createSpellToolHandlers({
+    getGraph: () => graph,
+    setGraph: (next) => { graph = next; },
+    recordActivity() {},
+  });
+  const initialGraph = JSON.stringify(graph);
+
+  await assert.rejects(
+    handlers.simulate_cast({ patchId: "patch-umbrella-v1" }),
+    /call propose_spell_patch first/,
+  );
+  await assert.rejects(
+    handlers.apply_spell_patch({ patchId: "patch-umbrella-v1" }),
+    /call propose_spell_patch first/,
+  );
+  assert.equal(JSON.stringify(graph), initialGraph);
+
+  const proposal = await handlers.propose_spell_patch();
+  await handlers.set_sacred_constraint({
+    targetId: "summon-ducks",
+    reason: "The proposal must become stale after this mutation.",
+  });
+  await assert.rejects(
+    handlers.apply_spell_patch({ patchId: proposal.patches[0].id }),
+    /has not been issued for review on graph v2/,
+  );
 });
 
 test("revert tokens fail closed after an intervening graph mutation", async () => {

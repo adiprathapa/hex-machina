@@ -24,6 +24,14 @@ npm run --silent gym:benchmark
 
 The command emits a JSON benchmark receipt with per-episode scores and aggregate split means. The checked-in reference policy discovers task-specific IDs through inspection; it is a transparency baseline, not a learned model.
 
+Check whether the rubric distinguishes behavior rather than merely rewarding task completion:
+
+```bash
+npm run --silent gym:policies
+```
+
+Across all eight held-out test variants, the grounded policy completes at 23/23; a policy that mutates before explaining still completes but scores 18; a safe diagnosis-only policy stops at 6; and a policy that reuses canonical IDs is rejected at −8. The command reports completion, unsafe-episode, invalid-action, score, and step metrics per policy. These are deterministic behavioral controls, not model leaderboard claims. Their checked values are rendered in the Agent Gym card so the visible story and executable evidence cannot drift.
+
 Export replay-complete JSONL for offline analysis or dataset prototyping:
 
 ```bash

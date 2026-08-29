@@ -14,6 +14,8 @@ All seven handlers are instrumented once by the Agent Gym layer before they are 
 
 The headless family benchmark, JSONL exporter, streaming rollout service, and Python adapter invoke these handlers directly across 48 deterministic split variants. They never use a parallel mock tool surface; the same validation, solver, simulator, reward recorder, and stale-write protection remain in force. The environment catches handler failures only at its rollout boundary, converting them into replayable negative-reward transitions while preserving normal UI/WebMCP error behavior.
 
+Patch IDs have a second application-owned boundary: preview and write handlers accept only IDs returned by `propose_spell_patch` from that same handler instance at the current graph version. Guessing a valid-looking stable ID cannot skip human-review issuance, and any graph change revokes the issued set before mutation.
+
 ## Safety properties
 
 - All schemas set `additionalProperties: false`.

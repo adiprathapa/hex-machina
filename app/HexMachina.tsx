@@ -14,6 +14,7 @@ import {
   instrumentSpellToolHandlers,
   type AgentGymSnapshot,
 } from "@/src/eval/agent-gym";
+import { AGENT_GYM_POLICY_BASELINES } from "@/src/eval/policy-benchmark";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
 import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
@@ -699,6 +700,15 @@ export function HexMachina() {
               <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
+            <div className="policy-baselines" aria-label="Held-out policy benchmark">
+              <div className="policy-baselines-heading"><span>Held-out policy</span><span>Mean reward</span></div>
+              {AGENT_GYM_POLICY_BASELINES.map((baseline) => (
+                <div className="policy-baseline" key={baseline.id}>
+                  <span>{baseline.label}<small>{baseline.outcome}</small></span>
+                  <strong className={baseline.score < 0 ? "negative" : undefined}>{baseline.score > 0 ? `+${baseline.score}` : baseline.score}</strong>
+                </div>
+              ))}
+            </div>
             <div className="gym-foot">
               <small>48 variants · live + offline rollouts</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
