@@ -660,7 +660,19 @@ export function HexMachina() {
                 {!previewCast && <button type="button" className="patch-simulate" onClick={previewRepair}>Simulate patch safely</button>}
                 <button type="button" className="patch-apply" onClick={applyRepair}>Apply patch & recast</button>
               </div>
-              <div className="preserves">Locked: ducks remain sacred</div>
+              {patch.tradeoffs.length > 0 && (
+                <div className="patch-tradeoffs" role="note">
+                  <strong>What this repair gives up</strong>
+                  <ul>
+                    {patch.tradeoffs.map((tradeoff) => <li key={tradeoff}>{tradeoff}</li>)}
+                  </ul>
+                </div>
+              )}
+              <div className="preserves" data-preserving={patch.preserves.length > 0}>
+                {patch.preserves.length > 0
+                  ? `Locked: ${patch.preserves.join(", ")}`
+                  : "No sacred lock is set, so nothing here is protected."}
+              </div>
             </article>
           ) : (
             <div className="familiar-message">

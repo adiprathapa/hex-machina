@@ -1046,6 +1046,33 @@ kbd {
   font-size: 11px;
 }
 
+/* Nothing protected is a warning, not a reassurance. */
+.preserves[data-preserving="false"] {
+  color: var(--ember);
+}
+
+.patch-tradeoffs {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--ember);
+  border-radius: 4px;
+  background: var(--failure-wash);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.patch-tradeoffs strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ember);
+}
+
+.patch-tradeoffs ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
 .patch-actions {
   display: grid;
   grid-template-columns: .8fr 1.2fr;
