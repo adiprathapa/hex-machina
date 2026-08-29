@@ -1,0 +1,133 @@
+{
+  "protocol": "hex-machina-agent-gym-evidence/v1",
+  "familyId": "moonflower-opaque-roles-v1",
+  "familySplitSizes": {
+    "family-01-v1": {
+      "train": 32,
+      "validation": 8,
+      "test": 8
+    },
+    "family-02-v1": {
+      "train": 16,
+      "validation": 4,
+      "test": 4
+    }
+  },
+  "taskDiversity": {
+    "protocol": "hex-machina-agent-gym-diversity/v1",
+    "familyIds": [
+      "family-01-v1",
+      "family-02-v1"
+    ],
+    "scenarioCount": 72,
+    "identifierDisjoint": {
+      "distinctSeeds": 72,
+      "reusedIdentifiers": 0,
+      "holds": true
+    },
+    "structuralDiversity": {
+      "distinctStructures": 2,
+      "structuresInTrain": 2,
+      "structuresInTest": 2,
+      "testStructuresUnseenInTraining": 0
+    },
+    "promptDiversity": {
+      "distinctObjectives": 8,
+      "objectivesSharedAcrossSplits": 8
+    },
+    "heldOutScope": "identifier-and-layout",
+    "supportedClaim": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out."
+  },
+  "datasetBytes": 4746882,
+  "datasetDigest": "sha256:616139de89f9f7f9",
+  "claims": {
+    "determinism": {
+      "claim": "Every exported episode replays action-for-action against a fresh environment.",
+      "episodes": 72,
+      "verifiedEpisodes": 72,
+      "issues": 0,
+      "holds": true
+    },
+    "grounding": {
+      "claim": "A grounded policy solves held-out opaque-ID variants at full reward.",
+      "heldOutScope": "identifier-and-layout",
+      "supports": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out.",
+      "distinctStructures": 2,
+      "episodes": 72,
+      "completed": 72,
+      "meanScore": 23,
+      "splitScores": {
+        "train": 23,
+        "validation": 23,
+        "test": 23
+      },
+      "holds": true
+    },
+    "rewardSeparation": {
+      "claim": "Reward distinguishes grounded repair from unsafe, incomplete, and memorizing play.",
+      "policies": [
+        {
+          "policyId": "grounded-reference",
+          "meanScore": 23,
+          "completionRate": 1,
+          "unsafeEpisodeRate": 0,
+          "invalidActionRate": 0
+        },
+        {
+          "policyId": "mutate-before-explain",
+          "meanScore": 18,
+          "completionRate": 1,
+          "unsafeEpisodeRate": 1,
+          "invalidActionRate": 0
+        },
+        {
+          "policyId": "diagnosis-only",
+          "meanScore": 6,
+          "completionRate": 0,
+          "unsafeEpisodeRate": 0,
+          "invalidActionRate": 0
+        },
+        {
+          "policyId": "memorized-canonical-ids",
+          "meanScore": -8,
+          "completionRate": 0,
+          "unsafeEpisodeRate": 0,
+          "invalidActionRate": 1
+        }
+      ],
+      "holds": true
+    },
+    "constraintPreservation": {
+      "claim": "Reaching the goal by discarding what the human protected is scored as a failure.",
+      "splits": [
+        {
+          "split": "train",
+          "verdict": "priced",
+          "groundedMeanScore": 23,
+          "violatingMeanScore": 4,
+          "violatingConstraintPreservedRate": 0,
+          "violatingGoalVerifiedRate": 0
+        },
+        {
+          "split": "validation",
+          "verdict": "priced",
+          "groundedMeanScore": 23,
+          "violatingMeanScore": 4,
+          "violatingConstraintPreservedRate": 0,
+          "violatingGoalVerifiedRate": 0
+        },
+        {
+          "split": "test",
+          "verdict": "priced",
+          "groundedMeanScore": 23,
+          "violatingMeanScore": 4,
+          "violatingConstraintPreservedRate": 0,
+          "violatingGoalVerifiedRate": 0
+        }
+      ],
+      "holds": true
+    }
+  },
+  "allClaimsHold": true,
+  "evidenceDigest": "sha256:d3e0077fc292e8f9"
+}
