@@ -344,7 +344,7 @@ test("memorized IDs from training fail safely on a held-out graph", async () => 
       reason: trained.humanConstraint,
     },
   });
-  assert.match(transition.error.message, /Unknown rune/);
+  assert.match(transition.error.message, /set_sacred_constraint: unknown rune .*inspect_spell/);
   assert.equal(transition.reward, -2);
   assert.equal(transition.info.actionAccepted, false);
   const snapshot = heldOut.snapshot();
@@ -357,7 +357,7 @@ test("Agent Gym penalizes invalid calls and premature mutation without hiding er
   gym.reset();
 
   const invalid = await gym.step({ tool: "trace_effect", input: { effectId: "invented-effect" } });
-  assert.deepEqual(invalid.error, { name: "Error", message: "Unknown effect: invented-effect" });
+  assert.deepEqual(invalid.error, { name: "Error", message: "trace_effect: unknown effect invented-effect; effect IDs come from sideEffects[].id on a prior simulate_cast" });
   assert.equal(invalid.reward, -2);
   assert.equal(invalid.terminated, false);
   assert.equal(invalid.truncated, false);
@@ -371,7 +371,10 @@ test("Agent Gym penalizes invalid calls and premature mutation without hiding er
   const snapshot = gym.snapshot();
   assert.equal(snapshot.score, -4);
   assert.equal(snapshot.trajectory[0].rewardDelta, -2);
-  assert.equal(snapshot.trajectory[0].error, "Unknown effect: invented-effect");
+  assert.equal(
+    snapshot.trajectory[0].error,
+    "trace_effect: unknown effect invented-effect; effect IDs come from sideEffects[].id on a prior simulate_cast",
+  );
   assert.equal(snapshot.trajectory[1].rewardDelta, -2);
   assert.equal(snapshot.trajectory[1].mutated, true);
   assert.match(snapshot.trajectory[1].rewardReasons.join(" "), /before explaining/);

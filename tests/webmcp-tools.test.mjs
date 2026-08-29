@@ -305,11 +305,13 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
 
   await assert.rejects(
     handlers.set_sacred_constraint({ targetId: "dragon", reason: "Keep it." }),
-    /Unknown rune/,
+    /set_sacred_constraint: unknown rune dragon/,
   );
   await assert.rejects(
     handlers.set_sacred_constraint({ targetId: "moonwell", reason: "Keep it." }),
-    /Unsupported sacred target/,
+    // Naming the legal target would hand over the answer, so the message must
+    // instead tell the agent how to ground it.
+    /is not the rune this scenario's human asked to protect.*inspect_spell/s,
   );
   await assert.rejects(
     handlers.set_sacred_constraint({ targetId: "summon-ducks", reason: "Keep it.", preserve: "yes" }),
@@ -317,12 +319,15 @@ test("tool handlers reject malformed, unknown, and stale inputs without mutation
   );
   await assert.rejects(
     handlers.explain_side_effect({ sideEffectId: "exploding-moon" }),
-    /Unknown side effect/,
+    /explain_side_effect: unknown side effect exploding-moon/,
   );
-  await assert.rejects(handlers.explain_side_effect({}), /sideEffectId must be a string/);
+  await assert.rejects(
+    handlers.explain_side_effect({}),
+    /explain_side_effect: sideEffectId is required/,
+  );
   await assert.rejects(
     handlers.trace_effect({ effectId: "exploding-moon" }),
-    /Unknown effect/,
+    /trace_effect: unknown effect exploding-moon/,
   );
   await assert.rejects(
     handlers.trace_effect({ effectId: "flooded-observatory", sourceId: "moonwell" }),

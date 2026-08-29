@@ -36,14 +36,36 @@ function requireToolInput(
   return record;
 }
 
-function requireString(value: unknown, label: string) {
-  if (typeof value !== "string") throw new Error(`${label} must be a string`);
+/**
+ * Errors an agent can act on.
+ *
+ * These messages are the only feedback a tool-using model gets when a call is
+ * rejected, so each one names the tool it came from — otherwise it is ambiguous
+ * under concurrent calls — and distinguishes a missing required field from one
+ * of the wrong type, which are different mistakes with different fixes.
+ */
+function requireString(value: unknown, label: string, tool?: string) {
+  const prefix = tool ? `${tool}: ` : "";
+  if (value === undefined) {
+    throw new Error(`${prefix}${label} is required`);
+  }
+  if (typeof value !== "string") {
+    throw new Error(`${prefix}${label} must be a string, received ${typeof value}`);
+  }
   return value;
 }
 
-function requireBoundedInteger(value: unknown, label: string, minimum: number, maximum: number) {
+function requireBoundedInteger(
+  value: unknown,
+  label: string,
+  minimum: number,
+  maximum: number,
+  tool?: string,
+) {
   if (!Number.isInteger(value) || (value as number) < minimum || (value as number) > maximum) {
-    throw new Error(`${label} must be an integer from ${minimum} to ${maximum}`);
+    throw new Error(
+      `${tool ? `${tool}: ` : ""}${label} must be an integer from ${minimum} to ${maximum}`,
+    );
   }
   return value as number;
 }
@@ -77,9 +99,9 @@ export type SpellToolPresentation =
       revertToken?: string;
     };
 
-function requireNode(graph: SpellGraph, nodeId: string) {
+function requireNode(graph: SpellGraph, nodeId: string, tool?: string) {
   if (!graph.nodes.some((node) => node.id === nodeId)) {
-    throw new Error(`Unknown rune: ${nodeId}`);
+    throw new Error(`${tool ? `${tool}: ` : ""}unknown rune ${nodeId}; rune IDs come from inspect_spell`);
   }
 }
 
@@ -150,7 +172,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
       const graph = cloneGraph(context.getGraph());
       const observation = observeSpellGraph(graph);
-      nodeIds?.forEach((nodeId) => requireNode(graph, nodeId));
+      nodeIds?.forEach((nodeId) => requireNode(graph, nodeId, "inspect_spell"));
       const selected = nodeIds
         ? graph.nodes.filter((node) => nodeIds.includes(node.id))
         : graph.nodes;
@@ -198,23 +220,25 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
       const effectId = parsed.effectId === undefined
         ? context.getGraph().semantics.effectId
-        : requireString(parsed.effectId, "effectId");
-      const sourceId = parsed.sourceId === undefined ? undefined : requireString(parsed.sourceId, "sourceId");
+        : requireString(parsed.effectId, "effectId", "trace_effect");
+      const sourceId = parsed.sourceId === undefined ? undefined : requireString(parsed.sourceId, "sourceId", "trace_effect");
       if (parsed.effectId !== undefined && effectId !== context.getGraph().semantics.effectId) {
-        throw new Error(`Unknown effect: ${effectId}`);
+        throw new Error(
+          `trace_effect: unknown effect ${effectId}; effect IDs come from sideEffects[].id on a prior simulate_cast`,
+        );
       }
       const graph = context.getGraph();
       if (sourceId) {
-        requireNode(graph, sourceId);
+        requireNode(graph, sourceId, "trace_effect");
         const source = graph.nodes.find((node) => node.id === sourceId)!;
-        if (source.kind !== "source") throw new Error(`Rune ${sourceId} is not a source`);
+        if (source.kind !== "source") throw new Error(`trace_effect: rune ${sourceId} is not a source; sourceId must name a rune whose kind is "source"`);
       }
       const maxDepth = parsed.maxDepth === undefined
         ? 8
-        : requireBoundedInteger(parsed.maxDepth, "maxDepth", 1, MAX_TRACE_DEPTH);
+        : requireBoundedInteger(parsed.maxDepth, "maxDepth", 1, MAX_TRACE_DEPTH, "trace_effect");
       const maxPaths = parsed.maxPaths === undefined
         ? 3
-        : requireBoundedInteger(parsed.maxPaths, "maxPaths", 1, MAX_TRACE_PATHS);
+        : requireBoundedInteger(parsed.maxPaths, "maxPaths", 1, MAX_TRACE_PATHS, "trace_effect");
       const trace = traceSpellGraph(graph, {
         effectId: sourceId ? undefined : effectId,
         sourceId,
@@ -232,7 +256,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       const parsed = requireToolInput(input, "simulate_cast", ["patchId"]);
       const graph = context.getGraph();
       if (parsed.patchId !== undefined) {
-        const patchId = requireString(parsed.patchId, "patchId");
+        const patchId = requireString(parsed.patchId, "patchId", "simulate_cast");
         if (!new RegExp(SPELL_PATCH_ID_PATTERN).test(patchId)) {
           throw new Error(`Invalid patch ID: ${patchId}`);
         }
@@ -278,9 +302,11 @@ export function createSpellToolHandlers(context: SpellToolContext) {
     },
     explain_side_effect: async (input: unknown = {}) => {
       const parsed = requireToolInput(input, "explain_side_effect", ["sideEffectId"]);
-      const sideEffectId = requireString(parsed.sideEffectId, "sideEffectId");
+      const sideEffectId = requireString(parsed.sideEffectId, "sideEffectId", "explain_side_effect");
       if (sideEffectId !== context.getGraph().semantics.effectId) {
-        throw new Error(`Unknown side effect: ${sideEffectId}`);
+        throw new Error(
+          `explain_side_effect: unknown side effect ${sideEffectId}; effect IDs come from sideEffects[].id on a prior simulate_cast`,
+        );
       }
       const explanation = explainSideEffect(context.getGraph());
       context.recordActivity(
@@ -308,19 +334,26 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         };
       };
       const parsed = requireToolInput(input, "set_sacred_constraint", ["targetId", "reason", "preserve"]);
-      const targetId = requireString(parsed.targetId, "targetId");
+      const targetId = requireString(parsed.targetId, "targetId", "set_sacred_constraint");
       const preserve = parsed.preserve === undefined ? true : parsed.preserve;
       if (typeof preserve !== "boolean") throw new Error("preserve must be a boolean");
       const before = context.getGraph();
-      requireNode(before, targetId);
-      if (targetId !== before.semantics.roles.subject) throw new Error(`Unsupported sacred target: ${targetId}`);
+      requireNode(before, targetId, "set_sacred_constraint");
+      if (targetId !== before.semantics.roles.subject) {
+        // Naming the legal target would hand over the answer, so the message
+        // says how to find it instead of leaving the agent with no next move.
+        throw new Error(
+          `set_sacred_constraint: ${targetId} is not the rune this scenario's human asked to protect. `
+            + "Ground the target from inspect_spell by matching the rune against the human's stated constraint.",
+        );
+      }
       // `reason` records why the human wants a rune kept, so it is required to
       // set a lock and meaningless to release one. Demanding it on release made
       // an agent invent a justification that is immediately discarded.
       if (!preserve && parsed.reason === undefined) {
         return releaseConstraint(before, targetId);
       }
-      const reason = requireShortText(requireString(parsed.reason, "reason"), "Constraint reason", 180);
+      const reason = requireShortText(requireString(parsed.reason, "reason", "set_sacred_constraint"), "Constraint reason", 180);
       const next = cloneGraph(before);
       const id = `sacred-${targetId}`;
       const existing = next.constraints.findIndex((item) => item.id === id);
@@ -379,7 +412,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
 
       if (hasRevertToken) {
-        const revertToken = requireString(parsed.revertToken, "revertToken");
+        const revertToken = requireString(parsed.revertToken, "revertToken", "apply_spell_patch");
         if (!new RegExp(SPELL_REVERT_TOKEN_PATTERN).test(revertToken)) {
           throw new Error("Invalid revert token");
         }
@@ -428,7 +461,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
         };
       }
 
-      const patchId = requireString(parsed.patchId, "patchId");
+      const patchId = requireString(parsed.patchId, "patchId", "simulate_cast");
       if (!new RegExp(SPELL_PATCH_ID_PATTERN).test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
