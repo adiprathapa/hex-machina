@@ -55,6 +55,11 @@ export interface AgentGymStep {
   observationAfter: SpellObservation;
   stateKeyBefore: string;
   stateKeyAfter: string;
+  /** Graph key folded together with the episode state that changes what the
+   *  next action does: milestones banked, and whether a patch capability is
+   *  currently issued. Key a value function or replay cache on this. */
+  episodeStateKeyBefore: string;
+  episodeStateKeyAfter: string;
   graphVersionBefore: number;
   graphVersionAfter: number;
   mutated: boolean;
@@ -140,14 +145,54 @@ function graphVersion(graph: SpellGraph) {
   return graph.version;
 }
 
-function stateKey(graph: SpellGraph) {
-  const serialized = serializeSpellGraph(graph);
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < serialized.length; index += 1) {
-    hash ^= serialized.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
+// Written with the BigInt constructor rather than n-literals so the module
+// keeps compiling at the project's ES2017 target and runs unchanged in the
+// browser, where the same session powers the WebMCP activity panel.
+const FNV64_OFFSET = BigInt("0xcbf29ce484222325");
+const FNV64_PRIME = BigInt("0x100000001b3");
+const FNV64_MASK = BigInt("0xffffffffffffffff");
+
+/**
+ * FNV-1a over 64 bits.
+ *
+ * The previous 32-bit key was collidable in practice: `set_sacred_constraint`
+ * accepts up to 180 characters of free text that lands in the serialized graph,
+ * and a search over six-character reasons found two distinct, agent-reachable
+ * graph states sharing a key after about 455,000 candidates. 32 bits expects a
+ * first collision near 65,000 distinct states, well inside what a rollout
+ * produces.
+ */
+function hash64(value: string) {
+  let hash = FNV64_OFFSET;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash ^ BigInt(value.charCodeAt(index))) * FNV64_PRIME) & FNV64_MASK;
   }
-  return `fnv1a32:${(hash >>> 0).toString(16).padStart(8, "0")}`;
+  return hash.toString(16).padStart(16, "0");
+}
+
+/**
+ * Content key for the graph alone.
+ *
+ * This identifies the graph, not the episode, and the distinction matters:
+ * `propose_spell_patch` issues the capability that authorizes a later apply
+ * without changing the graph at all, so the same graph key can precede a
+ * rejected apply and an accepted one. Anything keying a value function, a
+ * replay cache, or a dedup table on state must use the episode key.
+ */
+function stateKey(graph: SpellGraph) {
+  return `fnv1a64:${hash64(serializeSpellGraph(graph))}`;
+}
+
+function episodeStateKey(
+  graph: SpellGraph,
+  milestones: Iterable<string>,
+  capabilityIssued: boolean,
+) {
+  return `fnv1a64:${hash64([
+    serializeSpellGraph(graph),
+    [...milestones].sort().join(","),
+    capabilityIssued ? "capability:issued" : "capability:none",
+  ].join("\u0000"))}`;
 }
 
 export class AgentGymSession {
@@ -157,6 +202,8 @@ export class AgentGymSession {
   private truncated = false;
   private milestones = new Set<Milestone>();
   private trajectory: AgentGymStep[] = [];
+  /** Graph version a patch capability was last issued for, or null. */
+  private capabilityIssuedForVersion: number | null = null;
 
   private readonly config: AgentGymSessionConfig;
   private readonly initialObservation: SpellObservation;
@@ -178,6 +225,7 @@ export class AgentGymSession {
     this.truncated = false;
     this.milestones.clear();
     this.trajectory = [];
+    this.capabilityIssuedForVersion = null;
     return this.snapshot();
   }
 
@@ -219,8 +267,10 @@ export class AgentGymSession {
     after: SpellGraph,
     result: unknown,
   ) {
+    const beforeEpisodeKey = episodeStateKey(before, this.milestones, this.hasIssuedCapability(before));
     const rewards = this.evaluate(tool, input, result, after);
-    this.pushStep(tool, input, before, after, rewards, result);
+    if (tool === "propose_spell_patch") this.capabilityIssuedForVersion = after.version;
+    this.pushStep(tool, input, before, after, rewards, result, undefined, beforeEpisodeKey);
   }
 
   recordError(
@@ -238,7 +288,20 @@ export class AgentGymSession {
       [{ delta: -2, reason: "Invalid or stale tool call" }],
       undefined,
       error instanceof Error ? error.message : "Tool execution failed",
+      episodeStateKey(before, this.milestones, this.hasIssuedCapability(before)),
     );
+  }
+
+  /**
+   * Whether a patch capability is currently usable.
+   *
+   * `propose_spell_patch` issues it without changing the graph, and any
+   * mutation revokes it, so this bit decides whether an identical
+   * `apply_spell_patch` is accepted or rejected. Without it the graph key is
+   * not a state: the same key precedes both outcomes.
+   */
+  private hasIssuedCapability(graph: SpellGraph) {
+    return this.capabilityIssuedForVersion === graph.version;
   }
 
   private award(milestone: Milestone, reason: string): RewardEvent {
@@ -330,6 +393,7 @@ export class AgentGymSession {
     rewards: RewardEvent[],
     result?: unknown,
     error?: string,
+    beforeEpisodeKey?: string,
   ) {
     const rewardDelta = rewards.reduce((total, reward) => total + reward.delta, 0);
     this.score += rewardDelta;
@@ -341,6 +405,9 @@ export class AgentGymSession {
       observationAfter: observeSpellGraph(after),
       stateKeyBefore: stateKey(before),
       stateKeyAfter: stateKey(after),
+      episodeStateKeyBefore: beforeEpisodeKey
+        ?? episodeStateKey(before, this.milestones, this.hasIssuedCapability(before)),
+      episodeStateKeyAfter: episodeStateKey(after, this.milestones, this.hasIssuedCapability(after)),
       graphVersionBefore: graphVersion(before),
       graphVersionAfter: graphVersion(after),
       mutated: graphVersion(before) !== graphVersion(after),

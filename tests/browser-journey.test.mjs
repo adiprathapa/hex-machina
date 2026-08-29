@@ -219,8 +219,8 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(exportedEpisode.trajectory.every((transition) => (
       transition.observationBefore &&
       transition.observationAfter &&
-      /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyBefore) &&
-      /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyAfter)
+      /^fnv1a64:[a-f0-9]{16}$/.test(transition.stateKeyBefore) &&
+      /^fnv1a64:[a-f0-9]{16}$/.test(transition.stateKeyAfter)
     )), true, "the visible export contains replay-complete transitions");
 
     await page.getByRole("button", { name: "Undo agent patch", exact: true }).click();

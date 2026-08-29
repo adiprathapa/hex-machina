@@ -94,7 +94,7 @@ function parseEpisode(value: unknown): DatasetEpisodeRecord | string {
   }
   if (!recordOf(record.initialObservation) ||
       typeof record.initialStateKey !== "string" ||
-      !/^fnv1a32:[a-f0-9]{8}$/.test(record.initialStateKey)) {
+      !/^fnv1a64:[a-f0-9]{16}$/.test(record.initialStateKey)) {
     return "initialObservation and initialStateKey are invalid";
   }
   if (!Array.isArray(record.transitions) || record.transitions.length > 32) {

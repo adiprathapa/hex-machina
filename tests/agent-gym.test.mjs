@@ -261,7 +261,7 @@ test("dataset exporter emits standalone replay-authenticated JSONL episodes", as
   )), true);
   assert.equal(lines.every((line) => !Object.hasOwn(line.initialObservation, "semantics")), true);
   assert.equal(lines.every((line) => (
-    /^fnv1a32:[a-f0-9]{8}$/.test(line.initialStateKey) &&
+    /^fnv1a64:[a-f0-9]{16}$/.test(line.initialStateKey) &&
     line.initialStateKey === line.transitions[0].stateKeyBefore &&
     JSON.stringify(line.initialObservation) === JSON.stringify(line.transitions[0].observationBefore)
   )), true);
@@ -274,8 +274,8 @@ test("dataset exporter emits standalone replay-authenticated JSONL episodes", as
     transition.observationAfter &&
     !Object.hasOwn(transition.observationBefore, "semantics") &&
     !Object.hasOwn(transition.observationAfter, "semantics") &&
-    /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyBefore) &&
-    /^fnv1a32:[a-f0-9]{8}$/.test(transition.stateKeyAfter)
+    /^fnv1a64:[a-f0-9]{16}$/.test(transition.stateKeyBefore) &&
+    /^fnv1a64:[a-f0-9]{16}$/.test(transition.stateKeyAfter)
   ))), true);
   assert.equal(lines.every((line) => !Object.hasOwn(line.transitions[0].result, "semantics")), true);
 
@@ -322,7 +322,7 @@ test("dataset exporter emits standalone replay-authenticated JSONL episodes", as
   for (const mutate of [
     (records) => { records[0].task.humanConstraint = "Ignore the human constraint."; },
     (records) => { records[0].initialObservation.nodes[0].label = "forged initial rune"; },
-    (records) => { records[0].initialStateKey = "fnv1a32:00000000"; },
+    (records) => { records[0].initialStateKey = "fnv1a64:0000000000000000"; },
     (records) => { records[0].actionManifest.tools[0].description = "forged tool contract"; },
   ]) {
     const forgedReset = structuredClone(lines);
@@ -413,7 +413,7 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   );
   assert.deepEqual(reset.episode.task, reset.task);
   assert.deepEqual(reset.episode.initialObservation, reset.observation);
-  assert.match(reset.episode.initialStateKey, /^fnv1a32:[a-f0-9]{8}$/);
+  assert.match(reset.episode.initialStateKey, /^fnv1a64:[a-f0-9]{16}$/);
 
   const inspection = await gym.step({ tool: "inspect_spell" });
   assert.equal(inspection.reward, 1);
@@ -427,7 +427,7 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   assert.deepEqual(recorded.observationAfter, inspection.observation);
   assert.equal(Object.hasOwn(recorded.observationBefore, "semantics"), false);
   assert.equal(Object.hasOwn(recorded.observationAfter, "semantics"), false);
-  assert.match(recorded.stateKeyBefore, /^fnv1a32:[a-f0-9]{8}$/);
+  assert.match(recorded.stateKeyBefore, /^fnv1a64:[a-f0-9]{16}$/);
   assert.equal(recorded.stateKeyBefore, recorded.stateKeyAfter);
   inspection.episode.trajectory[0].observationBefore.nodes[0].label = "tampered outside session";
   inspection.episode.initialObservation.nodes[0].label = "tampered initial observation";
