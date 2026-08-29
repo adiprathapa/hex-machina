@@ -68,26 +68,25 @@ Honest policies are unaffected. The grounded reference still scores 23 on both
 families and all three splits, and every published baseline reproduces exactly:
 23, 18, 6, −8.
 
-## 2. The action space was under-specified
+## 2. The advertised tool schemas were locked to one scenario
 
-`describe` published seven bare tool names. The handlers reject unknown fields,
-and the vocabulary is not guessable — `trace_effect` takes `effectId` while
-`explain_side_effect` takes `sideEffectId`. Every natural guess cost the −2
-invalid-action penalty, so part of the benchmark's invalid-action rate was
-measuring the harness withholding its own contract rather than the agent failing
-the task. That is an evaluation-validity problem, not a documentation gap.
+The shared tool manifest takes rune, source, and effect identifiers as context,
+but registration built that context from a hardcoded scenario at call time. On
+any other scenario the advertised enums named runes and effects that do not
+exist, so a schema-conforming agent could not call `explain_side_effect` or
+`set_sacred_constraint` at all — the two tools that carry the human-constraint
+story. Latent while the app loads one scenario; wrong the moment it loads two.
 
-`describe` now publishes field names, types, bounds, cross-field rules, and
-read-only/mutating effect for all seven tools — and enumerates no legal *value*
-for anything the agent has not legitimately observed, since that would hand back
-what the observation projection withholds. Each field carries provenance naming
-the tool result that issues valid values, which is what a capability-based
-environment actually requires an agent to understand.
+Registration now takes the graph it is describing. Reading it back through
+`inspect_spell` was the tempting shortcut and is a trap: the app registers
+against Agent-Gym-instrumented handlers, so that call is scored and the episode
+opens with a step already spent. The browser journey caught that regression, and
+a test now pins it.
 
-The description is pinned to the handlers rather than maintained beside them:
-the conformance test reads each `requireToolInput` allowlist out of the
-production source and asserts exact set equality, so drift is caught in both
-directions.
+The protected rune is deliberately *not* enumerated. Which rune the human wants
+kept is exactly what an agent must ground from the stated constraint, so naming
+it in a tool definition publishes the answer. The full rune list stays
+enumerated, since that is the graph the agent can already see.
 
 ## 3. What the splits actually hold out — and holding out a structure
 

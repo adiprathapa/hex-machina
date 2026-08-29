@@ -118,13 +118,13 @@ the documentation:
   preservation on a structure it never saw, while an otherwise identical policy
   that memorized the training family's rune vocabulary scores −1 and completes
   0%.
-- **The action space was under-specified.** `describe` published seven bare tool
-  names, but the handlers reject unknown fields and `trace_effect` takes
-  `effectId` while `explain_side_effect` takes `sideEffectId`. Every natural
-  guess cost the invalid-action penalty, so part of that metric was measuring the
-  harness rather than the agent. The full input contract is now published, and
-  pinned to the handlers by a conformance test that reads their accepted-field
-  allowlists out of the production source.
+- **The advertised tool schemas were locked to one scenario.** Rune and effect
+  enums came from a hardcoded scenario at registration time, so on any other one
+  the only correct arguments were schema-invalid and the two tools carrying the
+  human-constraint story were uncallable. Registration now describes the graph it
+  is registering for — and deliberately does not enumerate the protected rune,
+  since that is the answer an agent is meant to ground from the human's stated
+  constraint.
 
 ## Run locally
 
