@@ -1575,6 +1575,11 @@ kbd {
 }
 
 @media (max-width: 1100px) {
+  .machina { height: auto; min-height: 100svh; overflow: visible; }
+  .workspace { min-height: 0; }
+  .brief-panel, .familiar-panel { overflow: visible; }
+  .canvas-panel { min-height: 560px; }
+  .spell-canvas { flex: 1 0 auto; }
   .topbar { grid-template-columns: 1fr auto; }
   .mission-chip { display: none; }
   .workspace { grid-template-columns: 220px 1fr; }
@@ -1588,7 +1593,10 @@ kbd {
 }
 
 @media (max-width: 760px) {
-  .machina { padding: 0 10px 14px; overflow: auto; }
+  .machina { height: auto; min-height: 0; padding: 0 10px 14px; overflow: visible; }
+  .workspace { display: block; }
+  .canvas-panel { margin: 0; min-height: 0; }
+  .spell-canvas { flex: none; min-height: 460px; }
   .topbar { grid-template-columns: 1fr auto; padding: 8px 4px; }
   .mission-chip {
     grid-column: 1 / -1;
