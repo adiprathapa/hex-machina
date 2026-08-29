@@ -176,7 +176,7 @@ export function HexMachina() {
   useEffect(() => {
     const registration = new AbortController();
     let active = true;
-    registerWebMCPTools(handlers, registration.signal)
+    registerWebMCPTools(handlers, registration.signal, { scenario: graphRef.current })
       .then((supported) => {
         if (active) setMcpReady(supported);
       })

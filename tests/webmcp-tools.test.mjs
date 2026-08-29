@@ -28,15 +28,39 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
     setGraph: (next) => { graph = next; },
     recordActivity() {},
   });
-  const supported = await registerWebMCPTools(handlers);
+  const supported = await registerWebMCPTools(handlers, undefined, { scenario: graph });
   assert.equal(supported, true);
   assert.equal(definitions.length, 7);
   const canonical = createMoonflowerScenario();
+
+  // The manifest is derived from the live graph through inspect_spell, not from
+  // a hardcoded scenario, so the advertised enums track whatever the app loaded.
+  // The one identifier deliberately not enumerated is the sacred target: which
+  // rune the human wants kept is what an agent must ground from the stated
+  // constraint, so naming it in the tool definition would publish the answer.
+  const sacredTarget = definitions
+    .find((definition) => definition.name === "set_sacred_constraint")
+    .inputSchema.properties.targetId;
+  assert.equal("enum" in sacredTarget, false, "the protected rune must not be enumerated");
+  assert.equal(sacredTarget.type, "string");
+  // The full rune list is legitimately public — it is the graph the agent can
+  // already see. What must not be public is which one of them the human wants
+  // kept, so no field may single it out.
+  for (const definition of definitions) {
+    for (const [field, property] of Object.entries(definition.inputSchema.properties)) {
+      const values = property.enum ?? property.items?.enum;
+      if (!values) continue;
+      assert.equal(
+        values.length === 1 && values[0] === canonical.semantics.roles.subject,
+        false,
+        `${definition.name}.${field} singles out the protected rune`,
+      );
+    }
+  }
   const expectedManifest = createSpellToolManifest({
     runeIds: canonical.nodes.map((node) => node.id),
     sourceIds: canonical.nodes.filter((node) => node.kind === "source").map((node) => node.id),
     effectIds: [canonical.semantics.effectId],
-    sacredTargetIds: [canonical.semantics.roles.subject],
     patchIdPattern: SPELL_PATCH_ID_PATTERN,
     revertTokenPattern: SPELL_REVERT_TOKEN_PATTERN,
   });
@@ -87,7 +111,10 @@ test("registers seven narrow WebMCP tools with honest mutation hints", async () 
   assert.equal(typeof inspectNodeIds.description, "string");
   assert.deepEqual(inspectNodeIds.items.enum, createMoonflowerScenario().nodes.map((node) => node.id));
   const sacredTool = definitions.find((item) => item.name === "set_sacred_constraint");
-  assert.deepEqual(sacredTool.inputSchema.properties.targetId.enum, ["summon-ducks"]);
+  // Constrained by shape, never enumerated: see the protected-rune assertion above.
+  assert.equal("enum" in sacredTool.inputSchema.properties.targetId, false);
+  assert.equal(sacredTool.inputSchema.properties.targetId.type, "string");
+  assert.equal(sacredTool.inputSchema.properties.targetId.maxLength, 128);
   const simulateTool = definitions.find((item) => item.name === "simulate_cast");
   assert.equal(simulateTool.inputSchema.properties.patchId.type, "string");
   assert.equal(simulateTool.inputSchema.properties.patchId.pattern, "^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$");
@@ -135,13 +162,13 @@ test("registration lifecycle removes tools before a Strict Mode remount", async 
   });
 
   const firstMount = new AbortController();
-  assert.equal(await registerWebMCPTools(handlers, firstMount.signal), true);
+  assert.equal(await registerWebMCPTools(handlers, firstMount.signal, { scenario: graph, readinessTimeoutMs: 0 }), true);
   assert.equal(registered.size, 7);
   firstMount.abort();
   assert.equal(registered.size, 0);
 
   const secondMount = new AbortController();
-  assert.equal(await registerWebMCPTools(handlers, secondMount.signal), true);
+  assert.equal(await registerWebMCPTools(handlers, secondMount.signal, { scenario: graph, readinessTimeoutMs: 0 }), true);
   assert.equal(registered.size, 7);
   secondMount.abort();
   assert.equal(registered.size, 0);

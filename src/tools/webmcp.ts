@@ -1,5 +1,5 @@
-import { createMoonflowerScenario } from "../scenarios/moonflower.ts";
 import { type SpellToolHandlers } from "./handlers.ts";
+import { type SpellGraph } from "../domain/spell.ts";
 import {
   createSpellToolManifest,
   SPELL_PATCH_ID_PATTERN,
@@ -108,11 +108,19 @@ function waitForModelContext(lifecycleSignal: AbortSignal | undefined, timeoutMs
   });
 }
 
+export interface WebMCPRegistrationSettings {
+  /** The graph these tool definitions describe. */
+  scenario: SpellGraph;
+  /** How long to wait for a host to install `document.modelContext`. */
+  readinessTimeoutMs?: number;
+}
+
 export async function registerWebMCPTools(
   handlers: SpellToolHandlers,
-  lifecycleSignal?: AbortSignal,
-  readinessTimeoutMs = MODEL_CONTEXT_READINESS_TIMEOUT_MS,
+  lifecycleSignal: AbortSignal | undefined,
+  settings: WebMCPRegistrationSettings,
 ) {
+  const { scenario, readinessTimeoutMs = MODEL_CONTEXT_READINESS_TIMEOUT_MS } = settings;
   // Checked before anything else: a caller that has already unmounted must not
   // start a wait, and must not register. Aborting the internal controller and
   // falling through would register every tool against a host that only listens
@@ -131,12 +139,22 @@ export async function registerWebMCPTools(
     { once: true },
   );
 
-  const canonical = createMoonflowerScenario();
+  // Taken from the scenario being registered rather than a hardcoded one. The
+  // manifest used to be built from `createMoonflowerScenario()` at call time,
+  // so on any other scenario the advertised enums named runes and effects that
+  // do not exist, and `explain_side_effect` and `set_sacred_constraint` became
+  // impossible for a schema-conforming agent to call at all.
+  //
+  // Passed in rather than read back through `handlers.inspect_spell`: those
+  // handlers may be instrumented by the Agent Gym, and registration must not
+  // consume a scored step or move the episode before the human has acted.
   const manifest = createSpellToolManifest({
-    runeIds: canonical.nodes.map((node) => node.id),
-    sourceIds: canonical.nodes.filter((node) => node.kind === "source").map((node) => node.id),
-    effectIds: [canonical.semantics.effectId],
-    sacredTargetIds: [canonical.semantics.roles.subject],
+    runeIds: scenario.nodes.map((node) => node.id),
+    sourceIds: scenario.nodes.filter((node) => node.kind === "source").map((node) => node.id),
+    effectIds: [scenario.semantics.effectId],
+    // Deliberately no sacredTargetIds enum. Which rune the human wants kept is
+    // the thing an agent is meant to ground from the stated constraint, so
+    // naming it in the tool definition would publish the answer.
     patchIdPattern: SPELL_PATCH_ID_PATTERN,
     revertTokenPattern: SPELL_REVERT_TOKEN_PATTERN,
   });
