@@ -161,12 +161,18 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByRole("region", { name: "Agent Gym evaluation" }), "the scored agent environment is visible");
     assert.match(await page.locator(".agent-gym").innerText(), /0\s*\/\s*23[\s\S]*0 steps/i);
     assert.equal(await page.getByRole("button", { name: "Export episode JSON" }).isDisabled(), true);
+    // Two type roles, and they must stay separated: the interface face for
+    // anything a person reads, the code face only for machine data where
+    // character alignment carries meaning. Setting every label in monospace
+    // made the whole interface read as a terminal.
     const computedFonts = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontFamily,
       semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
+      machineData: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
     }));
     assert.match(computedFonts.body, /Poppins/i, "the production body uses the intended display typeface");
-    assert.match(computedFonts.semanticLabel, /Fira Code/i, "semantic labels use the intended code typeface");
+    assert.match(computedFonts.semanticLabel, /Poppins/i, "interface labels use the interface typeface");
+    assert.match(computedFonts.machineData, /Fira Code/i, "machine data keeps the code typeface");
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "failure spectacle is visible");
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "failure state is visible");

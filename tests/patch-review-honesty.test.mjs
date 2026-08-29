@@ -18,12 +18,26 @@ test("the patch review card never asserts a protection the graph does not have",
     false,
     "the review card must not hardcode a protection claim",
   );
-  assert.match(client, /patch\.preserves/, "the card must read the patch's own preserved list");
+  assert.match(client, /patch\?\.preserves/, "the card must read the patch's own preserved list");
+  // `preserves` holds identifiers, which are the graph's vocabulary rather than
+  // the human's. The card must resolve them to rune names before showing them.
+  assert.match(client, /preservedNames/);
+  assert.match(client, /graph\.nodes\.find\(\(node\) => node\.id === id\)\?\.label/);
+  assert.equal(
+    /`Protected: \$\{patch\.preserves/.test(client),
+    false,
+    "raw identifiers must not be rendered to the human",
+  );
 });
 
-test("the review card shows the human what the repair gives up", () => {
-  assert.match(client, /patch\.tradeoffs/, "tradeoffs must reach the human, not only the agent");
-  assert.match(client, /data-preserving=\{patch\.preserves\.length > 0\}/);
+test("the review card shows the human what the repair does", () => {
+  assert.match(client, /patch\.tradeoffs/, "consequences must reach the human, not only the agent");
+  assert.match(client, /data-preserving=\{preservedNames\.length > 0\}/);
+
+  // Not every consequence is a loss: the constraint-preserving repair lists
+  // "Keeps all twelve ducks" here too, so the heading has to stay neutral.
+  assert.equal(/What this repair gives up/.test(client), false);
+  assert.match(client, /What this repair does/);
 });
 
 test("the top-ranked repair on an unconstrained graph really does destroy the protected rune", () => {

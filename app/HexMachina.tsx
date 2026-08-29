@@ -385,6 +385,12 @@ export function HexMachina() {
     [cast, graph],
   );
   const patchPreview = patch?.operationLedger ?? [];
+  // `preserves` holds identifiers, which are the graph's vocabulary and not the
+  // human's. Resolve them to rune names so the person approving the patch reads
+  // what they are protecting rather than an internal token.
+  const preservedNames = (patch?.preserves ?? [])
+    .map((id) => graph.nodes.find((node) => node.id === id)?.label)
+    .filter((label): label is string => Boolean(label));
   const removedPatchEdgeIds = new Set(
     patchPreview.filter((entry) => entry.kind === "disconnect" && entry.edgeId).map((entry) => entry.edgeId!),
   );
@@ -665,15 +671,15 @@ export function HexMachina() {
               </div>
               {patch.tradeoffs.length > 0 && (
                 <div className="patch-tradeoffs" role="note">
-                  <strong>What this repair gives up</strong>
+                  <strong>What this repair does</strong>
                   <ul>
                     {patch.tradeoffs.map((tradeoff) => <li key={tradeoff}>{tradeoff}</li>)}
                   </ul>
                 </div>
               )}
-              <div className="preserves" data-preserving={patch.preserves.length > 0}>
-                {patch.preserves.length > 0
-                  ? `Locked: ${patch.preserves.join(", ")}`
+              <div className="preserves" data-preserving={preservedNames.length > 0}>
+                {preservedNames.length > 0
+                  ? `Protected: ${preservedNames.join(", ")}`
                   : "No sacred lock is set, so nothing here is protected."}
               </div>
             </article>
