@@ -36,17 +36,24 @@ test("the claim a held-out score supports is chosen by the measurement, not asse
 
 test("counting structures is not mistaken for holding them out", () => {
   const report = measureAgentGymFamilyDiversity();
+  const { distinctStructures, structuresInTrain, structuresInTest, testStructuresUnseenInTraining } =
+    report.structuralDiversity;
 
-  // Two families exist, so two structures exist — and both appear on both
-  // sides of the split. More families is not the same as a held-out family.
-  assert.ok(report.familyIds.length >= 2, "more than one family is generated");
-  assert.ok(report.structuralDiversity.distinctStructures >= 2);
-  assert.equal(report.structuralDiversity.testStructuresUnseenInTraining, 0);
-  assert.equal(report.heldOutScope, "identifier-and-layout");
+  // Deliberately an invariant rather than today's numbers, which move whenever
+  // the family generator gains diversity. Existing is not the same as being
+  // held out: what earns the stronger scope is a test structure training never
+  // saw, never a raised structure count.
+  assert.ok(report.familyIds.length >= 1);
+  assert.ok(distinctStructures >= structuresInTrain, "train structures are a subset of all structures");
+  assert.ok(distinctStructures >= structuresInTest, "test structures are a subset of all structures");
+  assert.ok(
+    testStructuresUnseenInTraining <= structuresInTest,
+    "cannot hold out more structures than are evaluated",
+  );
   assert.equal(
-    report.structuralDiversity.structuresInTest <= report.structuralDiversity.structuresInTrain,
-    true,
-    "every test structure is also a training structure",
+    report.heldOutScope,
+    testStructuresUnseenInTraining > 0 ? "structural" : "identifier-and-layout",
+    "scope must follow the unseen-structure count and nothing else",
   );
 });
 

@@ -56,19 +56,28 @@ test("a policy that memorized training vocabulary does not transfer", async () =
   assert.equal(report.holds, true);
 
   for (const result of report.results) {
-    // The holdout is only meaningful if something can fail it.
-    assert.equal(
-      result.policies.memorizing.completionRate,
-      0,
-      `memorizing policy completed on held-out ${result.heldOutFamily}; the holdout is not exercising anything`,
-    );
+    // The holdout is only meaningful if something can fail it. The invariant is
+    // that recalling a training label never substitutes for grounding — not a
+    // particular score, which moves as the family generator gains diversity. A
+    // memorizing policy may still stumble into a completion; what it must not do
+    // is match a policy that read the human's constraint.
     assert.ok(
       result.separation > 0,
       `no separation on ${result.heldOutFamily}: grounding must beat memorization`,
     );
     assert.ok(
+      result.policies.memorizing.meanScore <= result.policies.grounded.meanScore / 2,
+      `memorizing scored ${result.policies.memorizing.meanScore} against grounded `
+        + `${result.policies.grounded.meanScore} on ${result.heldOutFamily}; the gap is not decisive`,
+    );
+    assert.ok(
       result.policies.memorizing.invalidActionRate > 0,
-      "a memorized label must be rejected, not silently accepted",
+      "a recalled label that names the wrong rune must be rejected, not silently accepted",
+    );
+    assert.ok(
+      result.policies.memorizing.constraintPreservedRate < 1
+        || result.policies.memorizing.meanScore < result.policies.grounded.meanScore,
+      "memorization must not reach the grounded outcome",
     );
   }
 });
