@@ -13,7 +13,7 @@ Hex Machina is configured as an existing Sites project and builds to a Cloudflar
 
 ## Release sequence
 
-1. Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.
+1. ~~Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.~~ **Done 2026-08-29:** MIT, public at <https://github.com/adiprathapa/hex-machina>, license detected by GitHub.
 2. Upload the existing 75-second narrated MP4 to YouTube with public visibility and record its URL.
 3. Run `python3 prepare.py --quick` and `npm run test:e2e`.
 4. Package the unchanged successful build with the official Sites helper.
@@ -27,4 +27,20 @@ No deployment or version publication is performed by this readiness check.
 
 ## Current Sites state
 
-The existing **Hex Machina** Sites project is active with custom owner-only access. It currently has zero saved versions, no preview URL, and no live URL. Its workspace policy does not permit external visitor invitations, so an owner-only deployment would not satisfy the judge-access requirement. Explicit authorization is needed for public site access, public repository access plus license selection, and public YouTube upload. The synchronized private GitHub `main` branch remains the source of truth until then.
+The existing **Hex Machina** Sites project is active with custom owner-only access. It currently has zero saved versions, no preview URL, and no live URL. Its workspace policy does not permit external visitor invitations, so an owner-only deployment would not satisfy the judge-access requirement.
+
+The repository gate is closed: `main` is public under MIT at
+<https://github.com/adiprathapa/hex-machina>, and it is the source of truth.
+
+Three gates remain, and each needs an authenticated session this checkout does
+not have:
+
+| Gate | Blocked on | Records into |
+| --- | --- | --- |
+| Live URL | Saving and deploying a Sites version with public access | `site.live_url` |
+| Public demo | Uploading the existing 75-second MP4 to YouTube as public | `video.public_youtube_url` |
+| Live discovery | Running the canonical judge prompt against the live URL in a WebMCP-capable browser | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
+
+The build is already deploy-shaped: `npm run test:deployment` validates the
+Worker entry, hashed client assets, hosting metadata, social metadata, and a
+secret-free archive surface on every run.

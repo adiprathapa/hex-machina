@@ -20,8 +20,9 @@
   },
   "repository": {
     "url": "https://github.com/adiprathapa/hex-machina",
-    "public": false,
-    "license_spdx": "MIT"
+    "public": true,
+    "license_spdx": "MIT",
+    "released_at": "2026-08-29"
   },
   "video": {
     "local_path": "submission/video/hex-machina-demo.mp4",
