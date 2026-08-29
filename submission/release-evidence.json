@@ -21,7 +21,7 @@
   "repository": {
     "url": "https://github.com/adiprathapa/hex-machina",
     "public": false,
-    "license_spdx": null
+    "license_spdx": "MIT"
   },
   "video": {
     "local_path": "submission/video/hex-machina-demo.mp4",

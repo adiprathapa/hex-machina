@@ -83,7 +83,7 @@ test("Devpost copy directly answers every required explanation and judging crite
   assert.match(copy, /canonical-ID memorization \(−8\)/i);
 });
 
-test("release evidence truthfully records local proof and unresolved external gates", async () => {
+test("release evidence records local proof and never overclaims an external gate", async () => {
   const evidence = JSON.parse(await readFile(path.join(ROOT, "submission/release-evidence.json"), "utf8"));
   assert.equal(evidence.schema_version, 1);
   assert.equal(evidence.project.created_during_submission_period, true);
@@ -93,9 +93,49 @@ test("release evidence truthfully records local proof and unresolved external ga
   assert.equal(evidence.video.duration_seconds, 75);
   assert.equal(evidence.video.has_audio, true);
   assert.ok((await stat(path.join(ROOT, evidence.video.local_path))).size > 500_000);
-  assert.equal(evidence.repository.public, false);
-  assert.equal(evidence.repository.license_spdx, null);
-  assert.equal(evidence.video.public_youtube_url, null);
-  assert.equal(evidence.site.live_url, null);
-  assert.equal(evidence.site.webmcp_discovered_live, false);
+  // Release fields are checked for consistency rather than pinned to the
+  // unreleased state, which would make an actual release fail the suite. What
+  // must never happen is claiming a release step that has not happened: each
+  // claim below requires the artefact it depends on.
+  const { repository, site, video } = evidence;
+
+  assert.equal(typeof repository.public, "boolean");
+  if (repository.public) {
+    assert.match(
+      repository.url,
+      /^https:\/\/(?:www\.)?(?:github|gitlab|bitbucket)\.[^\s/]+\/.+/,
+      "a public repository must record where it is",
+    );
+    assert.ok(
+      typeof repository.license_spdx === "string" && repository.license_spdx.trim().length > 0,
+      "the challenge requires a visible open-source license on a public repository",
+    );
+  }
+
+  // Selecting the license before publishing is the correct order, so it is
+  // checked independently of `public`. What it must not be is a claim: a
+  // recorded license has to exist as a file in the repository.
+  if (repository.license_spdx !== null) {
+    assert.ok(
+      (await stat(path.join(ROOT, "LICENSE"))).size > 0,
+      "the recorded license must exist in the repository, not only in the evidence",
+    );
+  }
+
+  if (site.live_url !== null) {
+    assert.match(site.live_url, /^https:\/\/[^\s/]+(?:\/.*)?$/);
+  }
+  assert.equal(typeof site.webmcp_discovered_live, "boolean");
+  if (site.webmcp_discovered_live) {
+    assert.ok(site.live_url, "live tool discovery cannot be claimed without a live site");
+  }
+
+  if (video.public_youtube_url !== null) {
+    assert.match(
+      video.public_youtube_url,
+      /^https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/,
+    );
+  }
+
+  assert.equal(evidence.devpost.submitted, evidence.devpost.submitted === true);
 });

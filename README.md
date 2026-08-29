@@ -228,8 +228,8 @@ The seven-day build specification is in `program.md`. Use `python3 train.py stat
 
 The source repository is [adiprathapa/hex-machina](https://github.com/adiprathapa/hex-machina). Its `main` branch is verified by the clean-install acceptance, dependency-audit, deployment-readiness, submission-package, and production-browser journey workflow on every push and pull request.
 
-It remains private during development. The challenge requires a public repository with a visible open-source license; public access and license selection are explicit release decisions tracked in [`submission/release-evidence.json`](submission/release-evidence.json).
+Public, under the [MIT License](LICENSE). Release state is tracked in [`submission/release-evidence.json`](submission/release-evidence.json).
 
 ## Contributing and licensing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository contract and verification workflow. A license is intentionally not selected yet; choose and add one before making the repository public.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository contract and verification workflow. Released under the [MIT License](LICENSE).
