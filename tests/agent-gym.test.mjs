@@ -102,6 +102,7 @@ test("scenario family creates deterministic disjoint train, validation, and test
 
   const seenSeeds = new Set();
   const seenScenarioIds = new Set();
+  const topologySignatures = new Map(Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES).map((familyId) => [familyId, new Set()]));
   for (const [familyId, splitSizes] of Object.entries(AGENT_GYM_FAMILY_SPLIT_SIZES)) {
     for (const [split, count] of Object.entries(splitSizes)) {
       for (let index = 0; index < count; index += 1) {
@@ -110,6 +111,15 @@ test("scenario family creates deterministic disjoint train, validation, and test
         assert.equal(serializeSpellGraph(first.graph), serializeSpellGraph(second.graph));
         assert.deepEqual(validateSpellGraph(first.graph), []);
         assert.equal(simulateCast(first.graph).success, false);
+        assert.equal(first.perturbations.includes("benign-decoy-subgraph"), true);
+        const answerEdges = new Set(first.graph.semantics.initialRouteEdgeIds);
+        const decoyEdges = first.graph.edges.filter((edge) => !answerEdges.has(edge.id));
+        assert.equal(decoyEdges.length >= 1 && decoyEdges.length <= 3, true);
+        const nodes = new Map(first.graph.nodes.map((node) => [node.id, node]));
+        assert.equal(decoyEdges.every((edge) => !nodes.get(edge.from).dormant && !nodes.get(edge.to).dormant), true);
+        topologySignatures.get(familyId).add(decoyEdges.map((edge) => (
+          `${nodes.get(edge.from).label}:${edge.type}:${nodes.get(edge.to).label}`
+        )).sort().join("|"));
         assert.equal(first.graph.nodes.some((node) => ["summon-ducks", "thunderbirds", "clockwork-moths"].includes(node.id)), false);
         assert.equal(seenSeeds.has(first.seed), false, `duplicate seed ${first.seed}`);
         assert.equal(seenScenarioIds.has(first.scenarioId), false, `duplicate scenario ${first.scenarioId}`);
@@ -120,6 +130,7 @@ test("scenario family creates deterministic disjoint train, validation, and test
   }
   assert.equal(seenSeeds.size, 96);
   assert.equal(seenScenarioIds.size, 96);
+  assert.equal([...topologySignatures.values()].every((signatures) => signatures.size >= 3), true);
 });
 
 test("resonant family is deterministic, opaque, structurally cyclic, and solvable", async () => {

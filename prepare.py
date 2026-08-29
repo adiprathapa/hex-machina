@@ -433,6 +433,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "unguarded-premature-action",
             "opaque-node-ids",
             "opaque-edge-ids",
+            "benign-decoy-subgraph",
             "benchmarkAgentGymFamily",
             "hex-machina-agent-gym-benchmark/v1",
             "AGENT_GYM_MAX_EPISODE_STEPS",

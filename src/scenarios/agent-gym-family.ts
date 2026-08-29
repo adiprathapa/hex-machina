@@ -1,4 +1,4 @@
-import { cloneGraph, type SpellGraph } from "../domain/spell.ts";
+import { cloneGraph, type SpellEdge, type SpellGraph } from "../domain/spell.ts";
 import { createMoonflowerScenario } from "./moonflower.ts";
 import { createResonantAviaryScenario } from "./resonant-aviary.ts";
 import { createClockworkOrchardScenario } from "./clockwork-orchard.ts";
@@ -109,6 +109,7 @@ export interface AgentGymScenarioVariant {
     "stable-order-shuffle",
     "layout-jitter",
     "prompt-paraphrase",
+    "benign-decoy-subgraph",
   ];
   graph: SpellGraph;
 }
@@ -138,6 +139,31 @@ function opaqueId(prefix: "r" | "e" | "fx", next: () => number, used: Set<string
   return candidate;
 }
 
+const DECOY_EDGES: Record<AgentGymFamilyId, readonly SpellEdge[]> = {
+  [AGENT_GYM_FAMILY_IDS.moonflower]: [
+    { id: "decoy-condition-action", from: "moonrise", to: "release", type: "triggers" },
+    { id: "decoy-action-target", from: "release", to: "mirror", type: "targets" },
+    { id: "decoy-modifier-target", from: "soften", to: "mirror", type: "modifies" },
+  ],
+  [AGENT_GYM_FAMILY_IDS.resonantAviary]: [
+    { id: "decoy-condition-action", from: "dawn", to: "release", type: "triggers" },
+    { id: "decoy-action-target", from: "release", to: "weather-vane", type: "targets" },
+    { id: "decoy-modifier-target", from: "hush", to: "weather-vane", type: "modifies" },
+  ],
+  [AGENT_GYM_FAMILY_IDS.clockworkOrchard]: [
+    { id: "decoy-condition-action", from: "at-midnight", to: "scatter", type: "triggers" },
+    { id: "decoy-action-target", from: "scatter", to: "moon-cactus", type: "targets" },
+    { id: "decoy-modifier-target", from: "sleep", to: "moon-cactus", type: "modifies" },
+  ],
+};
+
+function addBenignDecoySubgraph(graph: SpellGraph, familyId: AgentGymFamilyId, mask: number) {
+  const selectedEdges = DECOY_EDGES[familyId].filter((_, index) => (mask & (1 << index)) !== 0);
+  const activeNodeIds = new Set(selectedEdges.flatMap((edge) => [edge.from, edge.to]));
+  graph.edges.push(...selectedEdges.map((edge) => ({ ...edge })));
+  graph.nodes = graph.nodes.map((node) => activeNodeIds.has(node.id) ? { ...node, dormant: false } : node);
+}
+
 export function generateAgentGymScenarioForFamily(
   familyId: AgentGymFamilyId,
   split: AgentGymSplit,
@@ -165,6 +191,7 @@ export function generateAgentGymScenarioForFamily(
         ? createClockworkOrchardScenario()
         : createMoonflowerScenario(),
   );
+  addBenignDecoySubgraph(graph, familyId, (next() % 7) + 1);
   const used = new Set<string>();
   const nodeIdMap = new Map(graph.nodes.map((node) => [node.id, opaqueId("r", next, used)]));
   const edgeIdMap = new Map(graph.edges.map((edge) => [edge.id, opaqueId("e", next, used)]));
@@ -227,6 +254,7 @@ export function generateAgentGymScenarioForFamily(
       "stable-order-shuffle",
       "layout-jitter",
       "prompt-paraphrase",
+      "benign-decoy-subgraph",
     ],
     graph,
   };
