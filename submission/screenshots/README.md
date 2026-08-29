@@ -18,4 +18,4 @@ The initial cast floods the observatory. The causal path is highlighted, the adv
 
 ![Stable repaired graph with umbrella ducks and blooming moonflower](03-successful-recast.jpg)
 
-The applied v3 graph activates `Umbrella` and `Bloom`, targets the Moonflower, preserves all twelve ducks and their sacred constraint, and ends in **Stable — The moonflower blooms** with a completed, exportable Agent Gym trajectory. The card also identifies 72 variants across two causal families, vector plus offline rollout surfaces, and executable 23/18/6/−8 behavioral separation.
+The applied v3 graph activates `Umbrella` and `Bloom`, targets the Moonflower, preserves all twelve ducks and their sacred constraint, and ends in **Stable — The moonflower blooms** with a completed, exportable Agent Gym trajectory. The card also identifies 96 variants across three causal families, vector plus offline rollout surfaces, and executable 23/18/6/−8 behavioral separation.

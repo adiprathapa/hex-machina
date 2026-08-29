@@ -44,6 +44,7 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.equal(description.payload.maxEpisodeSteps, 32);
   assert.equal(description.payload.splitSizes.test, 8);
   assert.equal(description.payload.familySplitSizes[AGENT_GYM_FAMILY_IDS.resonantAviary].test, 4);
+  assert.equal(description.payload.familySplitSizes[AGENT_GYM_FAMILY_IDS.clockworkOrchard].test, 4);
   assert.equal(
     Object.keys(description.payload.familySplitSizes).every((familyId) => !/moonflower|resonan|feedback|aviary/i.test(familyId)),
     true,
@@ -75,6 +76,21 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.doesNotMatch(
     `${resonanceReset.payload.episode.familyId} ${resonanceReset.payload.episode.scenarioId} ${resonanceReset.payload.observation.scenario}`,
     /moonflower|resonan|feedback|aviary|carrier/i,
+  );
+
+  const temporalReset = JSON.parse(await bridge.handleLine(JSON.stringify({
+    id: "temporal",
+    op: "reset",
+    family: AGENT_GYM_FAMILY_IDS.clockworkOrchard,
+    split: "test",
+    index: 2,
+  })));
+  assert.equal(temporalReset.ok, true);
+  assert.equal(temporalReset.payload.info.scenarioId, "task-03-test-02");
+  assert.equal(temporalReset.payload.episode.familyId, AGENT_GYM_FAMILY_IDS.clockworkOrchard);
+  assert.doesNotMatch(
+    `${temporalReset.payload.episode.familyId} ${temporalReset.payload.episode.scenarioId} ${temporalReset.payload.observation.scenario}`,
+    /clockwork|orchard|temporal|premature|moth/i,
   );
 
   const step = JSON.parse(await bridge.handleLine(JSON.stringify({
@@ -169,7 +185,7 @@ with HexMachinaVectorEnv(3) as envs:
         families=[
             "family-01-v1",
             "family-02-v1",
-            "family-02-v1",
+            "family-03-v1",
         ],
     )
     print(json.dumps({
@@ -212,11 +228,11 @@ with HexMachinaVectorEnv(3) as envs:
   assert.deepEqual(receipt.mixedFamilies, [
     "family-01-v1",
     "family-02-v1",
-    "family-02-v1",
+    "family-03-v1",
   ]);
   assert.deepEqual(receipt.mixedScenarios, [
     "task-01-test-00",
     "task-02-test-00",
-    "task-02-test-01",
+    "task-03-test-01",
   ]);
 });

@@ -234,8 +234,92 @@ function simulateResonantCast(graph: SpellGraph): CastResult {
   };
 }
 
+function simulateTemporalCast(graph: SpellGraph): CastResult {
+  const { source, multiplier, subject, action, failureTarget, safeguard, goalTarget, goalSink } = graph.semantics.roles;
+  const starlightIsHastened = hasEdge(graph, source, multiplier);
+  const mothsPresent = starlightIsHastened && hasEdge(graph, multiplier, subject);
+  const mothCount = mothsPresent ? 9 : 0;
+  const mothsPollinate = mothsPresent && hasEdge(graph, subject, action);
+  const directRoute = hasEdge(graph, source, action);
+  const dawnGuardActive = hasEdge(graph, action, safeguard);
+  const prematureAction = mothsPollinate && !dawnGuardActive;
+  const bloomBruised = prematureAction && hasEdge(graph, action, failureTarget);
+  const orchidPollinated = hasEdge(graph, action, goalTarget) && (dawnGuardActive || directRoute);
+  const seedsSet = orchidPollinated && hasEdge(graph, goalTarget, goalSink);
+
+  const events: CastEvent[] = [{
+    id: "event-starlight",
+    order: 1,
+    nodeId: source,
+    tone: "magic",
+    message: "Starlight winds the clockwork orchard awake.",
+  }];
+  if (mothsPresent) events.push({
+    id: "event-moths",
+    order: 2,
+    nodeId: subject,
+    tone: "magic",
+    message: "Nine brass moths launch with their pollen satchels full.",
+  });
+  if (dawnGuardActive) events.push({
+    id: "event-dawn-guard",
+    order: 3,
+    nodeId: safeguard,
+    tone: "magic",
+    message: "After dawn holds the moths until the Sun Orchid opens.",
+  });
+  if (prematureAction) events.push({
+    id: "event-premature-pollen",
+    order: events.length + 1,
+    nodeId: action,
+    tone: "danger",
+    message: "Hasten fires Pollinate before the orchid can open.",
+  });
+  if (bloomBruised) events.push({
+    id: "event-bruised-bloom",
+    order: events.length + 1,
+    nodeId: failureTarget,
+    tone: "danger",
+    message: "The eager moths batter pollen against the sealed bloom.",
+  });
+  if (orchidPollinated) events.push({
+    id: "event-orchid-pollinated",
+    order: events.length + 1,
+    nodeId: goalTarget,
+    tone: "success",
+    message: "The moths dust the open Sun Orchid at exactly the right moment.",
+  });
+  if (seedsSet) events.push({
+    id: "event-seed-song",
+    order: events.length + 1,
+    nodeId: goalSink,
+    tone: "success",
+    message: "Golden seeds chime through the clockwork orchard.",
+  });
+
+  return {
+    graphVersion: graph.version,
+    seed: graph.seed,
+    success: seedsSet && !prematureAction && !bloomBruised,
+    summary: seedsSet && !prematureAction && !bloomBruised
+      ? mothCount > 0
+        ? "Stable cast: nine clockwork moths wait for dawn and pollinate the open Sun Orchid."
+        : "Stable cast: starlight pollinates the open Sun Orchid directly."
+      : "Unstable cast: Pollinate fires before dawn and bruises the closed Sun Orchid.",
+    events,
+    sideEffects: bloomBruised ? [{
+      id: graph.semantics.effectId,
+      label: "Closed Sun Orchid bruised by premature clockwork moths",
+      severity: "messy",
+      responsibleNodeIds: [source, multiplier, subject, action, failureTarget],
+      responsibleEdgeIds: graph.semantics.initialRouteEdgeIds,
+    }] : [],
+    assertions: { mothsPresent, mothCount, dawnGuardActive, prematureAction, bloomBruised, orchidPollinated, seedsSet },
+  };
+}
+
 export function simulateCast(graph: SpellGraph): CastResult {
-  return graph.semantics.ruleId === "resonant-feedback-cycle"
-    ? simulateResonantCast(graph)
-    : simulateCarrierCast(graph);
+  if (graph.semantics.ruleId === "resonant-feedback-cycle") return simulateResonantCast(graph);
+  if (graph.semantics.ruleId === "unguarded-premature-action") return simulateTemporalCast(graph);
+  return simulateCarrierCast(graph);
 }

@@ -64,6 +64,11 @@ export function explainSideEffect(graph: SpellGraph) {
     { id: "thunderbirds-release-song", nodeIds: [roles.subject, roles.action], edgeIds: [initialRouteEdgeIds[2]] },
     { id: "song-feeds-back-into-echo", nodeIds: [roles.action, roles.multiplier], edgeIds: [initialRouteEdgeIds[3]] },
     { id: "runaway-song-targets-dome", nodeIds: [roles.action, roles.failureTarget], edgeIds: [initialRouteEdgeIds[4]] },
+  ] : graph.semantics.ruleId === "unguarded-premature-action" ? [
+    { id: "starlight-enters-hasten", nodeIds: [roles.source, roles.multiplier], edgeIds: [initialRouteEdgeIds[0]] },
+    { id: "hasten-summons-clockwork-moths", nodeIds: [roles.multiplier, roles.subject], edgeIds: [initialRouteEdgeIds[1]] },
+    { id: "moths-release-pollinate", nodeIds: [roles.subject, roles.action], edgeIds: [initialRouteEdgeIds[2]] },
+    { id: "premature-pollinate-targets-closed-bloom", nodeIds: [roles.action, roles.failureTarget], edgeIds: [initialRouteEdgeIds[3]] },
   ] : [
     {
       id: "water-enters-multiplier",
@@ -93,23 +98,30 @@ export function explainSideEffect(graph: SpellGraph) {
   }));
   const hasConnection = (from: string, to: string) =>
     graph.edges.some((edge) => edge.from === from && edge.to === to);
+  const temporalRule = graph.semantics.ruleId === "unguarded-premature-action";
+  const absentConnections = temporalRule
+    ? [[roles.action, roles.safeguard]]
+    : [
+        [roles.subject, roles.safeguard],
+        [roles.source, roles.safeguard],
+        [roles.safeguard, roles.action],
+      ];
+  const protectiveRoutePresent = temporalRule
+    ? hasConnection(roles.action, roles.safeguard)
+    : (hasConnection(roles.subject, roles.safeguard) || hasConnection(roles.source, roles.safeguard)) &&
+      hasConnection(roles.safeguard, roles.action);
   const premises = [
     ...positivePremises,
     {
       id: graph.semantics.ruleId === "resonant-feedback-cycle"
         ? "no-feedback-dampener-route"
-        : "no-protective-umbrella-route",
+        : temporalRule
+          ? "no-after-dawn-requirement"
+          : "no-protective-umbrella-route",
       nodeIds: [roles.safeguard],
       edgeIds: [],
-      absentConnections: [
-        [roles.subject, roles.safeguard],
-        [roles.source, roles.safeguard],
-        [roles.safeguard, roles.action],
-      ],
-      satisfied: !(
-        (hasConnection(roles.subject, roles.safeguard) || hasConnection(roles.source, roles.safeguard)) &&
-        hasConnection(roles.safeguard, roles.action)
-      ),
+      absentConnections,
+      satisfied: !protectiveRoutePresent,
     },
   ];
   const necessityChecks = effect.responsibleEdgeIds.map((edgeId) => {
@@ -128,7 +140,9 @@ export function explainSideEffect(graph: SpellGraph) {
     present: true,
     explanation: graph.semantics.ruleId === "resonant-feedback-cycle"
       ? "The source reaches Echo, summons the thunderbirds, and Sing closes a directed cycle back into Echo before targeting the glass dome."
-      : "Multiply executes before a target is bounded. It amplifies Summon ducks, and Pour still targets the entire room.",
+      : temporalRule
+        ? "Hasten summons the clockwork moths and fires Pollinate at the sealed bloom without requiring the After dawn condition."
+        : "Multiply executes before a target is bounded. It amplifies Summon ducks, and Pour still targets the entire room.",
     nodeIds: effect.responsibleNodeIds,
     edgeIds: effect.responsibleEdgeIds,
     subgraph: {
@@ -278,9 +292,47 @@ export function proposePatches(graph: SpellGraph): SpellPatch[] {
       searchEvidence: { rank: 0, editCount: 0, candidateCount: 0, eligibleCandidateCount: 0, constraintsSatisfied: [] },
     },
   ];
+  const temporalCandidates: Array<Omit<SpellPatch, "preconditions">> = [
+    {
+      id: `patch-temporal-guard-v${graph.version}`,
+      title: "Wait for dawn before pollinating",
+      rationale: "Preserve the clockwork moths, require the After dawn guard, and pollinate the open Sun Orchid instead of its sealed bloom.",
+      expectedVersion: graph.version,
+      operations: [
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
+        { op: "activate_node", nodeId: roles.safeguard },
+        { op: "add_edge", edge: { id: edgeId("e-pollinate-dawn", "action-safeguard"), from: roles.action, to: roles.safeguard, type: "requires" } },
+        { op: "add_edge", edge: { id: edgeId("e-pollinate-orchid", "action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" } },
+        { op: "activate_node", nodeId: roles.goalSink },
+        { op: "add_edge", edge: { id: edgeId("e-orchid-seeds", "goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" } },
+      ],
+      preserves: [roles.subject, "clockwork-moths-present"],
+      tradeoffs: ["Keeps all nine clockwork moths", "Activates the After dawn condition"],
+      searchEvidence: { rank: 0, editCount: 0, candidateCount: 0, eligibleCandidateCount: 0, constraintsSatisfied: [] },
+    },
+    {
+      id: `patch-direct-v${graph.version}`,
+      title: "Bypass the clockwork moths",
+      rationale: "Disconnect Hasten from starlight and route the source directly to the open Sun Orchid.",
+      expectedVersion: graph.version,
+      operations: [
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[0] },
+        { op: "remove_edge", edgeId: initialRouteEdgeIds[3] },
+        { op: "add_edge", edge: { id: edgeId("e-starlight-pollinate", "source-action"), from: roles.source, to: roles.action, type: "flows_to" } },
+        { op: "add_edge", edge: { id: edgeId("e-direct-pollinate-orchid", "direct-action-goal"), from: roles.action, to: roles.goalTarget, type: "targets" } },
+        { op: "activate_node", nodeId: roles.goalSink },
+        { op: "add_edge", edge: { id: edgeId("e-direct-orchid-seeds", "direct-goal-sink"), from: roles.goalTarget, to: roles.goalSink, type: "flows_to" } },
+      ],
+      preserves: [],
+      tradeoffs: ["The clockwork moths disappear from the spell"],
+      searchEvidence: { rank: 0, editCount: 0, candidateCount: 0, eligibleCandidateCount: 0, constraintsSatisfied: [] },
+    },
+  ];
   const rawCandidates = graph.semantics.ruleId === "resonant-feedback-cycle"
     ? resonanceCandidates
-    : carrierCandidates;
+    : graph.semantics.ruleId === "unguarded-premature-action"
+      ? temporalCandidates
+      : carrierCandidates;
 
   const preserveConstraints = graph.constraints.filter((constraint) => constraint.requirement === "preserve");
   const candidates: SpellPatch[] = rawCandidates.map((patch) => ({

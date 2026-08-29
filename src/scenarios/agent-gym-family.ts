@@ -1,11 +1,13 @@
 import { cloneGraph, type SpellGraph } from "../domain/spell.ts";
 import { createMoonflowerScenario } from "./moonflower.ts";
 import { createResonantAviaryScenario } from "./resonant-aviary.ts";
+import { createClockworkOrchardScenario } from "./clockwork-orchard.ts";
 
 export type AgentGymSplit = "train" | "validation" | "test";
 export const AGENT_GYM_FAMILY_IDS = {
   moonflower: "family-01-v1",
   resonantAviary: "family-02-v1",
+  clockworkOrchard: "family-03-v1",
 } as const;
 export type AgentGymFamilyId = typeof AGENT_GYM_FAMILY_IDS[keyof typeof AGENT_GYM_FAMILY_IDS];
 
@@ -21,9 +23,16 @@ export const RESONANCE_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
   test: 4,
 };
 
+export const TEMPORAL_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {
+  train: 16,
+  validation: 4,
+  test: 4,
+};
+
 export const AGENT_GYM_FAMILY_SPLIT_SIZES: Record<AgentGymFamilyId, Record<AgentGymSplit, number>> = {
   [AGENT_GYM_FAMILY_IDS.moonflower]: AGENT_GYM_SPLIT_SIZES,
   [AGENT_GYM_FAMILY_IDS.resonantAviary]: RESONANCE_GYM_SPLIT_SIZES,
+  [AGENT_GYM_FAMILY_IDS.clockworkOrchard]: TEMPORAL_GYM_SPLIT_SIZES,
 };
 
 const SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
@@ -36,6 +45,12 @@ const RESONANCE_SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
   train: 740_000,
   validation: 850_000,
   test: 960_000,
+};
+
+const TEMPORAL_SPLIT_SEED_BASE: Record<AgentGymSplit, number> = {
+  train: 1_070_000,
+  validation: 1_180_000,
+  test: 1_290_000,
 };
 
 const OBJECTIVES = [
@@ -64,6 +79,20 @@ const RESONANCE_CONSTRAINTS = [
   "Preserve all seven thunderbirds; their song is part of the desired outcome.",
   "Do not remove the thunderbird branch. Break the feedback around it.",
   "The human values the thunderbirds, so the successful chord must keep them.",
+];
+
+const TEMPORAL_OBJECTIVES = [
+  "Repair the orchard timing, keep the sealed bloom safe, and preserve the clockwork moths if the human asks.",
+  "Diagnose the premature pollination, then set the Sun Orchid's seeds under the human's locked intent.",
+  "Pollinate the open Sun Orchid without bruising its bud; do not discard anything the human protects.",
+  "Prove the unsafe pollen path before changing it, then produce a fertile dawn cast.",
+];
+
+const TEMPORAL_CONSTRAINTS = [
+  "The clockwork moths are beautiful. They stay.",
+  "Preserve all nine clockwork moths; their pollination is part of the desired outcome.",
+  "Do not remove the moth branch. Repair its timing.",
+  "The human values the clockwork moths, so the successful cast must keep them.",
 ];
 
 export interface AgentGymScenarioVariant {
@@ -121,10 +150,21 @@ export function generateAgentGymScenarioForFamily(
   }
 
   const resonance = familyId === AGENT_GYM_FAMILY_IDS.resonantAviary;
-  const seedBase = resonance ? RESONANCE_SPLIT_SEED_BASE : SPLIT_SEED_BASE;
+  const temporal = familyId === AGENT_GYM_FAMILY_IDS.clockworkOrchard;
+  const seedBase = resonance
+    ? RESONANCE_SPLIT_SEED_BASE
+    : temporal
+      ? TEMPORAL_SPLIT_SEED_BASE
+      : SPLIT_SEED_BASE;
   const seed = seedBase[split] + index * 7919;
   const next = createPrng(seed);
-  const graph = cloneGraph(resonance ? createResonantAviaryScenario() : createMoonflowerScenario());
+  const graph = cloneGraph(
+    resonance
+      ? createResonantAviaryScenario()
+      : temporal
+        ? createClockworkOrchardScenario()
+        : createMoonflowerScenario(),
+  );
   const used = new Set<string>();
   const nodeIdMap = new Map(graph.nodes.map((node) => [node.id, opaqueId("r", next, used)]));
   const edgeIdMap = new Map(graph.edges.map((edge) => [edge.id, opaqueId("e", next, used)]));
@@ -155,13 +195,21 @@ export function generateAgentGymScenarioForFamily(
   shuffle(graph.nodes, next);
   shuffle(graph.edges, next);
 
-  const objectives = resonance ? RESONANCE_OBJECTIVES : OBJECTIVES;
-  const constraints = resonance ? RESONANCE_CONSTRAINTS : CONSTRAINTS;
+  const objectives = resonance
+    ? RESONANCE_OBJECTIVES
+    : temporal
+      ? TEMPORAL_OBJECTIVES
+      : OBJECTIVES;
+  const constraints = resonance
+    ? RESONANCE_CONSTRAINTS
+    : temporal
+      ? TEMPORAL_CONSTRAINTS
+      : CONSTRAINTS;
   const objective = objectives[next() % objectives.length];
   const humanConstraint = constraints[next() % constraints.length];
-  const scenarioId = `task-${resonance ? "02" : "01"}-${split}-${String(index).padStart(2, "0")}`;
+  const scenarioId = `task-${resonance ? "02" : temporal ? "03" : "01"}-${split}-${String(index).padStart(2, "0")}`;
   graph.id = `spell-${scenarioId}`;
-  graph.scenario = resonance ? "eval-family-02" : "eval-family-01";
+  graph.scenario = resonance ? "eval-family-02" : temporal ? "eval-family-03" : "eval-family-01";
   graph.seed = seed;
   graph.desiredOutcome = objective;
 
@@ -196,7 +244,9 @@ export function getAgentGymSplitManifest() {
       count: AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split],
       seedBase: familyId === AGENT_GYM_FAMILY_IDS.resonantAviary
         ? RESONANCE_SPLIT_SEED_BASE[split]
-        : SPLIT_SEED_BASE[split],
+        : familyId === AGENT_GYM_FAMILY_IDS.clockworkOrchard
+          ? TEMPORAL_SPLIT_SEED_BASE[split]
+          : SPLIT_SEED_BASE[split],
     })),
   );
 }

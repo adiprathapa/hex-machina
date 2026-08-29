@@ -95,6 +95,9 @@ test("scenario family creates deterministic disjoint train, validation, and test
     { familyId: "family-02-v1", split: "train", count: 16, seedBase: 740000 },
     { familyId: "family-02-v1", split: "validation", count: 4, seedBase: 850000 },
     { familyId: "family-02-v1", split: "test", count: 4, seedBase: 960000 },
+    { familyId: "family-03-v1", split: "train", count: 16, seedBase: 1070000 },
+    { familyId: "family-03-v1", split: "validation", count: 4, seedBase: 1180000 },
+    { familyId: "family-03-v1", split: "test", count: 4, seedBase: 1290000 },
   ]);
 
   const seenSeeds = new Set();
@@ -107,7 +110,7 @@ test("scenario family creates deterministic disjoint train, validation, and test
         assert.equal(serializeSpellGraph(first.graph), serializeSpellGraph(second.graph));
         assert.deepEqual(validateSpellGraph(first.graph), []);
         assert.equal(simulateCast(first.graph).success, false);
-        assert.equal(first.graph.nodes.some((node) => ["summon-ducks", "thunderbirds"].includes(node.id)), false);
+        assert.equal(first.graph.nodes.some((node) => ["summon-ducks", "thunderbirds", "clockwork-moths"].includes(node.id)), false);
         assert.equal(seenSeeds.has(first.seed), false, `duplicate seed ${first.seed}`);
         assert.equal(seenScenarioIds.has(first.scenarioId), false, `duplicate scenario ${first.scenarioId}`);
         seenSeeds.add(first.seed);
@@ -115,8 +118,8 @@ test("scenario family creates deterministic disjoint train, validation, and test
       }
     }
   }
-  assert.equal(seenSeeds.size, 72);
-  assert.equal(seenScenarioIds.size, 72);
+  assert.equal(seenSeeds.size, 96);
+  assert.equal(seenScenarioIds.size, 96);
 });
 
 test("resonant family is deterministic, opaque, structurally cyclic, and solvable", async () => {
@@ -133,6 +136,20 @@ test("resonant family is deterministic, opaque, structurally cyclic, and solvabl
   assert.doesNotMatch(`${episode.familyId} ${episode.scenarioId}`, /moonflower|resonan|feedback|aviary/i);
 });
 
+test("temporal family is deterministic, opaque, condition-guarded, and solvable", async () => {
+  const variant = generateAgentGymScenarioForFamily(AGENT_GYM_FAMILY_IDS.clockworkOrchard, "test", 3);
+  assert.deepEqual(validateSpellGraph(variant.graph), []);
+  assert.equal(variant.graph.semantics.ruleId, "unguarded-premature-action");
+  assert.equal(variant.graph.semantics.initialRouteEdgeIds.length, 4);
+  assert.equal(simulateCast(variant.graph).assertions.prematureAction, true);
+  assert.equal(variant.graph.nodes.some((node) => node.id === "clockwork-moths"), false);
+  const episode = (await runReferenceEpisode({ family: variant.familyId, split: "test", index: 3 })).snapshot;
+  assert.equal(episode.familyId, variant.familyId);
+  assert.equal(episode.status, "complete");
+  assert.equal(episode.score, 23);
+  assert.doesNotMatch(`${episode.familyId} ${episode.scenarioId}`, /clockwork|orchard|temporal|premature|moth/i);
+});
+
 test("inspection-driven policy solves held-out opaque-ID variants at full reward", async () => {
   const validation = (await runReferenceEpisode({ split: "validation", index: 3 })).snapshot;
   const testEpisode = (await runReferenceEpisode({ split: "test", index: 6 })).snapshot;
@@ -147,11 +164,11 @@ test("inspection-driven policy solves held-out opaque-ID variants at full reward
   assert.notEqual(validation.trajectory[4].input.targetId, testEpisode.trajectory[4].input.targetId);
 });
 
-test("benchmark runner completes all 72 split episodes across two causal families", async () => {
+test("benchmark runner completes all 96 split episodes across three causal families", async () => {
   const benchmark = await benchmarkAgentGymFamily();
   assert.equal(benchmark.protocol, "hex-machina-agent-gym-benchmark/v1");
-  assert.equal(benchmark.episodeCount, 72);
-  assert.equal(benchmark.completedCount, 72);
+  assert.equal(benchmark.episodeCount, 96);
+  assert.equal(benchmark.completedCount, 96);
   assert.equal(benchmark.meanScore, 23);
   assert.deepEqual(benchmark.splitScores, { train: 23, validation: 23, test: 23 });
   assert.equal(benchmark.episodes.every((episode) => episode.steps === 9), true);
@@ -160,7 +177,7 @@ test("benchmark runner completes all 72 split episodes across two causal familie
 test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized policies", async () => {
   const benchmark = await benchmarkAgentGymPolicies("test");
   assert.equal(benchmark.protocol, "hex-machina-agent-gym-policy-benchmark/v1");
-  assert.equal(benchmark.scenarioCount, 12);
+  assert.equal(benchmark.scenarioCount, 16);
   assert.deepEqual(benchmark.policies.map((policy) => ({
     policyId: policy.policyId,
     completionRate: policy.completionRate,
@@ -185,10 +202,11 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   const episodes = await collectAgentGymDataset("test");
   const jsonl = serializeAgentGymDatasetJsonl(episodes);
   const lines = jsonl.trim().split("\n").map(JSON.parse);
-  assert.equal(lines.length, 12);
+  assert.equal(lines.length, 16);
   assert.deepEqual(new Set(lines.map((line) => line.familyId)), new Set([
     AGENT_GYM_FAMILY_IDS.moonflower,
     AGENT_GYM_FAMILY_IDS.resonantAviary,
+    AGENT_GYM_FAMILY_IDS.clockworkOrchard,
   ]));
   assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v1"), true);
   assert.equal(lines.every((line) => line.split === "test" && line.score === 23), true);
@@ -209,8 +227,8 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   assert.deepEqual(verified, {
     protocol: "hex-machina-agent-gym-replay-verifier/v1",
     valid: true,
-    episodeCount: 12,
-    verifiedEpisodes: 12,
+    episodeCount: 16,
+    verifiedEpisodes: 16,
     issueCount: 0,
     issues: [],
   });
@@ -219,7 +237,7 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   tampered[0].transitions[1].rewardDelta += 100;
   const rejected = await verifyAgentGymDatasetJsonl(`${tampered.map(JSON.stringify).join("\n")}\n`);
   assert.equal(rejected.valid, false);
-  assert.equal(rejected.verifiedEpisodes, 11);
+  assert.equal(rejected.verifiedEpisodes, 15);
   assert.deepEqual(rejected.issues[0], {
     line: 1,
     scenarioId: "task-01-test-00",

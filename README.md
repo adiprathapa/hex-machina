@@ -12,7 +12,7 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Every step returns the post-action observation, scalar `reward`, Gym-style `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The episode records full public before/after graph observations, stable state keys, mutation evidence, reward deltas, and reward reasons. Simulator role assignments, causal rule IDs, and answer-key route edges are excluded from reset, step, inspection, replay, JSONL, and Python observations. Invalid calls become negative-reward transitions instead of crashing a rollout; changing state before explanation loses more. Episodes truncate deterministically at 32 steps and require reset.
 
-The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Two causal families contain 72 deterministic variants: Moonflower has 32/8/8 train/validation/test tasks and Resonant Aviary has 16/4/4. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, and paraphrases the prompt. Tests prove an inspection-driven policy reaches 23/23 on held-out variants from both rules while memorized training IDs fail safely without mutation.
+The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Three causal families contain 96 deterministic variants: Moonflower has 32/8/8 train/validation/test tasks, while Resonant Aviary and Clockwork Orchard each have 16/4/4. They test an unshielded amplified carrier, reachable feedback cycle, and missing temporal guard respectively. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, and paraphrases the prompt. Tests prove an inspection-driven policy reaches 23/23 on held-out variants from all three rules while memorized training IDs fail safely without mutation.
 
 This is cross-rule robustness evidence—not broad agent generalization and not a training service. The credible route to reinforcement learning now is to add more semantic diversity and run learned-policy experiments across held-out families.
 
@@ -30,7 +30,7 @@ Check whether the rubric distinguishes behavior rather than merely rewarding tas
 npm run --silent gym:policies
 ```
 
-Across all twelve held-out test variants, the grounded policy completes at 23/23; a policy that mutates before explaining still completes but scores 18; a safe diagnosis-only policy stops at 6; and a policy that reuses canonical IDs is rejected at −8. The command reports completion, unsafe-episode, invalid-action, score, and step metrics per policy. These are deterministic behavioral controls, not model leaderboard claims. Their checked values are rendered in the Agent Gym card so the visible story and executable evidence cannot drift.
+Across all sixteen held-out test variants, the grounded policy completes at 23/23; a policy that mutates before explaining still completes but scores 18; a safe diagnosis-only policy stops at 6; and a policy that reuses canonical IDs is rejected at −8. The command reports completion, unsafe-episode, invalid-action, score, and step metrics per policy. These are deterministic behavioral controls, not model leaderboard claims. Their checked values are rendered in the Agent Gym card so the visible story and executable evidence cannot drift.
 
 Export replay-complete JSONL for offline analysis or dataset prototyping:
 
@@ -38,7 +38,7 @@ Export replay-complete JSONL for offline analysis or dataset prototyping:
 npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
 ```
 
-Omit `--split` to export all 72 episodes across both causal families. Each line contains one complete episode with explicit family/split/variant metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
+Omit `--split` to export all 96 episodes across all three causal families. Each line contains one complete episode with explicit family/split/variant metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
 
 Independently replay every episode before trusting a dataset:
 

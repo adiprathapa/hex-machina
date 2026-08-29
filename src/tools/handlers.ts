@@ -228,7 +228,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       const graph = context.getGraph();
       if (parsed.patchId !== undefined) {
         const patchId = requireString(parsed.patchId, "patchId");
-        if (!/^patch-(umbrella|dampener|direct)-v[0-9]+$/.test(patchId)) {
+        if (!/^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$/.test(patchId)) {
           throw new Error(`Invalid patch ID: ${patchId}`);
         }
         requireIssuedPatch(graph, patchId);
@@ -389,7 +389,7 @@ export function createSpellToolHandlers(context: SpellToolContext) {
       }
 
       const patchId = requireString(parsed.patchId, "patchId");
-      if (!/^patch-(umbrella|dampener|direct)-v[0-9]+$/.test(patchId)) {
+      if (!/^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$/.test(patchId)) {
         throw new Error(`Invalid patch ID: ${patchId}`);
       }
       const before = context.getGraph();

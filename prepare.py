@@ -429,6 +429,8 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "AGENT_GYM_FAMILY_IDS",
             "family-01-v1",
             "resonant-feedback-cycle",
+            "family-03-v1",
+            "unguarded-premature-action",
             "opaque-node-ids",
             "opaque-edge-ids",
             "benchmarkAgentGymFamily",
@@ -571,7 +573,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared handlers expose rollout-safe reset/step, 72 variants across two causal families, contrast policies, replay observations, independently verified JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split families, replay verifier, or shared-handler instrumentation missing",
+            "shared handlers expose rollout-safe reset/step, 96 variants across three causal families, contrast policies, replay observations, independently verified JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, split families, replay verifier, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

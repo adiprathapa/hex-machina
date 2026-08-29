@@ -5,6 +5,7 @@ import { buildPatchPreview } from "../src/domain/patch-preview.ts";
 import { applyPatch, cloneGraph, connectRunes, getValidEdgeTypes, serializeSpellGraph, validateSpellGraph } from "../src/domain/spell.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { createResonantAviaryScenario } from "../src/scenarios/resonant-aviary.ts";
+import { createClockworkOrchardScenario } from "../src/scenarios/clockwork-orchard.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { explainFlood, proposePatches } from "../src/solver/repair.ts";
 import { traceSpellGraph } from "../src/solver/trace.ts";
@@ -73,6 +74,49 @@ test("resonant direct repair removes the cyclic choir when it is not sacred", ()
   assert.equal(repaired.assertions.thunderbirdsPresent, false);
   assert.equal(repaired.assertions.feedbackLoopActive, false);
   assert.equal(repaired.assertions.harmonyComplete, true);
+});
+
+test("clockwork orchard exposes an edge-minimal temporal failure and preserving repair", () => {
+  const graph = createClockworkOrchardScenario();
+  assert.deepEqual(validateSpellGraph(graph), []);
+  const failed = simulateCast(graph);
+  assert.equal(failed.success, false);
+  assert.equal(failed.assertions.mothsPresent, true);
+  assert.equal(failed.assertions.prematureAction, true);
+  assert.equal(failed.assertions.bloomBruised, true);
+
+  const explanation = explainFlood(graph);
+  assert.equal(explanation.ruleEvidence.ruleId, "unguarded-premature-action");
+  assert.equal(explanation.ruleEvidence.allPremisesSatisfied, true);
+  assert.equal(explanation.minimality.everyResponsibleEdgeNecessary, true);
+  assert.equal(explanation.ruleEvidence.premises.some((premise) => premise.id === "no-after-dawn-requirement"), true);
+
+  graph.constraints.push({
+    id: "keep-moths",
+    targetId: graph.semantics.roles.subject,
+    targetType: "node",
+    requirement: "preserve",
+    reason: "The clockwork moths are beautiful. They stay.",
+  });
+  const patches = proposePatches(graph);
+  assert.equal(patches.length, 1);
+  assert.match(patches[0].id, /^patch-temporal-guard/);
+  const repaired = simulateCast(applyPatch(graph, patches[0]));
+  assert.equal(repaired.success, true);
+  assert.equal(repaired.assertions.mothsPresent, true);
+  assert.equal(repaired.assertions.dawnGuardActive, true);
+  assert.equal(repaired.assertions.seedsSet, true);
+});
+
+test("clockwork orchard direct repair removes the moth branch when it is not sacred", () => {
+  const graph = createClockworkOrchardScenario();
+  const patch = proposePatches(graph)[0];
+  assert.match(patch.id, /^patch-direct/);
+  const repaired = simulateCast(applyPatch(graph, patch));
+  assert.equal(repaired.success, true);
+  assert.equal(repaired.assertions.mothsPresent, false);
+  assert.equal(repaired.assertions.prematureAction, false);
+  assert.equal(repaired.assertions.seedsSet, true);
 });
 
 test("side-effect explanation proves a typed edge-minimal causal subgraph", () => {

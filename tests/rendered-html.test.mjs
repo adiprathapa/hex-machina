@@ -51,7 +51,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(policy, /Memorized IDs/);
   assert.match(client, /instrumentSpellToolHandlers/);
   assert.match(client, /Export episode JSON/);
-  assert.match(client, /72 variants · 2 causal families · vector \+ offline rollouts/i);
+  assert.match(client, /96 variants · 3 causal families · vector \+ offline rollouts/i);
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);

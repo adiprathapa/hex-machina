@@ -62,7 +62,7 @@
 
 **Reference capture:** `screenshots/03-successful-recast.jpg`
 
-**Voiceover:** “Two causal rules and seventy-two variants separate grounded agents from unsafe shortcuts. Hex Machina turns a magical game into a deterministic gym.”
+**Voiceover:** “Three causal rules and ninety-six variants separate grounded agents from unsafe shortcuts. Hex Machina turns a magical game into a deterministic gym.”
 
 ## Judge prompt
 
