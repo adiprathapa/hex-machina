@@ -67,6 +67,12 @@ export interface AgentGymSnapshot {
   perturbations: readonly string[];
   seed: number;
   objective: string;
+  task: {
+    objective: string;
+    humanConstraint: string;
+  };
+  initialObservation: SpellObservation;
+  initialStateKey: string;
   score: number;
   maxScore: typeof AGENT_GYM_MAX_SCORE;
   status: "running" | "complete" | "truncated";
@@ -82,6 +88,7 @@ interface AgentGymSessionConfig {
   scenarioId: string;
   seed: number;
   objective: string;
+  humanConstraint: string;
   split: AgentGymSplit | "canonical";
   variantIndex: number | null;
   perturbations: readonly string[];
@@ -92,6 +99,7 @@ const CANONICAL_SESSION: AgentGymSessionConfig = {
   scenarioId: "moonflower-01",
   seed: 12012,
   objective: "Diagnose and repair the spell while preserving the human's ducks.",
+  humanConstraint: "The ducks are funny. They stay.",
   split: "canonical",
   variantIndex: null,
   perturbations: [],
@@ -140,7 +148,18 @@ export class AgentGymSession {
   private milestones = new Set<Milestone>();
   private trajectory: AgentGymStep[] = [];
 
-  constructor(private readonly config: AgentGymSessionConfig = CANONICAL_SESSION) {}
+  private readonly config: AgentGymSessionConfig;
+  private readonly initialObservation: SpellObservation;
+  private readonly initialStateKey: string;
+
+  constructor(
+    config: AgentGymSessionConfig = CANONICAL_SESSION,
+    initialGraph: SpellGraph = createMoonflowerScenario(),
+  ) {
+    this.config = config;
+    this.initialObservation = observeSpellGraph(initialGraph);
+    this.initialStateKey = stateKey(initialGraph);
+  }
 
   reset() {
     this.score = 0;
@@ -162,6 +181,12 @@ export class AgentGymSession {
       perturbations: [...this.config.perturbations],
       seed: this.config.seed,
       objective: this.config.objective,
+      task: {
+        objective: this.config.objective,
+        humanConstraint: this.config.humanConstraint,
+      },
+      initialObservation: cloneSerializable(this.initialObservation),
+      initialStateKey: this.initialStateKey,
       score: this.score,
       maxScore: AGENT_GYM_MAX_SCORE,
       status: this.complete ? "complete" : this.truncated ? "truncated" : "running",
@@ -359,10 +384,11 @@ export function createAgentGymEnvironment(options?: AgentGymEnvironmentOptions) 
     scenarioId: variant.scenarioId,
     seed: variant.seed,
     objective: variant.objective,
+    humanConstraint: variant.humanConstraint,
     split: variant.split,
     variantIndex: variant.index,
     perturbations: variant.perturbations,
-  } : CANONICAL_SESSION);
+  } : CANONICAL_SESSION, initialGraph);
   let handlers: SpellToolHandlers;
 
   const rebuildHandlers = () => {
@@ -382,10 +408,7 @@ export function createAgentGymEnvironment(options?: AgentGymEnvironmentOptions) 
       rebuildHandlers();
       return {
         observation: observeSpellGraph(graph),
-        task: {
-          objective: variant?.objective ?? CANONICAL_SESSION.objective,
-          humanConstraint: variant?.humanConstraint ?? "The ducks are funny. They stay.",
-        },
+        task: session.snapshot().task,
         episode: session.snapshot(),
         info: {
           protocol: "hex-machina-agent-gym/v1" as const,

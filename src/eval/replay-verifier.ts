@@ -1,21 +1,34 @@
-import { createAgentGymEnvironment, type AgentGymStep } from "./agent-gym.ts";
+import {
+  createAgentGymEnvironment,
+  type AgentGymStep,
+} from "./agent-gym.ts";
+import type { SpellObservation } from "../domain/spell.ts";
+import { createSpellToolManifest } from "../tools/definitions.ts";
 import {
   AGENT_GYM_FAMILY_SPLIT_SIZES,
   type AgentGymFamilyId,
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 
-export const AGENT_GYM_DATASET_SCHEMA = "hex-machina-agent-gym-episode/v1" as const;
+export const AGENT_GYM_DATASET_SCHEMA = "hex-machina-agent-gym-episode/v2" as const;
 export const MAX_REPLAY_EPISODES = 1_000;
 
 interface DatasetEpisodeRecord {
   schema: typeof AGENT_GYM_DATASET_SCHEMA;
+  environmentProtocol: "hex-machina-agent-gym/v1";
+  observationSchema: "hex-machina-public-spell-graph/v1";
+  actionManifest: ReturnType<typeof createSpellToolManifest>;
   familyId: AgentGymFamilyId;
   scenarioId: string;
   split: AgentGymSplit;
   variantIndex: number;
   seed: number;
-  objective: string;
+  task: {
+    objective: string;
+    humanConstraint: string;
+  };
+  initialObservation: SpellObservation;
+  initialStateKey: string;
   status: "running" | "complete" | "truncated";
   terminationReason: "goal-verified" | "step-limit" | null;
   score: number;
@@ -54,6 +67,14 @@ function parseEpisode(value: unknown): DatasetEpisodeRecord | string {
   const record = recordOf(value);
   if (!record) return "Episode must be a JSON object";
   if (record.schema !== AGENT_GYM_DATASET_SCHEMA) return `schema must be ${AGENT_GYM_DATASET_SCHEMA}`;
+  if (record.environmentProtocol !== "hex-machina-agent-gym/v1" ||
+      record.observationSchema !== "hex-machina-public-spell-graph/v1") {
+    return "environmentProtocol and observationSchema are invalid";
+  }
+  const actionManifest = recordOf(record.actionManifest);
+  if (actionManifest?.protocol !== "hex-machina-tool-manifest/v1" || !Array.isArray(actionManifest.tools)) {
+    return "actionManifest is invalid";
+  }
   if (typeof record.familyId !== "string" || !Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, record.familyId)) {
     return "familyId is unknown";
   }
@@ -66,8 +87,15 @@ function parseEpisode(value: unknown): DatasetEpisodeRecord | string {
       (record.variantIndex as number) >= AGENT_GYM_FAMILY_SPLIT_SIZES[familyId][split]) {
     return "variantIndex is outside the selected family split";
   }
-  if (typeof record.scenarioId !== "string" || typeof record.seed !== "number" || typeof record.objective !== "string") {
-    return "scenarioId, seed, and objective are required";
+  const task = recordOf(record.task);
+  if (typeof record.scenarioId !== "string" || typeof record.seed !== "number" ||
+      typeof task?.objective !== "string" || typeof task.humanConstraint !== "string") {
+    return "scenarioId, seed, and task prompt are required";
+  }
+  if (!recordOf(record.initialObservation) ||
+      typeof record.initialStateKey !== "string" ||
+      !/^fnv1a32:[a-f0-9]{8}$/.test(record.initialStateKey)) {
+    return "initialObservation and initialStateKey are invalid";
   }
   if (!Array.isArray(record.transitions) || record.transitions.length > 32) {
     return "transitions must be an array with at most 32 steps";
@@ -132,21 +160,31 @@ export async function verifyAgentGymDatasetJsonl(jsonl: string) {
     });
     const reset = environment.reset();
     const metadata = {
+      environmentProtocol: reset.episode.protocol,
+      observationSchema: reset.info.observationSchema,
+      actionManifest: reset.info.actionManifest,
       familyId: reset.episode.familyId,
       scenarioId: reset.episode.scenarioId,
       split: reset.episode.split,
       variantIndex: reset.episode.variantIndex,
       seed: reset.episode.seed,
-      objective: reset.episode.objective,
+      task: reset.task,
+      initialObservation: reset.observation,
+      initialStateKey: reset.episode.initialStateKey,
       maxScore: reset.episode.maxScore,
     };
     const expectedMetadata = {
+      environmentProtocol: parsed.environmentProtocol,
+      observationSchema: parsed.observationSchema,
+      actionManifest: parsed.actionManifest,
       familyId: parsed.familyId,
       scenarioId: parsed.scenarioId,
       split: parsed.split,
       variantIndex: parsed.variantIndex,
       seed: parsed.seed,
-      objective: parsed.objective,
+      task: parsed.task,
+      initialObservation: parsed.initialObservation,
+      initialStateKey: parsed.initialStateKey,
       maxScore: parsed.maxScore,
     };
     if (stableJson(metadata) !== stableJson(expectedMetadata)) {

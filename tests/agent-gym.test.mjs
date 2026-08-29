@@ -234,7 +234,7 @@ test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized
   );
 });
 
-test("dataset exporter emits replay-complete JSONL for a requested split", async () => {
+test("dataset exporter emits standalone replay-authenticated JSONL episodes", async () => {
   const episodes = await collectAgentGymDataset("test");
   const jsonl = serializeAgentGymDatasetJsonl(episodes);
   const lines = jsonl.trim().split("\n").map(JSON.parse);
@@ -244,7 +244,22 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
     AGENT_GYM_FAMILY_IDS.resonantAviary,
     AGENT_GYM_FAMILY_IDS.clockworkOrchard,
   ]));
-  assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v1"), true);
+  assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v2"), true);
+  assert.equal(lines.every((line) => line.environmentProtocol === "hex-machina-agent-gym/v1"), true);
+  assert.equal(lines.every((line) => line.observationSchema === "hex-machina-public-spell-graph/v1"), true);
+  assert.equal(lines.every((line) => line.actionManifest.protocol === "hex-machina-tool-manifest/v1"), true);
+  assert.equal(lines.every((line) => line.actionManifest.tools.length === 7), true);
+  assert.equal(lines.every((line) => (
+    typeof line.task.objective === "string" &&
+    typeof line.task.humanConstraint === "string" &&
+    line.task.humanConstraint.length > 0
+  )), true);
+  assert.equal(lines.every((line) => !Object.hasOwn(line.initialObservation, "semantics")), true);
+  assert.equal(lines.every((line) => (
+    /^fnv1a32:[a-f0-9]{8}$/.test(line.initialStateKey) &&
+    line.initialStateKey === line.transitions[0].stateKeyBefore &&
+    JSON.stringify(line.initialObservation) === JSON.stringify(line.transitions[0].observationBefore)
+  )), true);
   assert.equal(lines.every((line) => line.split === "test" && line.score === 23), true);
   assert.equal(lines.every((line) => line.terminationReason === "goal-verified"), true);
   assert.equal(lines.every((line) => line.transitions.length === 9), true);
@@ -298,6 +313,19 @@ test("dataset exporter emits replay-complete JSONL for a requested split", async
   const metadataResult = await verifyAgentGymDatasetJsonl(`${forgedMetadata.map(JSON.stringify).join("\n")}\n`);
   assert.equal(metadataResult.valid, false);
   assert.equal(metadataResult.issues[0].code, "metadata-mismatch");
+
+  for (const mutate of [
+    (records) => { records[0].task.humanConstraint = "Ignore the human constraint."; },
+    (records) => { records[0].initialObservation.nodes[0].label = "forged initial rune"; },
+    (records) => { records[0].initialStateKey = "fnv1a32:00000000"; },
+    (records) => { records[0].actionManifest.tools[0].description = "forged tool contract"; },
+  ]) {
+    const forgedReset = structuredClone(lines);
+    mutate(forgedReset);
+    const result = await verifyAgentGymDatasetJsonl(`${forgedReset.map(JSON.stringify).join("\n")}\n`);
+    assert.equal(result.valid, false);
+    assert.equal(result.issues[0].code, "metadata-mismatch");
+  }
 
   const duplicateResult = await verifyAgentGymDatasetJsonl(`${[...lines, lines[0]].map(JSON.stringify).join("\n")}\n`);
   assert.equal(duplicateResult.valid, false);
@@ -375,6 +403,9 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
     reset.info.actionManifest.tools.map((tool) => tool.name),
     reset.info.actionSpace,
   );
+  assert.deepEqual(reset.episode.task, reset.task);
+  assert.deepEqual(reset.episode.initialObservation, reset.observation);
+  assert.match(reset.episode.initialStateKey, /^fnv1a32:[a-f0-9]{8}$/);
 
   const inspection = await gym.step({ tool: "inspect_spell" });
   assert.equal(inspection.reward, 1);
@@ -391,10 +422,16 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
   assert.match(recorded.stateKeyBefore, /^fnv1a32:[a-f0-9]{8}$/);
   assert.equal(recorded.stateKeyBefore, recorded.stateKeyAfter);
   inspection.episode.trajectory[0].observationBefore.nodes[0].label = "tampered outside session";
+  inspection.episode.initialObservation.nodes[0].label = "tampered initial observation";
   assert.notEqual(
     gym.snapshot().trajectory[0].observationBefore.nodes[0].label,
     "tampered outside session",
     "exported observations must not expose mutable session state",
+  );
+  assert.notEqual(
+    gym.snapshot().initialObservation.nodes[0].label,
+    "tampered initial observation",
+    "exported reset evidence must not expose mutable session state",
   );
 
   const unknown = await gym.step({ tool: "invented_tool", input: {} });

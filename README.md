@@ -32,13 +32,13 @@ npm run --silent gym:policies
 
 Across all sixteen held-out test variants, the grounded policy completes at 23/23; a policy that mutates before explaining still completes but scores 18; a safe diagnosis-only policy stops at 6; and a policy that reuses canonical IDs is rejected at −8. The command reports completion, unsafe-episode, invalid-action, score, and step metrics per policy. These are deterministic behavioral controls, not model leaderboard claims. Their checked values are rendered in the Agent Gym card so the visible story and executable evidence cannot drift.
 
-Export replay-complete JSONL for offline analysis or dataset prototyping:
+Export standalone, replay-authenticated JSONL for offline training experiments:
 
 ```bash
 npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
 ```
 
-Omit `--split` to export all 96 episodes across all three causal families. Each line contains one complete episode with explicit family/split/variant metadata, terminal reason, score, and nine transitions including both graph observations and their deterministic state keys.
+Omit `--split` to export all 96 episodes across all three causal families. Every `hex-machina-agent-gym-episode/v2` line is independently usable: it contains the human-visible objective and preservation constraint, the initial public graph and state commitment, the identifier-neutral action manifest, explicit family/split/variant metadata, terminal receipt, and nine transitions with both graph observations and deterministic state keys. No separate prompt or tool-schema sidecar is required.
 
 Independently replay every episode before trusting a dataset:
 
@@ -46,7 +46,7 @@ Independently replay every episode before trusting a dataset:
 npm run --silent gym:dataset -- --split=test | npm run --silent gym:verify
 ```
 
-The verifier reconstructs each deterministic task and replays every recorded action through the production handlers. It exits nonzero if metadata, actions, rewards, observations, state keys, results, terminal scores, or scenario uniqueness differ from replay. Input is capped at 20 MiB and 1,000 episodes so untrusted JSONL cannot request an unbounded verification run.
+The verifier reconstructs each deterministic task and first authenticates its task prompt, initial graph, initial state key, observation protocol, and complete action manifest. It then replays every recorded action through the production handlers. It exits nonzero if any reset context, metadata, action, reward, observation, state key, result, terminal score, or scenario identity differs from replay. Input is capped at 20 MiB and 1,000 episodes so untrusted JSONL cannot request an unbounded verification run.
 
 Drive live online rollouts from any process over a strict newline-delimited protocol:
 
