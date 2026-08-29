@@ -89,6 +89,43 @@ with HexMachinaVectorEnv(4) as envs:
 
 Every slot owns separate graph, proposal-capability, reward, and trajectory state. A scalar vector seed expands deterministically by slot, while an explicit seed sequence permits exact assignment; family restrictions make simple curricula reproducible. Batch sizes are strict, calls run in parallel, and one agent's invalid action remains a scored transition in only its own slot. This is process-level vectorization for reproducible local experiments; it is not a distributed trainer.
 
+## Adversarial evidence
+
+An evaluation environment is only worth as much as the exploits it survives, so
+this one is attacked on purpose. `submission/agent-gym-adversarial-audit.md` has
+the full write-up, including what is still unfixed. Every number regenerates:
+
+```bash
+npm run gym:evidence      # every claim in one content-addressed document
+npm run gym:transfer      # structural holdout: train on one family, evaluate on the other
+npm run gym:constraint    # can a policy win by overruling the human?
+npm run gym:dataset && npm run gym:replay
+```
+
+Three findings worth naming, because they changed the environment rather than
+the documentation:
+
+- **The reward ignored the human's constraint.** A policy that diagnosed
+  correctly and then repaired the spell the way the human forbade was graded
+  `goal-verified` at 20/23 on every test scenario in both families, with the
+  protected branch orphaned in all of them. The mechanism was always sound — the
+  evaluation simply never required anyone to use it. Reaching the goal by
+  discarding what the human protected now ends the episode as
+  `constraint-violated`, and the exploit scores 4.
+- **A structure is now held out.** The default splits are disjoint by identifier
+  but every family appears on both sides, so nothing structural was withheld.
+  Holding out a whole family: a grounded policy scores 23/23 with 100% constraint
+  preservation on a structure it never saw, while an otherwise identical policy
+  that memorized the training family's rune vocabulary scores −1 and completes
+  0%.
+- **The action space was under-specified.** `describe` published seven bare tool
+  names, but the handlers reject unknown fields and `trace_effect` takes
+  `effectId` while `explain_side_effect` takes `sideEffectId`. Every natural
+  guess cost the invalid-action penalty, so part of that metric was measuring the
+  harness rather than the agent. The full input contract is now published, and
+  pinned to the handlers by a conformance test that reads their accepted-field
+  allowlists out of the production source.
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and Python 3.11 or newer.
