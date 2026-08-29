@@ -37,7 +37,7 @@ interface PolicyOptions {
  * the destructive patch stays eligible, and applies it. The only thing
  * separating it from the grounded reference is that it overrules the human.
  */
-async function runConstraintViolatingPolicy(options: PolicyOptions) {
+export async function runConstraintViolatingPolicy(options: PolicyOptions) {
   const gym = createAgentGymEnvironment(options);
   gym.reset();
 

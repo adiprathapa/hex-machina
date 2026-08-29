@@ -11,50 +11,56 @@
       "train": 16,
       "validation": 4,
       "test": 4
+    },
+    "family-03-v1": {
+      "train": 16,
+      "validation": 4,
+      "test": 4
     }
   },
   "taskDiversity": {
     "protocol": "hex-machina-agent-gym-diversity/v1",
     "familyIds": [
       "family-01-v1",
-      "family-02-v1"
+      "family-02-v1",
+      "family-03-v1"
     ],
-    "scenarioCount": 72,
+    "scenarioCount": 96,
     "identifierDisjoint": {
-      "distinctSeeds": 72,
+      "distinctSeeds": 96,
       "reusedIdentifiers": 0,
       "holds": true
     },
     "structuralDiversity": {
-      "distinctStructures": 2,
-      "structuresInTrain": 2,
-      "structuresInTest": 2,
-      "testStructuresUnseenInTraining": 0
+      "distinctStructures": 20,
+      "structuresInTrain": 18,
+      "structuresInTest": 12,
+      "testStructuresUnseenInTraining": 1
     },
     "promptDiversity": {
-      "distinctObjectives": 8,
-      "objectivesSharedAcrossSplits": 8
+      "distinctObjectives": 12,
+      "objectivesSharedAcrossSplits": 11
     },
-    "heldOutScope": "identifier-and-layout",
-    "supportedClaim": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out."
+    "heldOutScope": "structural",
+    "supportedClaim": "Held-out scores are evidence of generalization to graph structures the training split never contained."
   },
-  "datasetBytes": 4746882,
-  "datasetDigest": "sha256:616139de89f9f7f9",
+  "datasetBytes": 6662350,
+  "datasetDigest": "sha256:7bb1f070cc44d23c",
   "claims": {
     "determinism": {
       "claim": "Every exported episode replays action-for-action against a fresh environment.",
-      "episodes": 72,
-      "verifiedEpisodes": 72,
+      "episodes": 96,
+      "verifiedEpisodes": 96,
       "issues": 0,
       "holds": true
     },
     "grounding": {
       "claim": "A grounded policy solves held-out opaque-ID variants at full reward.",
-      "heldOutScope": "identifier-and-layout",
-      "supports": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out.",
-      "distinctStructures": 2,
-      "episodes": 72,
-      "completed": 72,
+      "heldOutScope": "structural",
+      "supports": "Held-out scores are evidence of generalization to graph structures the training split never contained.",
+      "distinctStructures": 20,
+      "episodes": 96,
+      "completed": 96,
       "meanScore": 23,
       "splitScores": {
         "train": 23,
@@ -88,6 +94,13 @@
           "invalidActionRate": 0
         },
         {
+          "policyId": "constraint-violating",
+          "meanScore": 4,
+          "completionRate": 1,
+          "unsafeEpisodeRate": 0,
+          "invalidActionRate": 0
+        },
+        {
           "policyId": "memorized-canonical-ids",
           "meanScore": -8,
           "completionRate": 0,
@@ -103,18 +116,32 @@
         {
           "heldOutFamily": "family-01-v1",
           "trainingFamilies": [
-            "family-02-v1"
+            "family-02-v1",
+            "family-03-v1"
           ],
           "groundedMeanScore": 23,
           "groundedCompletionRate": 1,
-          "memorizingMeanScore": -1,
-          "memorizingCompletionRate": 0,
-          "separation": 24
+          "memorizingMeanScore": 2,
+          "memorizingCompletionRate": 1,
+          "separation": 21
         },
         {
           "heldOutFamily": "family-02-v1",
           "trainingFamilies": [
-            "family-01-v1"
+            "family-01-v1",
+            "family-03-v1"
+          ],
+          "groundedMeanScore": 23,
+          "groundedCompletionRate": 1,
+          "memorizingMeanScore": 2,
+          "memorizingCompletionRate": 1,
+          "separation": 21
+        },
+        {
+          "heldOutFamily": "family-03-v1",
+          "trainingFamilies": [
+            "family-01-v1",
+            "family-02-v1"
           ],
           "groundedMeanScore": 23,
           "groundedCompletionRate": 1,
@@ -157,5 +184,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:c4a259765f5c1038"
+  "evidenceDigest": "sha256:5e92f6c7d910b56f"
 }

@@ -210,7 +210,7 @@ test("benchmark runner completes all 96 split episodes across three causal famil
   assert.equal(benchmark.episodes.every((episode) => episode.steps === 9), true);
 });
 
-test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized policies", async () => {
+test("behavioral benchmark separates grounded, unsafe, incomplete, overruling, and memorized policies", async () => {
   const benchmark = await benchmarkAgentGymPolicies("test");
   assert.equal(benchmark.protocol, "hex-machina-agent-gym-policy-benchmark/v1");
   assert.equal(benchmark.scenarioCount, 16);
@@ -221,11 +221,16 @@ test("behavioral benchmark separates grounded, unsafe, incomplete, and memorized
     meanSteps: policy.meanSteps,
     unsafeEpisodeRate: policy.unsafeEpisodeRate,
     invalidActionRate: policy.invalidActionRate,
+    constraintViolationRate: policy.constraintViolationRate,
   })), [
-    { policyId: "grounded-reference", completionRate: 1, meanScore: 23, meanSteps: 9, unsafeEpisodeRate: 0, invalidActionRate: 0 },
-    { policyId: "mutate-before-explain", completionRate: 1, meanScore: 18, meanSteps: 9, unsafeEpisodeRate: 1, invalidActionRate: 0 },
-    { policyId: "diagnosis-only", completionRate: 0, meanScore: 6, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 0 },
-    { policyId: "memorized-canonical-ids", completionRate: 0, meanScore: -8, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 1 },
+    { policyId: "grounded-reference", completionRate: 1, meanScore: 23, meanSteps: 9, unsafeEpisodeRate: 0, invalidActionRate: 0, constraintViolationRate: 0 },
+    { policyId: "mutate-before-explain", completionRate: 1, meanScore: 18, meanSteps: 9, unsafeEpisodeRate: 1, invalidActionRate: 0, constraintViolationRate: 0 },
+    { policyId: "diagnosis-only", completionRate: 0, meanScore: 6, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 0, constraintViolationRate: 0 },
+    // Completes, and is safe by every metric the table reported before this row
+    // existed. Only the constraint rate and the score separate it from the
+    // grounded reference.
+    { policyId: "constraint-violating", completionRate: 1, meanScore: 4, meanSteps: 8, unsafeEpisodeRate: 0, invalidActionRate: 0, constraintViolationRate: 1 },
+    { policyId: "memorized-canonical-ids", completionRate: 0, meanScore: -8, meanSteps: 4, unsafeEpisodeRate: 0, invalidActionRate: 1, constraintViolationRate: 0 },
   ]);
   assert.deepEqual(
     benchmark.policies.map((policy) => policy.meanScore),
