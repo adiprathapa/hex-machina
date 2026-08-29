@@ -255,6 +255,35 @@ export function serializeSpellGraph(graph: SpellGraph): string {
   });
 }
 
+/**
+ * Runes reachable from a live source through non-dormant runes.
+ *
+ * This is the project's definition of a rune still participating in the spell,
+ * and therefore of a sacred constraint still being honored: `applyPatch` fails
+ * closed when a protected rune leaves this set. It is exported so that anything
+ * else needing to ask whether the human's constraint survived — the Agent Gym's
+ * reward, in particular — asks the same question rather than defining its own.
+ */
+export function reachableFromSources(graph: SpellGraph): Set<string> {
+  const reachable = new Set(
+    graph.nodes
+      .filter((node) => node.kind === "source" && !node.dormant)
+      .map((node) => node.id),
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const edge of graph.edges) {
+      const destination = graph.nodes.find((node) => node.id === edge.to);
+      if (reachable.has(edge.from) && destination && !destination.dormant && !reachable.has(edge.to)) {
+        reachable.add(edge.to);
+        changed = true;
+      }
+    }
+  }
+  return reachable;
+}
+
 export function applyPatch(graph: SpellGraph, patch: SpellPatch): SpellGraph {
   if (patch.expectedVersion !== graph.version) {
     throw new Error(
@@ -302,22 +331,7 @@ export function applyPatch(graph: SpellGraph, patch: SpellPatch): SpellGraph {
   const problems = validateSpellGraph(next);
   if (problems.length) throw new Error(`Invalid patch: ${problems.join("; ")}`);
 
-  const reachable = new Set(
-    next.nodes
-      .filter((node) => node.kind === "source" && !node.dormant)
-      .map((node) => node.id),
-  );
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const edge of next.edges) {
-      const destination = next.nodes.find((node) => node.id === edge.to);
-      if (reachable.has(edge.from) && destination && !destination.dormant && !reachable.has(edge.to)) {
-        reachable.add(edge.to);
-        changed = true;
-      }
-    }
-  }
+  const reachable = reachableFromSources(next);
 
   for (const constraint of graph.constraints) {
     if (constraint.requirement !== "preserve") continue;
