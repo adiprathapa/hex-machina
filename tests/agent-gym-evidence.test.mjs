@@ -89,7 +89,7 @@ test("the rendered report states each verdict a judge needs to read", async () =
     "Reward separation",
     "Structural transfer",
     "Constraint preservation",
-    "What a held-out score here does and does not show",
+    "What the default splits hold out",
   ]) {
     assert.ok(markdown.includes(heading), `report must state the ${heading} claim`);
   }
