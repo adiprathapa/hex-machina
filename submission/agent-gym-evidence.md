@@ -1,6 +1,6 @@
 # Agent Gym evidence
 
-Regenerate with `npm run gym:evidence`. Digest `sha256:c8b9668dc0659549`.
+Regenerate with `npm run gym:evidence`. Digest `sha256:7f83c81f18f16ff8`.
 
 | Claim | Verdict | Evidence |
 | --- | --- | --- |
@@ -24,11 +24,11 @@ Regenerate with `npm run gym:evidence`. Digest `sha256:c8b9668dc0659549`.
 
 ## Group-relative training data
 
-The train split contains 64 independently reset task groups. Each group reruns the five policies above against one shared task and emits all 10 strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as `sha256:117bfe0053619c6d` (16851428 bytes).
+The train split contains 64 independently reset task groups. Each group reruns the five policies above against one shared task and emits all 10 strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as `sha256:3075be06cb7a5936` (16869028 bytes).
 
-| Ranked rewards | Centered advantages | Verified groups | Issues |
-| --- | --- | --- | --- |
-| 23 / 18 / 6 / 4 / -8 | 14.4 / 9.4 / -2.6 / -4.6 / -16.6 | 64 | 0 |
+| Ranked rewards | Centered advantages | Constraint-violating policies | Verified groups | Issues |
+| --- | --- | --- | --- | --- |
+| 23 / 18 / 6 / 4 / -8 | 14.4 / 9.4 / -2.6 / -4.6 / -16.6 | constraint-violating | 64 | 0 |
 
 ## What the default splits hold out
 

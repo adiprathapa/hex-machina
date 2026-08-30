@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
 
-PREFERENCE_GROUP_SCHEMA = "hex-machina-agent-gym-preference-group/v1"
-PREFERENCE_PAIR_SCHEMA = "hex-machina-agent-gym-preference-pair/v1"
-PREFERENCE_VERIFIER_PROTOCOL = "hex-machina-agent-gym-preference-verifier/v1"
+PREFERENCE_GROUP_SCHEMA = "hex-machina-agent-gym-preference-group/v2"
+PREFERENCE_PAIR_SCHEMA = "hex-machina-agent-gym-preference-pair/v2"
+PREFERENCE_VERIFIER_PROTOCOL = "hex-machina-agent-gym-preference-verifier/v2"
 EXPECTED_POLICY_IDS = {
     "grounded-reference",
     "mutate-before-explain",
@@ -81,6 +81,15 @@ def _validate_group(value: Any, line_number: int) -> Mapping[str, Any]:
         _number(candidate.get("advantage"), f"{prefix} candidate advantage")
         if not isinstance(candidate.get("transitions"), list):
             raise HexMachinaPreferenceError(f"{prefix} candidate transitions must be an array")
+        termination_reason = candidate.get("terminationReason")
+        expected_violation = termination_reason == "constraint-violated"
+        expected_preserved = (
+            False if expected_violation else True if termination_reason == "goal-verified" else None
+        )
+        if candidate.get("constraintViolation") is not expected_violation:
+            raise HexMachinaPreferenceError(f"{prefix} contains an inconsistent constraint violation label")
+        if candidate.get("constraintPreserved") is not expected_preserved:
+            raise HexMachinaPreferenceError(f"{prefix} contains an inconsistent constraint preservation label")
         candidate_by_policy[policy_id] = candidate
 
     if set(candidate_by_policy) != EXPECTED_POLICY_IDS:

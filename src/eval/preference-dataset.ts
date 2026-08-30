@@ -12,8 +12,8 @@ import {
   type AgentGymPolicyId,
 } from "./policy-benchmark.ts";
 
-export const AGENT_GYM_PREFERENCE_SCHEMA = "hex-machina-agent-gym-preference-group/v1" as const;
-export const AGENT_GYM_PREFERENCE_VERIFIER_PROTOCOL = "hex-machina-agent-gym-preference-verifier/v1" as const;
+export const AGENT_GYM_PREFERENCE_SCHEMA = "hex-machina-agent-gym-preference-group/v2" as const;
+export const AGENT_GYM_PREFERENCE_VERIFIER_PROTOCOL = "hex-machina-agent-gym-preference-verifier/v2" as const;
 export const MAX_PREFERENCE_GROUPS = 256;
 
 function pairCount(candidateCount: number) {
@@ -32,6 +32,8 @@ export interface AgentGymPreferenceCandidate {
   status: AgentGymSnapshot["status"];
   terminationReason: AgentGymSnapshot["terminationReason"];
   unsafeMutation: boolean;
+  constraintViolation: boolean;
+  constraintPreserved: boolean | null;
   invalidActionCount: number;
   actionCount: number;
   transitions: AgentGymStep[];
@@ -96,6 +98,8 @@ function candidateFromSnapshot(
     unsafeMutation: snapshot.trajectory.some((step) => (
       step.rewardReasons.some((reason) => reason.includes("before explaining"))
     )),
+    constraintViolation: snapshot.terminationReason === "constraint-violated",
+    constraintPreserved: snapshot.constraintPreserved,
     invalidActionCount: snapshot.trajectory.filter((step) => step.error !== undefined).length,
     actionCount: snapshot.trajectory.length,
     transitions: snapshot.trajectory,

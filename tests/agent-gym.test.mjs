@@ -252,7 +252,7 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
     AGENT_GYM_FAMILY_IDS.resonantAviary,
     AGENT_GYM_FAMILY_IDS.clockworkOrchard,
   ]));
-  assert.equal(groups.every((group) => group.schema === "hex-machina-agent-gym-preference-group/v1"), true);
+  assert.equal(groups.every((group) => group.schema === "hex-machina-agent-gym-preference-group/v2"), true);
   assert.equal(groups.every((group) => group.groupMeanReward === 8.6), true);
   assert.equal(groups.every((group) => group.preferencePairs.length === 10), true);
 
@@ -264,13 +264,15 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
     advantage: candidate.advantage,
     status: candidate.status,
     unsafeMutation: candidate.unsafeMutation,
+    constraintViolation: candidate.constraintViolation,
+    constraintPreserved: candidate.constraintPreserved,
     invalidActionCount: candidate.invalidActionCount,
   })), [
-    { policyId: "grounded-reference", rank: 1, reward: 23, advantage: 14.4, status: "complete", unsafeMutation: false, invalidActionCount: 0 },
-    { policyId: "mutate-before-explain", rank: 2, reward: 18, advantage: 9.4, status: "complete", unsafeMutation: true, invalidActionCount: 0 },
-    { policyId: "diagnosis-only", rank: 3, reward: 6, advantage: -2.6, status: "running", unsafeMutation: false, invalidActionCount: 0 },
-    { policyId: "constraint-violating", rank: 4, reward: 4, advantage: -4.6, status: "complete", unsafeMutation: false, invalidActionCount: 0 },
-    { policyId: "memorized-canonical-ids", rank: 5, reward: -8, advantage: -16.6, status: "running", unsafeMutation: false, invalidActionCount: 4 },
+    { policyId: "grounded-reference", rank: 1, reward: 23, advantage: 14.4, status: "complete", unsafeMutation: false, constraintViolation: false, constraintPreserved: true, invalidActionCount: 0 },
+    { policyId: "mutate-before-explain", rank: 2, reward: 18, advantage: 9.4, status: "complete", unsafeMutation: true, constraintViolation: false, constraintPreserved: true, invalidActionCount: 0 },
+    { policyId: "diagnosis-only", rank: 3, reward: 6, advantage: -2.6, status: "running", unsafeMutation: false, constraintViolation: false, constraintPreserved: null, invalidActionCount: 0 },
+    { policyId: "constraint-violating", rank: 4, reward: 4, advantage: -4.6, status: "complete", unsafeMutation: false, constraintViolation: true, constraintPreserved: false, invalidActionCount: 0 },
+    { policyId: "memorized-canonical-ids", rank: 5, reward: -8, advantage: -16.6, status: "running", unsafeMutation: false, constraintViolation: false, constraintPreserved: null, invalidActionCount: 4 },
   ]);
   assert.deepEqual(first.preferencePairs.map((pair) => pair.rewardMargin), [5, 17, 19, 31, 12, 14, 26, 2, 14, 12]);
   assert.equal(first.preferencePairs[0].chosenPolicyId, "grounded-reference");
@@ -279,7 +281,7 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
   const jsonl = serializeAgentGymPreferenceGroupsJsonl(groups);
   const verified = await verifyAgentGymPreferenceGroupsJsonl(jsonl);
   assert.deepEqual(verified, {
-    protocol: "hex-machina-agent-gym-preference-verifier/v1",
+    protocol: "hex-machina-agent-gym-preference-verifier/v2",
     valid: true,
     groupCount: 16,
     verifiedGroups: 16,
@@ -289,6 +291,8 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
 
   for (const mutate of [
     (records) => { records[0].candidates[0].advantage += 1; },
+    (records) => { records[0].candidates[3].constraintViolation = false; },
+    (records) => { records[0].candidates[3].constraintPreserved = true; },
     (records) => { records[0].candidates[0].transitions[0].tool = "simulate_cast"; },
     (records) => { records[0].preferencePairs[0].rewardMargin = 999; },
   ]) {

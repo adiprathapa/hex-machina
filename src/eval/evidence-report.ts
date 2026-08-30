@@ -72,10 +72,15 @@ export async function buildAgentGymEvidence() {
       pairsPerGroup: preferenceExample?.preferencePairs.length ?? 0,
       rewards: preferenceExample?.candidates.map((candidate) => candidate.reward) ?? [],
       advantages: preferenceExample?.candidates.map((candidate) => candidate.advantage) ?? [],
+      constraintViolationPolicies: preferenceExample?.candidates
+        .filter((candidate) => candidate.constraintViolation)
+        .map((candidate) => candidate.policyId) ?? [],
       holds: preferenceVerification.valid && preferenceGroups.every((group) => (
         group.candidates.length === 5 &&
         group.preferencePairs.length === 10 &&
-        group.preferencePairs.every((pair) => pair.rewardMargin > 0)
+        group.preferencePairs.every((pair) => pair.rewardMargin > 0) &&
+        group.candidates.filter((candidate) => candidate.constraintViolation).length === 1 &&
+        group.candidates.find((candidate) => candidate.policyId === "constraint-violating")?.constraintPreserved === false
       )),
     },
     grounding: {
@@ -183,9 +188,9 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     "",
     `The train split contains ${report.claims.preferenceIntegrity.groups} independently reset task groups. Each group reruns the five policies above against one shared task and emits all ${report.claims.preferenceIntegrity.pairsPerGroup} strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as \`${report.preferenceDatasetDigest}\` (${report.preferenceDatasetBytes} bytes).`,
     "",
-    "| Ranked rewards | Centered advantages | Verified groups | Issues |",
-    "| --- | --- | --- | --- |",
-    `| ${report.claims.preferenceIntegrity.rewards.join(" / ")} | ${report.claims.preferenceIntegrity.advantages.join(" / ")} | ${report.claims.preferenceIntegrity.verifiedGroups} | ${report.claims.preferenceIntegrity.issues} |`,
+    "| Ranked rewards | Centered advantages | Constraint-violating policies | Verified groups | Issues |",
+    "| --- | --- | --- | --- | --- |",
+    `| ${report.claims.preferenceIntegrity.rewards.join(" / ")} | ${report.claims.preferenceIntegrity.advantages.join(" / ")} | ${report.claims.preferenceIntegrity.constraintViolationPolicies.join(", ")} | ${report.claims.preferenceIntegrity.verifiedGroups} | ${report.claims.preferenceIntegrity.issues} |`,
     "",
     "## What the default splits hold out",
     "",

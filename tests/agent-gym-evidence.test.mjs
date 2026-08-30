@@ -31,6 +31,7 @@ test("the evidence bundle asserts every headline claim and they all hold", async
   assert.equal(report.claims.preferenceIntegrity.pairsPerGroup, 10);
   assert.deepEqual(report.claims.preferenceIntegrity.rewards, [23, 18, 6, 4, -8]);
   assert.deepEqual(report.claims.preferenceIntegrity.advantages, [14.4, 9.4, -2.6, -4.6, -16.6]);
+  assert.deepEqual(report.claims.preferenceIntegrity.constraintViolationPolicies, ["constraint-violating"]);
 
   assert.equal(report.claims.grounding.completed, report.claims.grounding.episodes);
   assert.equal(report.claims.grounding.meanScore, 23);

@@ -46,8 +46,8 @@
   },
   "datasetBytes": 7393339,
   "datasetDigest": "sha256:3f5602e3f8ba0470",
-  "preferenceDatasetBytes": 16851428,
-  "preferenceDatasetDigest": "sha256:117bfe0053619c6d",
+  "preferenceDatasetBytes": 16869028,
+  "preferenceDatasetDigest": "sha256:3075be06cb7a5936",
   "claims": {
     "determinism": {
       "claim": "Every exported episode replays action-for-action against a fresh environment.",
@@ -76,6 +76,9 @@
         -2.6,
         -4.6,
         -16.6
+      ],
+      "constraintViolationPolicies": [
+        "constraint-violating"
       ],
       "holds": true
     },
@@ -209,5 +212,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:c8b9668dc0659549"
+  "evidenceDigest": "sha256:7f83c81f18f16ff8"
 }

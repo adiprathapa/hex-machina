@@ -325,11 +325,18 @@ test("Python preference adapter verifies groups and streams every ranked pair", 
     );
     assert.equal(exported.code, 0, exported.stderr);
     const validPath = path.join(temporary, "validation.jsonl");
-    const tamperedPath = path.join(temporary, "tampered.jsonl");
+    const marginTamperedPath = path.join(temporary, "margin-tampered.jsonl");
+    const constraintTamperedPath = path.join(temporary, "constraint-tampered.jsonl");
     await writeFile(validPath, exported.stdout);
     const records = exported.stdout.trim().split("\n").map((line) => JSON.parse(line));
     records[0].preferencePairs[0].rewardMargin = 999;
-    await writeFile(tamperedPath, `${records.map((record) => JSON.stringify(record)).join("\n")}\n`);
+    await writeFile(marginTamperedPath, `${records.map((record) => JSON.stringify(record)).join("\n")}\n`);
+    const constraintRecords = exported.stdout.trim().split("\n").map((line) => JSON.parse(line));
+    constraintRecords[0].candidates[3].constraintViolation = false;
+    await writeFile(
+      constraintTamperedPath,
+      `${constraintRecords.map((record) => JSON.stringify(record)).join("\n")}\n`,
+    );
 
     const script = String.raw`
 import json
@@ -340,11 +347,12 @@ dataset = HexMachinaPreferenceDataset(sys.argv[1])
 verification = dataset.verify()
 groups = list(dataset.groups())
 pairs = list(dataset.pairs())
-tampered_rejected = False
-try:
-    list(HexMachinaPreferenceDataset(sys.argv[2]).groups())
-except HexMachinaPreferenceError:
-    tampered_rejected = True
+def rejected(path):
+    try:
+        list(HexMachinaPreferenceDataset(path).groups())
+        return False
+    except HexMachinaPreferenceError:
+        return True
 first = pairs[0]
 print(json.dumps({
     "verificationProtocol": verification["protocol"],
@@ -357,23 +365,28 @@ print(json.dumps({
     "margin": first["rewardMargin"],
     "actionManifest": first["actionManifest"]["protocol"],
     "scenario": first["scenarioId"],
-    "tamperedRejected": tampered_rejected,
+    "marginTamperedRejected": rejected(sys.argv[2]),
+    "constraintTamperedRejected": rejected(sys.argv[3]),
 }))
 `;
-    const result = await run("python3", ["-c", script, validPath, tamperedPath]);
+    const result = await run(
+      "python3",
+      ["-c", script, validPath, marginTamperedPath, constraintTamperedPath],
+    );
     assert.equal(result.code, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), {
-      verificationProtocol: "hex-machina-agent-gym-preference-verifier/v1",
+      verificationProtocol: "hex-machina-agent-gym-preference-verifier/v2",
       verifiedGroups: 16,
       groups: 16,
       pairs: 160,
-      pairSchema: "hex-machina-agent-gym-preference-pair/v1",
+      pairSchema: "hex-machina-agent-gym-preference-pair/v2",
       chosen: "grounded-reference",
       rejected: "mutate-before-explain",
       margin: 5,
       actionManifest: "hex-machina-tool-manifest/v1",
       scenario: "task-01-validation-00",
-      tamperedRejected: true,
+      marginTamperedRejected: true,
+      constraintTamperedRejected: true,
     });
   } finally {
     await rm(temporary, { recursive: true, force: true });
