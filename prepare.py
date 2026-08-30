@@ -467,12 +467,14 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "createAgentGymJsonlBridge",
             "HexMachinaEnv",
             "HexMachinaVectorEnv",
+            "HexMachinaPreferenceDataset",
+            "hex-machina-agent-gym-preference-pair/v1",
             "instrumentSpellToolHandlers",
             "createAgentGymEnvironment",
             "trajectory",
             "rewardDelta",
         )
-    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists()
+    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists() and (ROOT / "adapters" / "preference_dataset.py").exists()
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -586,7 +588,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
         Check(
             "deterministic Agent Gym episode",
             deterministic_agent_gym,
-            "shared definitions and handlers expose a self-describing rollout protocol, 96 variants across three causal families, verifier-backed preference groups, replay observations, independently verified JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, action manifest, preference groups, split families, replay verifier, or shared-handler instrumentation missing",
+            "shared definitions and handlers expose a self-describing rollout protocol, 96 variants across three causal families, verifier-backed preference groups with streaming Python pairs, replay observations, independently verified JSONL datasets, and isolated vector Python rollouts" if deterministic_agent_gym else "Agent Gym rollout, action manifest, preference groups, Python reader, split families, replay verifier, or shared-handler instrumentation missing",
         ),
         Check("source-level tests", bool(tests), f"{len(tests)} test files found"),
     ]

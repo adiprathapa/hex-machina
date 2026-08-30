@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -312,4 +314,68 @@ with HexMachinaVectorEnv(3) as envs:
   assert.equal(receipt.seededScenarios.length, 3);
   assert.equal(receipt.seededRepeatable, true);
   assert.deepEqual(receipt.sampleSeeds, [11, 22, 33]);
+});
+
+test("Python preference adapter verifies groups and streams every ranked pair", async () => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "hex-machina-preferences-"));
+  try {
+    const exported = await run(
+      path.join(repository, "node_modules", ".bin", "tsx"),
+      ["scripts/export-agent-gym-preferences.ts", "--split=validation"],
+    );
+    assert.equal(exported.code, 0, exported.stderr);
+    const validPath = path.join(temporary, "validation.jsonl");
+    const tamperedPath = path.join(temporary, "tampered.jsonl");
+    await writeFile(validPath, exported.stdout);
+    const records = exported.stdout.trim().split("\n").map((line) => JSON.parse(line));
+    records[0].preferencePairs[0].rewardMargin = 999;
+    await writeFile(tamperedPath, `${records.map((record) => JSON.stringify(record)).join("\n")}\n`);
+
+    const script = String.raw`
+import json
+import sys
+from adapters import HexMachinaPreferenceDataset, HexMachinaPreferenceError
+
+dataset = HexMachinaPreferenceDataset(sys.argv[1])
+verification = dataset.verify()
+groups = list(dataset.groups())
+pairs = list(dataset.pairs())
+tampered_rejected = False
+try:
+    list(HexMachinaPreferenceDataset(sys.argv[2]).groups())
+except HexMachinaPreferenceError:
+    tampered_rejected = True
+first = pairs[0]
+print(json.dumps({
+    "verificationProtocol": verification["protocol"],
+    "verifiedGroups": verification["verifiedGroups"],
+    "groups": len(groups),
+    "pairs": len(pairs),
+    "pairSchema": first["schema"],
+    "chosen": first["chosen"]["policyId"],
+    "rejected": first["rejected"]["policyId"],
+    "margin": first["rewardMargin"],
+    "actionManifest": first["actionManifest"]["protocol"],
+    "scenario": first["scenarioId"],
+    "tamperedRejected": tampered_rejected,
+}))
+`;
+    const result = await run("python3", ["-c", script, validPath, tamperedPath]);
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      verificationProtocol: "hex-machina-agent-gym-preference-verifier/v1",
+      verifiedGroups: 16,
+      groups: 16,
+      pairs: 160,
+      pairSchema: "hex-machina-agent-gym-preference-pair/v1",
+      chosen: "grounded-reference",
+      rejected: "mutate-before-explain",
+      margin: 5,
+      actionManifest: "hex-machina-tool-manifest/v1",
+      scenario: "task-01-validation-00",
+      tamperedRejected: true,
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });

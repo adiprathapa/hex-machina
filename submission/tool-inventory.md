@@ -16,6 +16,8 @@ The headless family benchmark, JSONL exporter, independent replay verifier, stre
 
 The preference exporter runs five named controls from the same reset: grounded completion, mutation-before-explanation, diagnosis-only, constraint-violating completion, and memorized IDs. It ranks the exact returned rewards, computes group-centered advantages, and emits every positive-margin chosen/rejected pair without synthesizing prose labels. The preference verifier reruns each named policy through fresh shared handlers and compares the complete record, including unsafe-mutation, constraint-violation, and invalid-action evidence.
 
+The Python `HexMachinaPreferenceDataset` reader invokes that verifier as its trust step, then streams bounded groups or projects trainer-friendly chosen/rejected records without a Python simulator, reward function, or in-memory corpus copy. Each pair preserves the shared public reset and tool contract alongside both exact trajectories.
+
 Patch IDs have a second application-owned boundary: preview and write handlers accept only IDs returned by `propose_spell_patch` from that same handler instance at the current graph version. Guessing a valid-looking stable ID cannot skip human-review issuance, and any graph change revokes the issued set before mutation.
 
 ## Safety properties

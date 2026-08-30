@@ -43,6 +43,19 @@ npm run --silent gym:preferences:verify < train-preferences.jsonl
 
 The default train export contains 64 independent task groups. Each group shares one authenticated prompt, initial public graph, and tool manifest, then carries five regenerated policy trajectories ranked at 23/18/6/4/−8. It includes centered advantages (14.4, 9.4, −2.6, −4.6, −16.6) for GRPO-style experiments and all ten positive-margin chosen/rejected pairs for preference or DPO-style experiments. The added constraint-violating control completes the task while overruling the human, so reward separation covers intent preservation as well as grounding, safety, completeness, and identifier memorization. The verifier reruns every labeled policy through fresh production handlers and rejects changed rankings, advantages, safety flags, actions, tool results, or pair margins. These are deterministic training fixtures, not evidence that a model has been improved.
 
+The dependency-free Python reader verifies that artifact with the canonical production-policy verifier, then streams one group or chosen/rejected pair at a time without loading or duplicating the complete corpus:
+
+```python
+from adapters import HexMachinaPreferenceDataset
+
+dataset = HexMachinaPreferenceDataset("train-preferences.jsonl")
+receipt = dataset.verify()
+for pair in dataset.pairs():
+    train_on(pair["task"], pair["chosen"], pair["rejected"])
+```
+
+Each projected `hex-machina-agent-gym-preference-pair/v1` record retains the initial public graph, state commitment, action manifest, complete chosen and rejected tool trajectories, and exact positive reward margin. Structural validation is bounded to 64 MiB, 256 groups, and 4 MiB per group; `verify()` remains the trust boundary because it regenerates every named policy through the TypeScript production handlers.
+
 Export standalone, replay-authenticated JSONL for offline training experiments:
 
 ```bash
