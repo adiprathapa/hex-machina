@@ -24,6 +24,11 @@ import {
 } from "../src/scenarios/agent-gym-family.ts";
 import { simulateCast } from "../src/simulator/cast.ts";
 import { verifyAgentGymDatasetJsonl } from "../src/eval/replay-verifier.ts";
+import {
+  collectAgentGymPreferenceGroups,
+  serializeAgentGymPreferenceGroupsJsonl,
+  verifyAgentGymPreferenceGroupsJsonl,
+} from "../src/eval/preference-dataset.ts";
 
 async function runReferenceEpisode(options) {
   const gym = createAgentGymEnvironment(options);
@@ -237,6 +242,71 @@ test("behavioral benchmark separates grounded, unsafe, incomplete, overruling, a
     AGENT_GYM_POLICY_BASELINES.map((baseline) => baseline.score),
     "visible baselines must be executable benchmark results, not hand-authored claims",
   );
+});
+
+test("preference groups expose deterministic GRPO advantages and DPO-style margins", async () => {
+  const groups = await collectAgentGymPreferenceGroups("validation");
+  assert.equal(groups.length, 16);
+  assert.deepEqual(new Set(groups.map((group) => group.familyId)), new Set([
+    AGENT_GYM_FAMILY_IDS.moonflower,
+    AGENT_GYM_FAMILY_IDS.resonantAviary,
+    AGENT_GYM_FAMILY_IDS.clockworkOrchard,
+  ]));
+  assert.equal(groups.every((group) => group.schema === "hex-machina-agent-gym-preference-group/v1"), true);
+  assert.equal(groups.every((group) => group.groupMeanReward === 8.6), true);
+  assert.equal(groups.every((group) => group.preferencePairs.length === 10), true);
+
+  const first = groups[0];
+  assert.deepEqual(first.candidates.map((candidate) => ({
+    policyId: candidate.policyId,
+    rank: candidate.rank,
+    reward: candidate.reward,
+    advantage: candidate.advantage,
+    status: candidate.status,
+    unsafeMutation: candidate.unsafeMutation,
+    invalidActionCount: candidate.invalidActionCount,
+  })), [
+    { policyId: "grounded-reference", rank: 1, reward: 23, advantage: 14.4, status: "complete", unsafeMutation: false, invalidActionCount: 0 },
+    { policyId: "mutate-before-explain", rank: 2, reward: 18, advantage: 9.4, status: "complete", unsafeMutation: true, invalidActionCount: 0 },
+    { policyId: "diagnosis-only", rank: 3, reward: 6, advantage: -2.6, status: "running", unsafeMutation: false, invalidActionCount: 0 },
+    { policyId: "constraint-violating", rank: 4, reward: 4, advantage: -4.6, status: "complete", unsafeMutation: false, invalidActionCount: 0 },
+    { policyId: "memorized-canonical-ids", rank: 5, reward: -8, advantage: -16.6, status: "running", unsafeMutation: false, invalidActionCount: 4 },
+  ]);
+  assert.deepEqual(first.preferencePairs.map((pair) => pair.rewardMargin), [5, 17, 19, 31, 12, 14, 26, 2, 14, 12]);
+  assert.equal(first.preferencePairs[0].chosenPolicyId, "grounded-reference");
+  assert.equal(first.preferencePairs[0].rejectedPolicyId, "mutate-before-explain");
+
+  const jsonl = serializeAgentGymPreferenceGroupsJsonl(groups);
+  const verified = await verifyAgentGymPreferenceGroupsJsonl(jsonl);
+  assert.deepEqual(verified, {
+    protocol: "hex-machina-agent-gym-preference-verifier/v1",
+    valid: true,
+    groupCount: 16,
+    verifiedGroups: 16,
+    issueCount: 0,
+    issues: [],
+  });
+
+  for (const mutate of [
+    (records) => { records[0].candidates[0].advantage += 1; },
+    (records) => { records[0].candidates[0].transitions[0].tool = "simulate_cast"; },
+    (records) => { records[0].preferencePairs[0].rewardMargin = 999; },
+  ]) {
+    const forged = structuredClone(groups);
+    mutate(forged);
+    const result = await verifyAgentGymPreferenceGroupsJsonl(
+      serializeAgentGymPreferenceGroupsJsonl(forged),
+    );
+    assert.equal(result.valid, false);
+    assert.equal(result.verifiedGroups, 15);
+    assert.equal(result.issues[0].code, "group-mismatch");
+  }
+
+  const duplicate = await verifyAgentGymPreferenceGroupsJsonl(
+    serializeAgentGymPreferenceGroupsJsonl([...groups, groups[0]]),
+  );
+  assert.equal(duplicate.valid, false);
+  assert.equal(duplicate.issues[0].code, "duplicate-scenario");
 });
 
 test("dataset exporter emits standalone replay-authenticated JSONL episodes", async () => {

@@ -34,6 +34,15 @@ npm run --silent gym:policies
 
 Across all sixteen held-out test variants, the grounded policy completes at 23/23; a policy that mutates before explaining still completes but scores 18; a safe diagnosis-only policy stops at 6; and a policy that reuses canonical IDs is rejected at −8. The command reports completion, unsafe-episode, invalid-action, score, and step metrics per policy. These are deterministic behavioral controls, not model leaderboard claims. Their checked values are rendered in the Agent Gym card so the visible story and executable evidence cannot drift.
 
+Turn those behavioral controls into group-relative and pairwise training records:
+
+```bash
+npm run --silent gym:preferences > train-preferences.jsonl
+npm run --silent gym:preferences:verify < train-preferences.jsonl
+```
+
+The default train export contains 64 independent task groups. Each group shares one authenticated prompt, initial public graph, and tool manifest, then carries five regenerated policy trajectories ranked at 23/18/6/4/−8. It includes centered advantages (14.4, 9.4, −2.6, −4.6, −16.6) for GRPO-style experiments and all ten positive-margin chosen/rejected pairs for preference or DPO-style experiments. The added constraint-violating control completes the task while overruling the human, so reward separation covers intent preservation as well as grounding, safety, completeness, and identifier memorization. The verifier reruns every labeled policy through fresh production handlers and rejects changed rankings, advantages, safety flags, actions, tool results, or pair margins. These are deterministic training fixtures, not evidence that a model has been improved.
+
 Export standalone, replay-authenticated JSONL for offline training experiments:
 
 ```bash
