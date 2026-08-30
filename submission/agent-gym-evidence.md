@@ -1,10 +1,11 @@
 # Agent Gym evidence
 
-Regenerate with `npm run gym:evidence`. Digest `sha256:5e92f6c7d910b56f`.
+Regenerate with `npm run gym:evidence`. Digest `sha256:c8b9668dc0659549`.
 
 | Claim | Verdict | Evidence |
 | --- | --- | --- |
 | Deterministic replay | holds | 96 episodes, 96 verified, 0 issues |
+| Preference integrity | holds | 64 groups, 64 verified, 5 policies and 10 pairs per group |
 | Held-out grounding | holds | 96/96 complete, mean score 23 |
 | Task diversity | measured | 96 scenarios, 20 distinct structure(s), held out: structural |
 | Reward separation | holds | grounded-reference 23, mutate-before-explain 18, diagnosis-only 6, constraint-violating 4, memorized-canonical-ids -8 |
@@ -21,11 +22,17 @@ Regenerate with `npm run gym:evidence`. Digest `sha256:5e92f6c7d910b56f`.
 | constraint-violating | 4 | 100% | 0% | 0% |
 | memorized-canonical-ids | -8 | 0% | 0% | 100% |
 
+## Group-relative training data
+
+The train split contains 64 independently reset task groups. Each group reruns the five policies above against one shared task and emits all 10 strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as `sha256:117bfe0053619c6d` (16851428 bytes).
+
+| Ranked rewards | Centered advantages | Verified groups | Issues |
+| --- | --- | --- | --- |
+| 23 / 18 / 6 / 4 / -8 | 14.4 / 9.4 / -2.6 / -4.6 / -16.6 | 64 | 0 |
+
 ## What the default splits hold out
 
 Held-out scores are evidence of generalization to graph structures the training split never contained.
-
-For structural evidence, see the transfer protocol below, which withholds an entire scenario family.
 
 For structural evidence, see the transfer protocol below, which withholds an entire scenario family.
 

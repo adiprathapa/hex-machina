@@ -5,6 +5,11 @@ import { measureAgentGymFamilyDiversity } from "./family-diversity.ts";
 import { benchmarkStructuralTransfer } from "./transfer-protocol.ts";
 import { benchmarkAgentGymPolicies } from "./policy-benchmark.ts";
 import {
+  collectAgentGymPreferenceGroups,
+  serializeAgentGymPreferenceGroupsJsonl,
+  verifyAgentGymPreferenceGroupsJsonl,
+} from "./preference-dataset.ts";
+import {
   benchmarkAgentGymFamily,
   collectAgentGymDataset,
   serializeAgentGymDatasetJsonl,
@@ -26,7 +31,7 @@ import { AGENT_GYM_FAMILY_SPLIT_SIZES, type AgentGymSplit } from "../scenarios/a
  * committed evidence is stale.
  */
 
-export const AGENT_GYM_EVIDENCE_PROTOCOL = "hex-machina-agent-gym-evidence/v1" as const;
+export const AGENT_GYM_EVIDENCE_PROTOCOL = "hex-machina-agent-gym-evidence/v2" as const;
 
 const SPLITS = ["train", "validation", "test"] as AgentGymSplit[];
 
@@ -45,6 +50,10 @@ export async function buildAgentGymEvidence() {
   const transfer = await benchmarkStructuralTransfer();
   const dataset = serializeAgentGymDatasetJsonl(await collectAgentGymDataset());
   const replay = await verifyAgentGymDatasetJsonl(dataset);
+  const preferenceGroups = await collectAgentGymPreferenceGroups("train");
+  const preferenceDataset = serializeAgentGymPreferenceGroupsJsonl(preferenceGroups);
+  const preferenceVerification = await verifyAgentGymPreferenceGroupsJsonl(preferenceDataset);
+  const preferenceExample = preferenceGroups[0];
 
   const claims = {
     determinism: {
@@ -53,6 +62,21 @@ export async function buildAgentGymEvidence() {
       verifiedEpisodes: replay.verifiedEpisodes,
       issues: replay.issueCount,
       holds: replay.valid,
+    },
+    preferenceIntegrity: {
+      claim: "Every group-relative training record is regenerated from five executable policies and verifies exactly.",
+      groups: preferenceVerification.groupCount,
+      verifiedGroups: preferenceVerification.verifiedGroups,
+      issues: preferenceVerification.issueCount,
+      candidatesPerGroup: preferenceExample?.candidates.length ?? 0,
+      pairsPerGroup: preferenceExample?.preferencePairs.length ?? 0,
+      rewards: preferenceExample?.candidates.map((candidate) => candidate.reward) ?? [],
+      advantages: preferenceExample?.candidates.map((candidate) => candidate.advantage) ?? [],
+      holds: preferenceVerification.valid && preferenceGroups.every((group) => (
+        group.candidates.length === 5 &&
+        group.preferencePairs.length === 10 &&
+        group.preferencePairs.every((pair) => pair.rewardMargin > 0)
+      )),
     },
     grounding: {
       claim: "A grounded policy solves held-out opaque-ID variants at full reward.",
@@ -68,7 +92,7 @@ export async function buildAgentGymEvidence() {
       holds: family.completedCount === family.episodeCount,
     },
     rewardSeparation: {
-      claim: "Reward distinguishes grounded repair from unsafe, incomplete, and memorizing play.",
+      claim: "Reward distinguishes grounded repair from unsafe, incomplete, human-overruling, and memorizing play.",
       policies: policies.policies.map((policy) => ({
         policyId: policy.policyId,
         meanScore: policy.meanScore,
@@ -117,6 +141,8 @@ export async function buildAgentGymEvidence() {
     taskDiversity: diversity,
     datasetBytes: dataset.length,
     datasetDigest: digest(dataset),
+    preferenceDatasetBytes: preferenceDataset.length,
+    preferenceDatasetDigest: digest(preferenceDataset),
     claims,
   };
 
@@ -138,6 +164,7 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     "| Claim | Verdict | Evidence |",
     "| --- | --- | --- |",
     `| Deterministic replay | ${mark(report.claims.determinism.holds)} | ${report.claims.determinism.episodes} episodes, ${report.claims.determinism.verifiedEpisodes} verified, ${report.claims.determinism.issues} issues |`,
+    `| Preference integrity | ${mark(report.claims.preferenceIntegrity.holds)} | ${report.claims.preferenceIntegrity.groups} groups, ${report.claims.preferenceIntegrity.verifiedGroups} verified, ${report.claims.preferenceIntegrity.candidatesPerGroup} policies and ${report.claims.preferenceIntegrity.pairsPerGroup} pairs per group |`,
     `| Held-out grounding | ${mark(report.claims.grounding.holds)} | ${report.claims.grounding.completed}/${report.claims.grounding.episodes} complete, mean score ${report.claims.grounding.meanScore} |`,
     `| Task diversity | measured | ${report.taskDiversity.scenarioCount} scenarios, ${report.taskDiversity.structuralDiversity.distinctStructures} distinct structure(s), held out: ${report.taskDiversity.heldOutScope} |`,
     `| Reward separation | ${mark(report.claims.rewardSeparation.holds)} | ${report.claims.rewardSeparation.policies.map((policy) => `${policy.policyId} ${policy.meanScore}`).join(", ")} |`,
@@ -151,6 +178,14 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     ...report.claims.rewardSeparation.policies.map((policy) => (
       `| ${policy.policyId} | ${policy.meanScore} | ${(policy.completionRate * 100).toFixed(0)}% | ${(policy.unsafeEpisodeRate * 100).toFixed(0)}% | ${(policy.invalidActionRate * 100).toFixed(0)}% |`
     )),
+    "",
+    "## Group-relative training data",
+    "",
+    `The train split contains ${report.claims.preferenceIntegrity.groups} independently reset task groups. Each group reruns the five policies above against one shared task and emits all ${report.claims.preferenceIntegrity.pairsPerGroup} strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as \`${report.preferenceDatasetDigest}\` (${report.preferenceDatasetBytes} bytes).`,
+    "",
+    "| Ranked rewards | Centered advantages | Verified groups | Issues |",
+    "| --- | --- | --- | --- |",
+    `| ${report.claims.preferenceIntegrity.rewards.join(" / ")} | ${report.claims.preferenceIntegrity.advantages.join(" / ")} | ${report.claims.preferenceIntegrity.verifiedGroups} | ${report.claims.preferenceIntegrity.issues} |`,
     "",
     "## What the default splits hold out",
     "",

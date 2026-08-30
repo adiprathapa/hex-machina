@@ -23,6 +23,15 @@ test("the evidence bundle asserts every headline claim and they all hold", async
   assert.equal(report.claims.determinism.issues, 0);
   assert.equal(report.claims.determinism.verifiedEpisodes, report.claims.determinism.episodes);
 
+  assert.equal(report.claims.preferenceIntegrity.holds, true);
+  assert.equal(report.claims.preferenceIntegrity.groups, 64);
+  assert.equal(report.claims.preferenceIntegrity.verifiedGroups, 64);
+  assert.equal(report.claims.preferenceIntegrity.issues, 0);
+  assert.equal(report.claims.preferenceIntegrity.candidatesPerGroup, 5);
+  assert.equal(report.claims.preferenceIntegrity.pairsPerGroup, 10);
+  assert.deepEqual(report.claims.preferenceIntegrity.rewards, [23, 18, 6, 4, -8]);
+  assert.deepEqual(report.claims.preferenceIntegrity.advantages, [14.4, 9.4, -2.6, -4.6, -16.6]);
+
   assert.equal(report.claims.grounding.completed, report.claims.grounding.episodes);
   assert.equal(report.claims.grounding.meanScore, 23);
 
@@ -66,6 +75,7 @@ test("the bundle is content-addressed and regenerates identically", async () => 
 
   assert.equal(first.evidenceDigest, second.evidenceDigest, "an unchanged tree must produce one digest");
   assert.equal(first.datasetDigest, second.datasetDigest);
+  assert.equal(first.preferenceDatasetDigest, second.preferenceDatasetDigest);
   assert.match(first.evidenceDigest, /^sha256:[a-f0-9]{16}$/);
   assert.deepEqual(first, second);
 
@@ -85,6 +95,7 @@ test("the rendered report states each verdict a judge needs to read", async () =
 
   for (const heading of [
     "Deterministic replay",
+    "Preference integrity",
     "Held-out grounding",
     "Reward separation",
     "Structural transfer",
@@ -94,5 +105,7 @@ test("the rendered report states each verdict a judge needs to read", async () =
     assert.ok(markdown.includes(heading), `report must state the ${heading} claim`);
   }
   assert.ok(markdown.includes("npm run gym:evidence"), "report must say how to regenerate itself");
+  assert.ok(markdown.includes("Group-relative training data"));
+  assert.ok(markdown.includes("64 groups"));
   assert.ok(!markdown.includes("FAILS"), "no claim may render as failing while the suite is green");
 });

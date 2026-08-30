@@ -1,5 +1,5 @@
 {
-  "protocol": "hex-machina-agent-gym-evidence/v1",
+  "protocol": "hex-machina-agent-gym-evidence/v2",
   "familyId": "moonflower-opaque-roles-v1",
   "familySplitSizes": {
     "family-01-v1": {
@@ -44,14 +44,39 @@
     "heldOutScope": "structural",
     "supportedClaim": "Held-out scores are evidence of generalization to graph structures the training split never contained."
   },
-  "datasetBytes": 6662350,
-  "datasetDigest": "sha256:7bb1f070cc44d23c",
+  "datasetBytes": 7393339,
+  "datasetDigest": "sha256:3f5602e3f8ba0470",
+  "preferenceDatasetBytes": 16851428,
+  "preferenceDatasetDigest": "sha256:117bfe0053619c6d",
   "claims": {
     "determinism": {
       "claim": "Every exported episode replays action-for-action against a fresh environment.",
       "episodes": 96,
       "verifiedEpisodes": 96,
       "issues": 0,
+      "holds": true
+    },
+    "preferenceIntegrity": {
+      "claim": "Every group-relative training record is regenerated from five executable policies and verifies exactly.",
+      "groups": 64,
+      "verifiedGroups": 64,
+      "issues": 0,
+      "candidatesPerGroup": 5,
+      "pairsPerGroup": 10,
+      "rewards": [
+        23,
+        18,
+        6,
+        4,
+        -8
+      ],
+      "advantages": [
+        14.4,
+        9.4,
+        -2.6,
+        -4.6,
+        -16.6
+      ],
       "holds": true
     },
     "grounding": {
@@ -70,7 +95,7 @@
       "holds": true
     },
     "rewardSeparation": {
-      "claim": "Reward distinguishes grounded repair from unsafe, incomplete, and memorizing play.",
+      "claim": "Reward distinguishes grounded repair from unsafe, incomplete, human-overruling, and memorizing play.",
       "policies": [
         {
           "policyId": "grounded-reference",
@@ -184,5 +209,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:5e92f6c7d910b56f"
+  "evidenceDigest": "sha256:c8b9668dc0659549"
 }
