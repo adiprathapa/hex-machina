@@ -52,6 +52,14 @@ def _number(value: Any, label: str) -> float:
     return float(value)
 
 
+def _optional_filter(value: str | None, label: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise HexMachinaPreferenceError(f"{label} filter must be a non-empty string")
+    return value
+
+
 def _validate_group(value: Any, line_number: int) -> Mapping[str, Any]:
     prefix = f"preference group on line {line_number}"
     group = _record(value, prefix)
@@ -59,6 +67,10 @@ def _validate_group(value: Any, line_number: int) -> Mapping[str, Any]:
         raise HexMachinaPreferenceError(f"{prefix} has an unsupported schema")
     if not isinstance(group.get("scenarioId"), str) or not group["scenarioId"]:
         raise HexMachinaPreferenceError(f"{prefix} requires scenarioId")
+    if not isinstance(group.get("familyId"), str) or not group["familyId"]:
+        raise HexMachinaPreferenceError(f"{prefix} requires familyId")
+    if not isinstance(group.get("split"), str) or not group["split"]:
+        raise HexMachinaPreferenceError(f"{prefix} requires split")
     if any(field not in group for field in PAIR_CONTEXT_FIELDS):
         raise HexMachinaPreferenceError(f"{prefix} is missing trainer context")
 
@@ -183,12 +195,20 @@ class HexMachinaPreferenceDataset:
             raise HexMachinaPreferenceError("verifier returned an unsupported protocol")
         return receipt
 
-    def groups(self) -> Iterator[Mapping[str, Any]]:
-        """Yield structurally validated groups in file order."""
+    def groups(
+        self,
+        *,
+        split: str | None = None,
+        family: str | None = None,
+    ) -> Iterator[Mapping[str, Any]]:
+        """Yield validated groups in file order, optionally restricting a curriculum."""
 
         self._validate_size()
+        selected_split = _optional_filter(split, "split")
+        selected_family = _optional_filter(family, "family")
         seen_scenarios: set[str] = set()
         group_count = 0
+        matched_count = 0
         with self.path.open("r", encoding="utf-8") as source:
             for line_number, line in enumerate(source, start=1):
                 if not line.strip():
@@ -211,14 +231,34 @@ class HexMachinaPreferenceDataset:
                 if scenario_id in seen_scenarios:
                     raise HexMachinaPreferenceError(f"duplicate scenarioId {scenario_id}")
                 seen_scenarios.add(scenario_id)
+                if selected_split is not None and group["split"] != selected_split:
+                    continue
+                if selected_family is not None and group["familyId"] != selected_family:
+                    continue
+                matched_count += 1
                 yield group
         if group_count == 0:
             raise HexMachinaPreferenceError("preference dataset is empty")
+        if matched_count == 0:
+            filters = ", ".join(
+                value
+                for value in (
+                    f"split={selected_split!r}" if selected_split is not None else "",
+                    f"family={selected_family!r}" if selected_family is not None else "",
+                )
+                if value
+            )
+            raise HexMachinaPreferenceError(f"no preference groups match {filters}")
 
-    def pairs(self) -> Iterator[Mapping[str, Any]]:
-        """Project groups into trainer-friendly chosen/rejected records."""
+    def pairs(
+        self,
+        *,
+        split: str | None = None,
+        family: str | None = None,
+    ) -> Iterator[Mapping[str, Any]]:
+        """Project a filtered group stream into chosen/rejected records."""
 
-        for group in self.groups():
+        for group in self.groups(split=split, family=family):
             candidate_by_policy = {
                 candidate["policyId"]: candidate for candidate in group["candidates"]
             }

@@ -50,11 +50,11 @@ from adapters import HexMachinaPreferenceDataset
 
 dataset = HexMachinaPreferenceDataset("train-preferences.jsonl")
 receipt = dataset.verify()
-for pair in dataset.pairs():
+for pair in dataset.pairs(split="train", family="family-02-v1"):
     train_on(pair["task"], pair["chosen"], pair["rejected"])
 ```
 
-Each projected `hex-machina-agent-gym-preference-pair/v2` record retains the initial public graph, state commitment, action manifest, complete chosen and rejected tool trajectories, explicit constraint outcome labels, and exact positive reward margin. Structural validation is bounded to 64 MiB, 256 groups, and 4 MiB per group; `verify()` remains the trust boundary because it regenerates every named policy through the TypeScript production handlers.
+Both `groups()` and `pairs()` accept optional exact `split` and `family` filters for reproducible curricula and held-out evaluation while retaining file order and one-group-at-a-time streaming. A filter that matches nothing fails explicitly instead of silently running an empty training epoch. Each projected `hex-machina-agent-gym-preference-pair/v2` record retains the initial public graph, state commitment, action manifest, complete chosen and rejected tool trajectories, explicit constraint outcome labels, and exact positive reward margin. Structural validation is bounded to 64 MiB, 256 groups, and 4 MiB per group; `verify()` remains the trust boundary because it regenerates every named policy through the TypeScript production handlers.
 
 Export standalone, replay-authenticated JSONL for offline training experiments:
 

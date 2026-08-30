@@ -316,7 +316,7 @@ with HexMachinaVectorEnv(3) as envs:
   assert.deepEqual(receipt.sampleSeeds, [11, 22, 33]);
 });
 
-test("Python preference adapter verifies groups and streams every ranked pair", async () => {
+test("Python preference adapter verifies and filters streaming ranked pairs", async () => {
   const temporary = await mkdtemp(path.join(tmpdir(), "hex-machina-preferences-"));
   try {
     const exported = await run(
@@ -347,9 +347,18 @@ dataset = HexMachinaPreferenceDataset(sys.argv[1])
 verification = dataset.verify()
 groups = list(dataset.groups())
 pairs = list(dataset.pairs())
+family = groups[0]["familyId"]
+family_groups = list(dataset.groups(split="validation", family=family))
+family_pairs = list(dataset.pairs(split="validation", family=family))
 def rejected(path):
     try:
         list(HexMachinaPreferenceDataset(path).groups())
+        return False
+    except HexMachinaPreferenceError:
+        return True
+def filter_rejected(**filters):
+    try:
+        list(dataset.groups(**filters))
         return False
     except HexMachinaPreferenceError:
         return True
@@ -365,6 +374,12 @@ print(json.dumps({
     "margin": first["rewardMargin"],
     "actionManifest": first["actionManifest"]["protocol"],
     "scenario": first["scenarioId"],
+    "family": family,
+    "familyGroups": len(family_groups),
+    "familyPairs": len(family_pairs),
+    "familyScenarios": [group["scenarioId"] for group in family_groups],
+    "wrongSplitRejected": filter_rejected(split="test"),
+    "emptyFamilyRejected": filter_rejected(family=""),
     "marginTamperedRejected": rejected(sys.argv[2]),
     "constraintTamperedRejected": rejected(sys.argv[3]),
 }))
@@ -385,6 +400,21 @@ print(json.dumps({
       margin: 5,
       actionManifest: "hex-machina-tool-manifest/v1",
       scenario: "task-01-validation-00",
+      family: "family-01-v1",
+      familyGroups: 8,
+      familyPairs: 80,
+      familyScenarios: [
+        "task-01-validation-00",
+        "task-01-validation-01",
+        "task-01-validation-02",
+        "task-01-validation-03",
+        "task-01-validation-04",
+        "task-01-validation-05",
+        "task-01-validation-06",
+        "task-01-validation-07",
+      ],
+      wrongSplitRejected: true,
+      emptyFamilyRejected: true,
       marginTamperedRejected: true,
       constraintTamperedRejected: true,
     });
