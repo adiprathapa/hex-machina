@@ -1,107 +1,107 @@
 1
-00:00:01,500 --> 00:00:06,900
-This is Hex Machina. It is a debugger for executable graphs,
+00:00:01,500 --> 00:00:02,851
+This is Hex Machina.
 
 2
-00:00:06,900 --> 00:00:12,400
-and a browser agent is about to drive it through seven WebMCP tools.
+00:00:02,851 --> 00:00:10,956
+It is an agent gym for constraint aware repair, and a WebMCP client is about to drive it through seven registered tools.
 
 3
-00:00:12,400 --> 00:00:17,600
-The page registers those tools on document.modelContext.
+00:00:10,956 --> 00:00:21,265
+The page registers those tools on document dot modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet.
 
 4
-00:00:17,600 --> 00:00:22,800
-Everything you are about to see is the agent calling them. Nobody is clicking.
+00:00:21,265 --> 00:00:25,613
+Every repair you are about to see is a tool call, not a click.
 
 5
-00:00:22,800 --> 00:00:28,700
+00:00:25,613 --> 00:00:29,428
 First it inspects the live graph, then it casts the spell.
 
 6
-00:00:28,700 --> 00:00:34,500
-The spell should water a moonflower. Instead, twelve ducks flood the observatory.
+00:00:29,428 --> 00:00:35,873
+The spell is supposed to water a moonflower. Instead, twelve summoned ducks flood the observatory.
 
 7
-00:00:34,500 --> 00:00:40,400
-Now it traces the effect. This is a bounded graph traversal, not a guess.
+00:00:35,873 --> 00:00:37,539
+Now it traces the effect.
 
 8
-00:00:40,400 --> 00:00:46,300
-It returns the ordered causal path and every edge responsible for it.
+00:00:37,539 --> 00:00:45,337
+This is a bounded graph traversal, not a guess: it returns the ordered causal path and every edge responsible for it.
 
 9
-00:00:46,300 --> 00:00:51,500
+00:00:45,337 --> 00:00:47,302
 Then it proves the diagnosis.
 
 10
-00:00:51,500 --> 00:00:56,700
-The explanation returns the smallest subgraph and proves each edge is necessary.
+00:00:47,302 --> 00:00:55,907
+The explanation returns the smallest responsible subgraph, and a counterfactual check showing each of those edges is necessary.
 
 11
-00:00:56,700 --> 00:01:02,300
-Here is the part that matters. A human says something the graph cannot infer:
+00:00:55,907 --> 00:01:03,062
+Here is the part that matters. A human says something the graph cannot infer: the ducks are funny, they stay.
 
 12
-00:01:02,300 --> 00:01:08,000
-the ducks are funny, they stay. That becomes an executable constraint.
+00:01:03,062 --> 00:01:05,556
+That becomes an executable constraint.
 
 13
-00:01:08,000 --> 00:01:14,800
-The cheapest repair deletes the duck branch entirely.
+00:01:05,556 --> 00:01:10,618
+Watch what it changes. The cheapest repair deletes the duck branch entirely.
 
 14
-00:01:14,800 --> 00:01:21,600
-With the constraint locked, it is ineligible, so the agent ranks a longer repair.
+00:01:10,618 --> 00:01:17,477
+With the constraint locked, that repair is no longer eligible, so the agent ranks a longer one instead.
 
 15
-00:01:21,600 --> 00:01:27,500
-Before anything is applied, the human sees the exact operation ledger.
+00:01:17,477 --> 00:01:23,424
+Before anything is applied, the human sees the exact operation ledger the agent received.
 
 16
-00:01:27,500 --> 00:01:33,300
+00:01:23,424 --> 00:01:27,901
 Eight graph edits, what is preserved, and what the repair gives up.
 
 17
-00:01:33,300 --> 00:01:38,000
+00:01:27,901 --> 00:01:31,869
 The patch is simulated first, without touching editor state.
 
 18
-00:01:38,000 --> 00:01:42,800
-Then it is applied atomically, with its preconditions revalidated.
+00:01:31,869 --> 00:01:37,358
+Then applied atomically, with preconditions revalidated at the moment of the write.
 
 19
-00:01:42,800 --> 00:01:49,100
-The recast succeeds. All twelve ducks survive, and the room stays dry.
+00:01:37,358 --> 00:01:45,365
+The recast succeeds. All twelve ducks survive, they carry umbrellas, the room stays dry, and the moonflower blooms.
 
 20
-00:01:49,100 --> 00:01:55,500
-The moonflower blooms. The human's preference changed the solution, not just the score.
+00:01:45,365 --> 00:01:49,821
+The human's preference changed the solution, not just the score.
 
 21
-00:01:55,500 --> 00:02:01,800
-One more thing, because a polished demo invites one question: is this on rails?
+00:01:49,821 --> 00:01:55,577
+One more thing, because a polished demo invites one question: is this on rails.
 
 22
-00:02:01,800 --> 00:02:07,900
-The evaluation layer generates ninety-six tasks across three causal rules.
+00:01:55,577 --> 00:02:01,073
+The evaluation layer generates ninety six tasks across three different causal rules.
 
 23
-00:02:07,900 --> 00:02:14,000
-Let me load a held-out one, from a rule this run has never seen.
+00:02:01,073 --> 00:02:06,635
+I will use the interface to load a held out one, from a rule this run has never seen.
 
 24
-00:02:14,000 --> 00:02:19,900
-Every rune, edge, and effect identifier is freshly remapped. Nothing was memorised.
+00:02:06,635 --> 00:02:13,058
+Every rune, edge and effect identifier is freshly remapped. Nothing here was memorised.
 
 25
-00:02:19,900 --> 00:02:25,700
+00:02:13,058 --> 00:02:18,004
 The same seven tools inspect it, cast it, trace it, and explain it.
 
 26
-00:02:25,700 --> 00:02:30,000
-Graph interfaces let people and agents negotiate executable intent,
+00:02:18,004 --> 00:02:19,261
+That is the claim.
 
 27
-00:02:30,000 --> 00:02:34,300
-and the application proves every mutation.
+00:02:19,261 --> 00:02:26,937
+Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.

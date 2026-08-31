@@ -28,10 +28,11 @@
   },
   "video": {
     "local_path": "submission/video/hex-machina-demo.mp4",
-    "duration_seconds": 154.4,
+    "duration_seconds": 157.4,
     "has_audio": true,
     "public_youtube_url": null,
-    "kind": "screencast with narration"
+    "kind": "screencast with narration",
+    "captions_path": "submission/video/captions.srt"
   },
   "devpost": {
     "copy_path": "submission/devpost-entry.md",

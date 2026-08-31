@@ -115,6 +115,13 @@ export interface AgentGymScenarioVariant {
     "benign-decoy-subgraph",
   ];
   graph: SpellGraph;
+  /**
+   * The seeded benign decoy edges active in this variant, after ID remapping.
+   * They are valid typed structures that are causally irrelevant to the tracked
+   * failure, so a measurement that wants to talk about causal structure has to
+   * be able to exclude them.
+   */
+  decoyEdgeIds: readonly string[];
 }
 
 function createPrng(seed: number) {
@@ -165,6 +172,10 @@ function addBenignDecoySubgraph(graph: SpellGraph, familyId: AgentGymFamilyId, m
   const activeNodeIds = new Set(selectedEdges.flatMap((edge) => [edge.from, edge.to]));
   graph.edges.push(...selectedEdges.map((edge) => ({ ...edge })));
   graph.nodes = graph.nodes.map((node) => activeNodeIds.has(node.id) ? { ...node, dormant: false } : node);
+  return {
+    edgeIds: selectedEdges.map((edge) => edge.id),
+    awakenedNodeIds: [...activeNodeIds],
+  };
 }
 
 function familyTaskNumber(familyId: AgentGymFamilyId) {
@@ -200,7 +211,7 @@ export function generateAgentGymScenarioForFamily(
         ? createClockworkOrchardScenario()
         : createMoonflowerScenario(),
   );
-  addBenignDecoySubgraph(graph, familyId, (next() % 7) + 1);
+  const decoys = addBenignDecoySubgraph(graph, familyId, (next() % 7) + 1);
   const used = new Set<string>();
   const nodeIdMap = new Map(graph.nodes.map((node) => [node.id, opaqueId("r", next, used)]));
   const edgeIdMap = new Map(graph.edges.map((edge) => [edge.id, opaqueId("e", next, used)]));
@@ -267,6 +278,7 @@ export function generateAgentGymScenarioForFamily(
       "benign-decoy-subgraph",
     ],
     graph,
+    decoyEdgeIds: decoys.edgeIds.map(mapEdgeId),
   };
 }
 

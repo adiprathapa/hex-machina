@@ -40,12 +40,24 @@ export const AGENT_GYM_DIVERSITY_PROTOCOL = "hex-machina-agent-gym-diversity/v1"
  */
 export type HeldOutScope = "identifier-and-layout" | "structural";
 
-function structuralFingerprint(graph: SpellGraph) {
+function structuralFingerprint(graph: SpellGraph, excludeEdgeIds: readonly string[] = []) {
   const labelOf = new Map(graph.nodes.map((node) => [node.id, node.label]));
   const label = (id: string) => labelOf.get(id) ?? id;
+  const dropped = new Set(excludeEdgeIds);
+  const edges = graph.edges.filter((edge) => !dropped.has(edge.id));
+  // A node is only "awake" for causal purposes if something other than a
+  // dropped edge touches it.
+  const touched = new Set(edges.flatMap((edge) => [edge.from, edge.to]));
   return createHash("sha256").update(JSON.stringify({
-    nodes: graph.nodes.map((node) => [node.label, node.kind, node.glyph, node.dormant ?? false]).sort(),
-    edges: graph.edges.map((edge) => [label(edge.from), edge.type, label(edge.to)]).sort(),
+    nodes: graph.nodes
+      .map((node) => [
+        node.label,
+        node.kind,
+        node.glyph,
+        dropped.size > 0 ? !touched.has(node.id) : node.dormant ?? false,
+      ])
+      .sort(),
+    edges: edges.map((edge) => [label(edge.from), edge.type, label(edge.to)]).sort(),
     roles: Object.fromEntries(
       Object.entries(graph.semantics.roles).map(([role, id]) => [role, label(id)]),
     ),
@@ -56,9 +68,11 @@ function structuralFingerprint(graph: SpellGraph) {
  * Diversity under a transfer protocol that withholds one family.
  *
  * The default splits hold out identifiers. A transfer protocol holds out a
- * structure, so the same measurement applied to it reports the stronger scope —
- * which is the point of having the measurement drive the claim rather than the
- * other way round.
+ * causal structure, so the same measurement applied to it reports the stronger
+ * scope — which is the point of having the measurement drive the claim rather
+ * than the other way round. Both sides compare causal fingerprints, so a
+ * difference in which benign decoys happen to be active cannot be mistaken for
+ * a held-out structure.
  */
 export function measureTransferDiversity(
   heldOutFamily: AgentGymFamilyId,
@@ -68,18 +82,16 @@ export function measureTransferDiversity(
   for (const family of trainingFamilies) {
     for (const split of ["train", "validation"] as AgentGymSplit[]) {
       for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[family][split]; index += 1) {
-        structuresInTraining.add(
-          structuralFingerprint(generateAgentGymScenarioForFamily(family, split, index).graph),
-        );
+        const variant = generateAgentGymScenarioForFamily(family, split, index);
+        structuresInTraining.add(structuralFingerprint(variant.graph, variant.decoyEdgeIds));
       }
     }
   }
 
   const evaluatedStructures = new Set<string>();
   for (let index = 0; index < AGENT_GYM_FAMILY_SPLIT_SIZES[heldOutFamily].test; index += 1) {
-    evaluatedStructures.add(
-      structuralFingerprint(generateAgentGymScenarioForFamily(heldOutFamily, "test", index).graph),
-    );
+    const variant = generateAgentGymScenarioForFamily(heldOutFamily, "test", index);
+    evaluatedStructures.add(structuralFingerprint(variant.graph, variant.decoyEdgeIds));
   }
 
   const unseen = [...evaluatedStructures].filter(
@@ -109,6 +121,9 @@ export function measureAgentGymFamilyDiversity() {
   const structuresBySplit: Record<AgentGymSplit, Set<string>> = {
     train: new Set(), validation: new Set(), test: new Set(),
   };
+  const causalBySplit: Record<AgentGymSplit, Set<string>> = {
+    train: new Set(), validation: new Set(), test: new Set(),
+  };
   const allStructures = new Set<string>();
   const objectives = new Map<string, Set<AgentGymSplit>>();
   const identifiers = new Map<string, number>();
@@ -125,6 +140,11 @@ export function measureAgentGymFamilyDiversity() {
         const fingerprint = structuralFingerprint(variant.graph);
         structuresBySplit[split].add(fingerprint);
         allStructures.add(fingerprint);
+
+        // Two variants that differ only by which benign decoys are active have
+        // the same causal problem. Counting that difference as a held-out
+        // structure once promoted the whole claim on a single accident.
+        causalBySplit[split].add(structuralFingerprint(variant.graph, variant.decoyEdgeIds));
 
         const seen = objectives.get(variant.objective) ?? new Set<AgentGymSplit>();
         seen.add(split);
@@ -143,7 +163,15 @@ export function measureAgentGymFamilyDiversity() {
   const unseenInTraining = [...structuresBySplit.test].filter(
     (fingerprint) => !structuresBySplit.train.has(fingerprint),
   );
-  const heldOutScope: HeldOutScope = unseenInTraining.length > 0 ? "structural" : "identifier-and-layout";
+  const causalUnseenInTraining = [...causalBySplit.test].filter(
+    (fingerprint) => !causalBySplit.train.has(fingerprint),
+  );
+  // The scope has to rest on causal novelty. A test task whose only novelty is
+  // its seeded decoy subgraph is a different picture of the same problem, and
+  // held-out scores on it are not structural-generalization evidence.
+  const heldOutScope: HeldOutScope = causalUnseenInTraining.length > 0
+    ? "structural"
+    : "identifier-and-layout";
 
   return {
     protocol: AGENT_GYM_DIVERSITY_PROTOCOL,
@@ -160,13 +188,14 @@ export function measureAgentGymFamilyDiversity() {
       structuresInTrain: structuresBySplit.train.size,
       structuresInTest: structuresBySplit.test.size,
       testStructuresUnseenInTraining: unseenInTraining.length,
+      causalStructuresUnseenInTraining: causalUnseenInTraining.length,
     },
     promptDiversity: {
       distinctObjectives: objectives.size,
       objectivesSharedAcrossSplits: [...objectives.values()].filter((seen) => seen.size > 1).length,
     },
     heldOutScope,
-    supportedClaim: unseenInTraining.length > 0
+    supportedClaim: causalUnseenInTraining.length > 0
       ? "Held-out scores are evidence of generalization to graph structures the training split never contained."
       : "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out.",
   };

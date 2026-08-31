@@ -1,6 +1,6 @@
-This is Hex Machina. It is an agent gym for constraint aware repair, and a browser agent is about to drive it through seven WebMCP tools.
+This is Hex Machina. It is an agent gym for constraint aware repair, and a WebMCP client is about to drive it through seven registered tools.
 
-The page registers those tools on document dot modelContext. Everything you are about to see is the agent calling them. Nobody is clicking.
+The page registers those tools on document dot modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet. Every repair you are about to see is a tool call, not a click.
 
 First it inspects the live graph, then it casts the spell. The spell is supposed to water a moonflower. Instead, twelve summoned ducks flood the observatory.
 
@@ -20,7 +20,7 @@ The recast succeeds. All twelve ducks survive, they carry umbrellas, the room st
 
 One more thing, because a polished demo invites one question: is this on rails.
 
-The evaluation layer generates ninety six tasks across three different causal rules. Let me load a held out one, from a rule this run has never seen.
+The evaluation layer generates ninety six tasks across three different causal rules. I will use the interface to load a held out one, from a rule this run has never seen.
 
 Every rune, edge and effect identifier is freshly remapped. Nothing here was memorised. The same seven tools inspect it, cast it, trace it, and explain it.
 

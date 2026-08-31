@@ -12,6 +12,18 @@ An agent gym where humans decide what matters and agents prove the smallest repa
 
 Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste—“the ducks must stay”—while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
 
+## How to try it
+
+WebMCP tools register only when a host provides `document.modelContext`, and
+hosts are not broadly shipped yet, so the page tells you which case you are in
+instead of pretending. Opened by a WebMCP-capable browser agent the header reads
+`WebMCP · 7 tools registered`; opened in an ordinary browser it reads
+`WebMCP · 7 tools ready for a host`. Either way the lesson is playable, because
+the local tool console calls the same production handlers a visiting agent
+would. The screenshots, the demo video, and the browser tests install a stand-in
+`document.modelContext` to play the host; that shim only delivers the calls,
+and every result in them comes from the production handlers.
+
 ## Why this is a strong fit for WebMCP
 
 Most agents have to infer application state from pixels and imitate clicks. That is especially brittle in a graph editor, where direction, type, version, and causality matter more than position. Hex Machina exposes the spell as a semantic, versioned artifact instead.
@@ -83,7 +95,7 @@ asserted: the suite fingerprints every task and derives the claim a held-out
 score is entitled to support. A separate transfer protocol withholds an entire
 family — a grounded policy scores 23/23 with every constraint preserved on a
 structure it never saw, while an otherwise identical policy that memorized the
-training family's vocabulary scores −1 and completes nothing.
+training family's vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Two of the three still reach the goal; only the reward tells them apart.
 
 The audit's negative results are recorded too, and the limitations it did not
 fix are stated in `submission/agent-gym-adversarial-audit.md` rather than
@@ -107,7 +119,7 @@ WebMCP is the collaboration layer, not a decorative integration. The canonical j
 
 ### Execution
 
-The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 154.4-second real WebMCP screencast.
+The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 157.4-second screencast driven through the registered WebMCP tools by a scripted client standing in for a host.
 
 ### Potential impact
 

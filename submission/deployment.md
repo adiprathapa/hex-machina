@@ -14,7 +14,7 @@ Hex Machina is configured as an existing Sites project and builds to a Cloudflar
 ## Release sequence
 
 1. ~~Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.~~ **Done 2026-08-29:** MIT, public at <https://github.com/adiprathapa/hex-machina>, license detected by GitHub.
-2. Follow [`video/youtube-upload.md`](video/youtube-upload.md) to upload the existing 154.4-second narrated WebMCP screencast to YouTube with public visibility, then record its URL with the validated `train.py` command.
+2. Follow [`video/youtube-upload.md`](video/youtube-upload.md) to upload the existing 157.4-second narrated WebMCP screencast to YouTube with public visibility, then record its URL with the validated `train.py` command.
 3. Run `python3 prepare.py --quick` and `npm run test:e2e`.
 4. Package the unchanged successful build with the official Sites helper.
 5. Save one version using the synchronized Git commit and deploy it.
@@ -37,7 +37,7 @@ One gate remains:
 | Gate | Blocked on | Records into |
 | --- | --- | --- |
 | ~~Live URL~~ | **Done 2026-08-30:** deployed to Cloudflare Workers at <https://hex-machina.hex-machina.workers.dev> | `site.live_url` |
-| Public demo | Uploading the existing 154.4-second MP4 to YouTube as public | `video.public_youtube_url` |
+| Public demo | Uploading the existing 157.4-second MP4 to YouTube as public | `video.public_youtube_url` |
 | ~~Live discovery~~ | **Done 2026-08-30:** seven tools discovered live; canonical prompt executed end to end through them | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
 
 The build is already deploy-shaped: `npm run test:deployment` validates the

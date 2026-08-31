@@ -23,8 +23,35 @@ command -v ffmpeg >/dev/null
 command -v ffprobe >/dev/null
 command -v say >/dev/null
 
-say -v "$VOICE" -r 150 -f "$NARRATION" -o "$VIDEO_TMP_DIR/narration.aiff"
+# Synthesize one paragraph at a time and measure each, so the captions can be
+# generated from the real audio instead of hand-maintained beside it. They had
+# already drifted: six of fourteen paragraphs did not match the shipped cues.
+GAP_SECONDS=0.45
+: > "$VIDEO_TMP_DIR/concat.txt"
+: > "$VIDEO_TMP_DIR/manifest.jsonl"
+ffmpeg -hide_banner -loglevel error -y -f lavfi -t "$GAP_SECONDS" -i anullsrc=r=22050:cl=mono "$VIDEO_TMP_DIR/gap.aiff"
+
+PART=0
+while IFS= read -r paragraph; do
+  [ -n "$paragraph" ] || continue
+  PART=$((PART + 1))
+  PART_FILE="$VIDEO_TMP_DIR/part-$PART.aiff"
+  printf '%s' "$paragraph" | say -v "$VOICE" -r 150 -o "$PART_FILE"
+  PART_SECONDS="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$PART_FILE")"
+  [ "$PART" -eq 1 ] || printf "file '%s'\n" "$VIDEO_TMP_DIR/gap.aiff" >> "$VIDEO_TMP_DIR/concat.txt"
+  printf "file '%s'\n" "$PART_FILE" >> "$VIDEO_TMP_DIR/concat.txt"
+  python3 -c 'import json,sys; print(json.dumps({"text": sys.argv[1], "seconds": float(sys.argv[2]) + float(sys.argv[3])}))' \
+    "$paragraph" "$PART_SECONDS" "$GAP_SECONDS" >> "$VIDEO_TMP_DIR/manifest.jsonl"
+done < <(awk 'BEGIN { RS = ""; ORS = "\n" } { gsub(/\n/, " "); print }' "$NARRATION")
+
+[ "$PART" -gt 0 ] || { printf 'Narration produced no paragraphs.\n' >&2; exit 1; }
+
+ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i "$VIDEO_TMP_DIR/concat.txt" -c copy "$VIDEO_TMP_DIR/narration.aiff"
 NARRATION_SECONDS="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VIDEO_TMP_DIR/narration.aiff")"
+
+python3 -c 'import json,sys; print(json.dumps([json.loads(l) for l in open(sys.argv[1]) if l.strip()]))' \
+  "$VIDEO_TMP_DIR/manifest.jsonl" > "$VIDEO_TMP_DIR/manifest.json"
+node "$VIDEO_DIR/build-captions.mjs" "$VIDEO_TMP_DIR/manifest.json" "$VIDEO_DIR/captions.srt" 1.5
 
 # The challenge caps the demo under three minutes; leave headroom for the tail.
 if ! awk -v duration="$NARRATION_SECONDS" 'BEGIN { exit !(duration <= 165) }'; then

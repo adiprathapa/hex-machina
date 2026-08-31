@@ -204,6 +204,7 @@ export function renderAgentGymEvidence(report: Awaited<ReturnType<typeof buildAg
     `| Splits disjoint by identifier | ${report.taskDiversity.identifierDisjoint.holds ? "yes" : "no"} (${report.taskDiversity.identifierDisjoint.distinctSeeds} distinct seeds, ${report.taskDiversity.identifierDisjoint.reusedIdentifiers} reused IDs) |`,
     `| Distinct graph structures | ${report.taskDiversity.structuralDiversity.distinctStructures} |`,
     `| Test structures unseen in training | ${report.taskDiversity.structuralDiversity.testStructuresUnseenInTraining} |`,
+    `| Test structures unseen in training, ignoring benign decoys | ${report.taskDiversity.structuralDiversity.causalStructuresUnseenInTraining} |`,
     `| Objectives recurring across splits | ${report.taskDiversity.promptDiversity.objectivesSharedAcrossSplits} of ${report.taskDiversity.promptDiversity.distinctObjectives} |`,
     "",
     "## Structural transfer",

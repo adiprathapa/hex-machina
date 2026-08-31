@@ -12,6 +12,27 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 ![The agent has traced the flood path and proposed a constraint-aware repair; the review card shows all eight graph edits before anything is applied.](submission/screenshots/02-constraint-aware-patch.jpg)
 
+## Try it in two minutes
+
+Open the [live site](https://hex-machina.hex-machina.workers.dev). If you have a
+WebMCP-capable browser agent, paste this prompt into it — the same one the left
+rail offers as **Copy prompt**:
+
+> Inspect my spell and cast it. Explain why it failed, but do not change
+> anything yet. The ducks are funny, so preserve them as a sacred constraint.
+> Find the smallest repair that waters the moonflower without flooding the room,
+> show me the proposed patch, apply it, and cast the spell again.
+
+You should end at **23 / 23**, nine steps, nine of nine milestones, twelve ducks
+alive and the room dry. If you do not have a host, run the same journey from the
+**Local tool console** in the right rail — it calls the same production handlers
+— then use the **Task loader** to swap in any of the 96 generated tasks and
+watch the seven tools re-register against a graph with entirely new identifiers.
+
+Everything below is the evidence for what that journey claims. See
+[What you need to run it](#what-you-need-to-run-it) for the two host cases.
+
+
 ## Agent Gym protocol
 
 The research layer treats the live graph as an observation and the seven site tools as the action space. `createAgentGymEnvironment()` exposes deterministic `reset()` and `step({ tool, input })` operations. Every reset includes a versioned, serializable action manifest with each tool's description, JSON Schema, and read/write annotation, so an LLM runner can construct tool calls without a hand-maintained adapter. The manifest and browser WebMCP registrations are generated from the same definitions, while task-specific opaque IDs are deliberately absent from the headless manifest. Every step returns the post-action observation, scalar `reward`, Gym-style `terminated` and `truncated` flags, structured result or error, and an `info` receipt. The episode records full public before/after graph observations, stable state keys, mutation evidence, reward deltas, and reward reasons. Simulator role assignments, causal rule IDs, and answer-key route edges are excluded from reset, step, inspection, replay, JSONL, and Python observations. Invalid calls become negative-reward transitions instead of crashing a rollout; changing state before explanation loses more. Episodes truncate deterministically at 32 steps and require reset.
@@ -20,7 +41,7 @@ The on-screen Agent Gym card scores calls from both WebMCP and the local interfa
 
 The live **Task loader** can swap any of those 96 variants directly into the visible graph. Each swap resets the scored episode and patch capabilities, removes the previous WebMCP registrations, and advertises fresh rune/effect schemas before the new tools become live. An exhaustive integration test completes the nine-call, constraint-preserving journey through registered WebMCP definitions on every task; the production-browser journey additionally proves a real UI swap replaces the old seven-tool registration and renders the loaded family's failure.
 
-This is cross-rule robustness evidence—not broad agent generalization and not a training service. The default splits hold out identifiers, and the suite says so: it fingerprints every task and derives the claim a held-out score is entitled to support, rather than asserting one. For structural evidence, `npm run gym:transfer` withholds an entire family from training — a grounded policy scores 23/23 with every constraint preserved on a structure it never saw, while an otherwise identical policy that memorized the training family's vocabulary scores −1 and completes nothing.
+This is cross-rule robustness evidence—not broad agent generalization and not a training service. The default splits hold out identifiers, and the suite says so: it fingerprints every task and derives the claim a held-out score is entitled to support, rather than asserting one. For structural evidence, `npm run gym:transfer` withholds an entire family from training — a grounded policy scores 23/23 with every constraint preserved on a structure it never saw, while an otherwise identical policy that memorized the training family's vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Two of those three runs still reach the goal, which is the point: memorised vocabulary can stumble into a completion, and only the reward separates it from grounded repair.
 
 Run the reproducible baseline over every split:
 
@@ -127,7 +148,7 @@ the full write-up, including what is still unfixed. Every number regenerates:
 npm run gym:evidence      # every claim in one content-addressed document
 npm run gym:transfer      # structural holdout: train on one family, evaluate on the other
 npm run gym:constraint    # can a policy win by overruling the human?
-npm run gym:dataset && npm run gym:replay
+npm run gym:dataset && npm run gym:verify
 ```
 
 Three findings worth naming, because they changed the environment rather than
@@ -144,8 +165,10 @@ the documentation:
   but every family appears on both sides, so nothing structural was withheld.
   Holding out a whole family: a grounded policy scores 23/23 with 100% constraint
   preservation on a structure it never saw, while an otherwise identical policy
-  that memorized the training family's rune vocabulary scores −1 and completes
-  0%.
+  that memorized the training family's rune vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Holding
+  out family-01 or family-02 it still reaches the goal (2, 100% complete);
+  holding out family-03 it does not (−1, 0% complete). Regenerate with
+  `npm run gym:transfer`.
 - **The advertised tool schemas were locked to one scenario.** Rune and effect
   enums came from a hardcoded scenario at registration time, so on any other one
   the only correct arguments were schema-invalid and the two tools carrying the
@@ -196,13 +219,32 @@ Every visible action is also available through a narrow semantic tool. Tool resu
 Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
 Patch proposals include a compact minimality certificate—rank, edit count, candidate count, eligibility count, and satisfied constraints—plus a complete structured operation ledger. The human card renders that exact handler-returned ledger instead of independently rebuilding it. Preview, application, and rollback receipts repeat the same entries and summary counts, making drift detectable across the whole transaction. A visible preflight contract names the exact graph version, live edges, dormant runes, and sacred locks the proposal relies on. Before approval, the canvas ghosts proposed connections, strikes outgoing ones, and marks dormant runes that will awaken. Atomic application revalidates every precondition before cloning, then separately proves that sacred graph elements remain reachable from an active source.
 
+## What you need to run it
+
+WebMCP tools only register when the page is opened by a host that provides
+`document.modelContext`. Hosts are not broadly shipped yet, so the page states
+which case you are in rather than pretending:
+
+- **With a WebMCP-capable browser agent** — the header reads
+  `WebMCP · 7 tools registered`. Copy the prompt from the left rail, paste it
+  into the agent, and watch the canvas.
+- **In an ordinary browser** — the header reads
+  `WebMCP · 7 tools ready for a host`, which is the honest state: the
+  definitions are built and waiting, but nothing has claimed them. The whole
+  lesson is still playable, because the local tool console in the right rail
+  calls the same production handlers a visiting agent would.
+
+The screenshots, the demo video, and the browser tests all install a stand-in
+`document.modelContext` to stand in for a host. That shim only delivers the
+tool calls; every result in them comes from the production handlers.
+
 ## Judge journey
 
 ![Hex Machina failure diagnosis with the graph-native Familiar ranking](submission/screenshots/01-failure-diagnosis.jpg)
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
-The [narrated 154.4-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+The [narrated 157.4-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
 
 ## Architecture
 

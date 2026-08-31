@@ -6,6 +6,7 @@ import {
   buildAgentGymEvidence,
   renderAgentGymEvidence,
 } from "../src/eval/evidence-report.ts";
+import { readFile } from "node:fs/promises";
 
 let cached;
 async function evidence() {
@@ -109,4 +110,19 @@ test("the rendered report states each verdict a judge needs to read", async () =
   assert.ok(markdown.includes("Group-relative training data"));
   assert.ok(markdown.includes("64 groups"));
   assert.ok(!markdown.includes("FAILS"), "no claim may render as failing while the suite is green");
+});
+
+test("the checked-in evidence document matches a regeneration", async () => {
+  const checkedIn = await readFile(new URL("../submission/agent-gym-evidence.md", import.meta.url), "utf8");
+  const regenerated = renderAgentGymEvidence(await evidence());
+
+  // The document is content-addressed and the build is deterministic, so a
+  // difference means the checked-in copy is stale — which is worse than having
+  // no digest at all, because the entry's own drift tripwire then fires on a
+  // judge's first regeneration. Nothing compared these two before.
+  assert.equal(
+    checkedIn.trimEnd(),
+    regenerated.trimEnd(),
+    "run `npm run gym:evidence > submission/agent-gym-evidence.md` to refresh the checked-in evidence",
+  );
 });

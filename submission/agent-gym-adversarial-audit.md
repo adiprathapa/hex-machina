@@ -12,7 +12,7 @@ npm run gym:constraint    # constraint-preservation audit
 npm run gym:transfer      # structural holdout: train on one family, evaluate on another
 npm test                  # includes the WebMCP contract and review-card regressions
 npm run gym:dataset       # export trajectories
-npm run gym:replay        # replay every exported episode
+npm run gym:verify        # replay every exported episode through production handlers
 ```
 
 ## 1. The reward ignored the human's constraint
@@ -34,7 +34,7 @@ destructive repair stays eligible, applies it, and recasts:
 | Grounded reference | 23 / 23 | complete | goal-verified | intact |
 | Diagnose-then-overrule (before) | **20 / 23** | **complete** | **goal-verified** | **orphaned** |
 
-Twelve of twelve test scenarios, across **both** scenario families. The human's
+Sixteen of sixteen test scenarios, across all three scenario families. The human's
 constraint was worth at most the milestone an agent could simply decline to
 claim — 87% of maximum reward was recoverable by ignoring it.
 
@@ -90,8 +90,8 @@ enumerated, since that is the graph the agent can already see.
 
 ## 3. What the splits actually hold out — and holding out a structure
 
-The splits are genuinely disjoint by identifier: 72 distinct seeds, zero reused
-node or edge IDs. It is easy to read that as 72 distinct tasks.
+The splits are genuinely disjoint by identifier: 96 distinct seeds, zero reused
+node or edge IDs. It is easy to read that as 96 distinct tasks.
 
 The sharper question is whether any structure in the test split is absent from
 train. Fingerprinting each graph on everything except opaque IDs and layout —
@@ -100,15 +100,21 @@ expressed in labels — answers it directly:
 
 | Property | Measured |
 | --- | --- |
-| Scenarios | 72 across 2 families |
-| Distinct graph structures | 2 |
-| **Test structures unseen in training** | **0** |
-| Objectives recurring across splits | 8 of 8 |
+| Scenarios | 96 across 3 families |
+| Distinct graph structures | 20 |
+| Test structures unseen in training | 1 |
+| **Test structures unseen in training, ignoring benign decoys** | **0** |
+| Objectives recurring across splits | 11 of 12 |
 
-Two families give two structures, and both appear on both sides of the split.
-**More families is not the same as a held-out family.** A held-out score here is
-evidence of robustness to identifier and layout perturbation — which is real,
-and is what defeats ID memorization — not of structural generalization.
+Twenty structures now, because each variant activates a different seeded decoy
+subgraph. Exactly one test structure has a fingerprint training never saw — and
+its only novelty is which benign decoys are active, not its causal rule or its
+answer-key route. That is the same problem wearing a different coat, so the
+measurement ignores decoys when it decides what the splits hold out, and reports
+zero. **More structures is not the same as a held-out structure.** A held-out
+score here is evidence of robustness to identifier and layout perturbation —
+which is real, and is what defeats ID memorization — not of structural
+generalization.
 
 Rather than restate that caveat in prose where it can drift, the suite computes
 it and derives the claim the score is entitled to support from the number.
@@ -117,8 +123,9 @@ Then it earns the stronger claim. A **transfer protocol** withholds a whole
 scenario family: each family is held out in turn, the training pool becomes
 every other family, and evaluation runs only on the held-out family's test
 split. Families differ in topology, rune vocabulary, failure rule, and the
-identity of the protected subject — ducks flooding an observatory against
-thunderbirds shattering a glass dome — so a score here is about structure.
+identity of the protected subject — ducks flooding an observatory, thunderbirds
+shattering a glass dome, moths pollinating too early — so a score here is about
+structure.
 
 A holdout means nothing if nothing can fail it, so it runs as a contrast: the
 grounded policy against one identical in every respect except that it grounds
@@ -126,8 +133,14 @@ the protected subject by recalling a rune label from the training family.
 
 | Held out | Trained on | Grounded | Memorizing |
 | --- | --- | --- | --- |
-| family-01 | family-02 | **23 / 23, 100% complete** | **−1, 0% complete** |
-| family-02 | family-01 | **23 / 23, 100% complete** | **−1, 0% complete** |
+| family-01 | family-02, family-03 | **23 / 23, 100% complete** | **2, 100% complete** |
+| family-02 | family-01, family-03 | **23 / 23, 100% complete** | **2, 100% complete** |
+| family-03 | family-01, family-02 | **23 / 23, 100% complete** | **−1, 0% complete** |
+
+Two of the three memorizing runs still reach the goal. That is the more
+interesting result, not a weaker one: recalled vocabulary can stumble into a
+completion, so completion alone does not separate grounded repair from
+memorization. The reward does, by 21 to 24 points.
 
 Grounding transfers to a structure it never saw, at full reward, with every
 constraint preserved and zero invalid actions. Memorization does not, and is
@@ -269,9 +282,9 @@ Stated because they are real, not because they are comfortable.
 - **The default splits still hold out only identifiers.** The transfer protocol
   above holds out structure, but it is a separate evaluation; a score quoted
   from the default splits still means identifier-and-layout robustness.
-- **Two families is a small basis for a transfer claim.** Each protocol
+- **Three families is still a small basis for a transfer claim.** Each protocol
   evaluates one held-out structure. The separation is unambiguous, but it is
-  evidence from two structures, not a learning curve.
+  evidence from three structures, not a learning curve.
 - **A constraint-violating episode still terminates.** It ends as
   `constraint-violated` at a heavily penalized score rather than aborting
   mid-episode, so completion rate still needs reading alongside

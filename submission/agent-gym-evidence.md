@@ -1,13 +1,13 @@
 # Agent Gym evidence
 
-Regenerate with `npm run gym:evidence`. Digest `sha256:7f83c81f18f16ff8`.
+Regenerate with `npm run gym:evidence`. Digest `sha256:f6b7140687d1ee77`.
 
 | Claim | Verdict | Evidence |
 | --- | --- | --- |
 | Deterministic replay | holds | 96 episodes, 96 verified, 0 issues |
 | Preference integrity | holds | 64 groups, 64 verified, 5 policies and 10 pairs per group |
 | Held-out grounding | holds | 96/96 complete, mean score 23 |
-| Task diversity | measured | 96 scenarios, 20 distinct structure(s), held out: structural |
+| Task diversity | measured | 96 scenarios, 20 distinct structure(s), held out: identifier-and-layout |
 | Reward separation | holds | grounded-reference 23, mutate-before-explain 18, diagnosis-only 6, constraint-violating 4, memorized-canonical-ids -8 |
 | Structural transfer | holds | hold out family-01-v1: grounded 23 vs memorizing 2, hold out family-02-v1: grounded 23 vs memorizing 2, hold out family-03-v1: grounded 23 vs memorizing -1 |
 | Constraint preservation | holds | train priced (grounded 23 vs violating 4), validation priced (grounded 23 vs violating 4), test priced (grounded 23 vs violating 4) |
@@ -24,7 +24,7 @@ Regenerate with `npm run gym:evidence`. Digest `sha256:7f83c81f18f16ff8`.
 
 ## Group-relative training data
 
-The train split contains 64 independently reset task groups. Each group reruns the five policies above against one shared task and emits all 10 strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as `sha256:3075be06cb7a5936` (16869028 bytes).
+The train split contains 64 independently reset task groups. Each group reruns the five policies above against one shared task and emits all 10 strict chosen/rejected comparisons. The complete JSONL artifact is content-addressed as `sha256:4b3e2d22546fb30e` (17118692 bytes).
 
 | Ranked rewards | Centered advantages | Constraint-violating policies | Verified groups | Issues |
 | --- | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ The train split contains 64 independently reset task groups. Each group reruns t
 
 ## What the default splits hold out
 
-Held-out scores are evidence of generalization to graph structures the training split never contained.
+Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out.
 
 For structural evidence, see the transfer protocol below, which withholds an entire scenario family.
 
@@ -42,6 +42,7 @@ For structural evidence, see the transfer protocol below, which withholds an ent
 | Splits disjoint by identifier | yes (96 distinct seeds, 0 reused IDs) |
 | Distinct graph structures | 20 |
 | Test structures unseen in training | 1 |
+| Test structures unseen in training, ignoring benign decoys | 0 |
 | Objectives recurring across splits | 11 of 12 |
 
 ## Structural transfer
