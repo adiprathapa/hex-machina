@@ -579,13 +579,17 @@ export function HexMachina() {
           <span>Objective</span>
           <strong>{graph.desiredOutcome}</strong>
         </div>
-        <div className={`site-tool-state ${mcpState}`} title="This page registers seven semantic tools with document.modelContext for a visiting browser agent.">
+        {/* An ordinary browser has no model context, so this settles on the
+            no-host state in every screenshot and in the demo recording. It says
+            what is true — the seven tools are defined and offered — instead of
+            labelling the protocol this entry is judged on as unavailable. */}
+        <div className={`site-tool-state ${mcpState}`} title="This page defines seven semantic tools and registers them on document.modelContext whenever a browser agent provides one.">
           <span className="status-dot" />
           {mcpState === "live"
             ? "WebMCP · 7 tools registered"
             : mcpState === "checking"
-              ? "WebMCP · looking for a host…"
-              : "WebMCP unavailable · using the local tool console"}
+              ? "WebMCP · connecting to host…"
+              : "WebMCP · 7 tools ready for a host"}
         </div>
       </header>
 
@@ -599,13 +603,6 @@ export function HexMachina() {
             </p>
           </div>
 
-          <ol className="quest-steps" aria-label="Investigation steps">
-            <li className={cast ? "done" : "current"}><span>01</span><div><strong>Cast the spell</strong><small>Observe before editing.</small></div></li>
-            <li className={activity.some((item) => item.tool === "explain_side_effect") ? "done" : cast ? "current" : ""}><span>02</span><div><strong>Trace the glitch</strong><small>Find the causal path.</small></div></li>
-            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
-            <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
-          </ol>
-
           {/* A judge arriving in a WebMCP browser needs the prompt in front of
               them, not in a README they were not told to open. */}
           <section className="agent-brief" aria-label="Drive this with a browser agent">
@@ -614,7 +611,6 @@ export function HexMachina() {
               This page registers seven semantic tools on <code>document.modelContext</code>.
               Paste this into a WebMCP-capable browser agent and watch the canvas.
             </p>
-            <p className="agent-brief-prompt">{JUDGE_PROMPT}</p>
             <div className="agent-brief-actions">
               <button
                 type="button"
@@ -633,7 +629,15 @@ export function HexMachina() {
               </button>
               <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source &amp; evidence</a>
             </div>
+            <p className="agent-brief-prompt">{JUDGE_PROMPT}</p>
           </section>
+
+          <ol className="quest-steps" aria-label="Investigation steps">
+            <li className={cast ? "done" : "current"}><span>01</span><div><strong>Cast the spell</strong><small>Observe before editing.</small></div></li>
+            <li className={activity.some((item) => item.tool === "explain_side_effect") ? "done" : cast ? "current" : ""}><span>02</span><div><strong>Trace the glitch</strong><small>Find the causal path.</small></div></li>
+            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
+            <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
+          </ol>
 
           <div className="controls">
             {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}

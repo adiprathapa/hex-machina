@@ -36,6 +36,13 @@
   --success-wash: rgba(50, 164, 103, .16);
   --failure-wash: rgba(205, 66, 70, .16);
 
+  /* Intent colours legible enough to set text in. The mid-tone versions above
+     carry meaning in borders and fills; used as type on a near-black ground
+     they measure near 2.7:1, so text takes the lighter step. */
+  --ember-text: #ff9d9f;
+  --aqua-text: #7fd8a8;
+  --blue-text: #8abbff;
+
   /* Geometry. Blueprint moved to 2px because at operator density a large
      radius reads as a consumer card rather than a panel. */
   --radius: 2px;
@@ -181,6 +188,7 @@ summary:focus-visible {
 .status-dot {
   width: 7px;
   height: 7px;
+  border-radius: 999px;
   background: var(--line-strong);
 }
 
@@ -221,7 +229,6 @@ summary:focus-visible {
   padding: 12px 18px 0;
   overflow-y: auto;
   scrollbar-width: thin;
-  scroll-padding-bottom: 160px;
 }
 
 .brief-panel > :last-child {
@@ -315,14 +322,9 @@ summary:focus-visible {
 }
 
 .controls {
-  position: sticky;
-  z-index: 3;
-  bottom: 0;
   display: grid;
   gap: 7px;
-  margin-top: auto;
-  padding: 24px 0 12px;
-  background: var(--paper);
+  padding: 18px 0 12px;
 }
 
 .controls button {
@@ -365,7 +367,7 @@ summary:focus-visible {
 
 .controls .quiet:hover {
   border-color: var(--blue);
-  color: var(--blue-dark);
+  color: var(--blue-text);
 }
 
 kbd {
@@ -396,7 +398,7 @@ kbd {
 }
 
 .agent-brief-prompt {
-  margin: 0 0 8px;
+  margin: 8px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--blue-dark);
   background: var(--panel-raised);
@@ -500,7 +502,7 @@ kbd {
 
 .cast-state.danger {
   border-color: var(--ember);
-  color: #8f3825;
+  color: var(--ember);
   background: var(--failure-wash);
 }
 
@@ -509,8 +511,8 @@ kbd {
 }
 
 .cast-state.success {
-  border-color: #9ac8b2;
-  color: #1f664b;
+  border-color: var(--aqua);
+  color: var(--aqua);
   background: var(--success-wash);
 }
 
@@ -882,16 +884,19 @@ kbd {
 
 .vision-symbol {
   flex: none;
-  padding: 3px 9px;
+  padding: 3px 10px;
+  border: 1px solid var(--ember);
   border-radius: 999px;
-  background: var(--ember);
-  color: var(--ink);
+  background: var(--failure-wash);
+  color: var(--ember-text);
   font-size: 11px;
   font-weight: 600;
 }
 
 .vision-success .vision-symbol {
-  background: var(--aqua);
+  border-color: var(--aqua);
+  background: var(--success-wash);
+  color: var(--aqua-text);
 }
 
 .cast-vision strong {
@@ -1001,8 +1006,9 @@ kbd {
 
 .confirm-link {
   border-color: var(--aqua) !important;
-  background: var(--aqua);
-  color: var(--ink);
+  border-color: var(--aqua);
+  background: var(--success-wash);
+  color: var(--aqua);
   font-weight: 600;
 }
 
@@ -1208,8 +1214,9 @@ kbd {
 
 .patch-apply {
   border: 1px solid var(--aqua);
-  background: var(--aqua);
-  color: var(--ink);
+  border-color: var(--aqua);
+  background: var(--success-wash);
+  color: var(--aqua);
 }
 
 .patch-actions button:active {
@@ -1381,8 +1388,6 @@ kbd {
 
 .gym-foot button {
   flex: none;
-  max-width: 46%;
-  line-height: 1.3;
 }
 
 .agent-gym h3 {
@@ -1394,9 +1399,10 @@ kbd {
 .agent-gym-heading > span {
   padding: 4px 6px;
   border: 1px solid var(--line-strong);
-  color: var(--blue-dark);
+  color: var(--blue-text);
   background: var(--panel-raised);
-  font: 600 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  border-radius: var(--radius);
+  font: 600 11px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .agent-gym-heading > span.complete {
@@ -1412,8 +1418,8 @@ kbd {
 }
 
 .gym-score strong {
-  color: var(--blue-dark);
-  font: 600 20px/1 var(--font-fira-code), monospace;
+  color: var(--blue-text);
+  font: 600 clamp(20px, 1.4vw, 26px)/1 var(--font-fira-code), monospace;
 }
 
 .gym-score strong small,
@@ -1486,15 +1492,21 @@ kbd {
 }
 
 .gym-foot button {
-  min-height: 36px;
-  padding: 0 9px;
-  border: 1px solid var(--blue);
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  color: var(--blue-dark);
+  color: var(--blue-text);
   background: var(--panel-raised);
   cursor: pointer;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.gym-foot button:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: var(--ink);
 }
 
 .gym-foot button:disabled {
@@ -1752,7 +1764,7 @@ kbd {
   padding: 10px;
   overflow: auto;
   border: 1px solid var(--line);
-  color: #355063;
+  color: var(--muted);
   background: var(--panel);
   font: 500 10px/1.5 var(--font-fira-code), monospace;
   white-space: pre-wrap;
@@ -1803,7 +1815,7 @@ kbd {
     border-top: 1px solid var(--line);
     border-left: 0;
   }
-  .site-tool-state { font-size: 0; }
+  .site-tool-state { font-size: 10px; }
   .workspace { display: flex; flex-direction: column; }
   .brief-panel { border-right: 0; padding: 18px 4px; }
   .brief-panel h2,
