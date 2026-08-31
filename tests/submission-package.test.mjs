@@ -90,7 +90,9 @@ test("release evidence records local proof and never overclaims an external gate
   assert.match(evidence.project.first_commit, /^[a-f0-9]{7,40}$/);
   assert.ok(Date.parse(evidence.project.first_commit_at) >= Date.parse("2026-08-25T11:00:00-07:00"));
   assert.equal(evidence.devpost.copy_ready, true);
-  assert.equal(evidence.video.duration_seconds, 75);
+  // The challenge caps the demo at under three minutes; the exact length is a
+  // production choice, so the evidence is checked against the rule.
+  assert.ok(evidence.video.duration_seconds > 20 && evidence.video.duration_seconds < 180);
   assert.equal(evidence.video.has_audio, true);
   assert.ok((await stat(path.join(ROOT, evidence.video.local_path))).size > 500_000);
   // Release fields are checked for consistency rather than pinned to the

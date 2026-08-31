@@ -1,13 +1,27 @@
-Hex Machina is an agent evaluation environment disguised as a cooperative spell debugger. Its executable graph is shared by a person and their browser agent.
+This is Hex Machina. It is a debugger for executable graphs, and a browser agent is about to drive it through seven WebMCP tools.
 
-This spell should water a rare Moonflower. Instead, Multiply runs before rain has a bounded target. Twelve lunar ducks flood the observatory.
+The page registers those tools on document dot modelContext. Everything you are about to see is the agent calling them. Nobody is clicking.
 
-Moth suggests suspicious runes, while WebMCP tools inspect exact graph state and trace the responsible path. The deterministic simulator remains authoritative.
+First it inspects the live graph, then it casts the spell. The spell is supposed to water a moonflower. Instead, twelve summoned ducks flood the observatory.
 
-Then the person contributes something the graph cannot know: taste. The ducks are funny, so they become a sacred constraint. Deleting them is no longer valid.
+Now it traces the effect. This is a bounded graph traversal, not a guess: it returns the ordered causal path and every edge responsible for it.
 
-The agent ranks bounded rewrites under that constraint. The eight-edit umbrella route is the only eligible candidate, and changes nothing until the person approves.
+Then it proves the diagnosis. The explanation returns the smallest responsible subgraph, and a counterfactual check showing each of those edges is necessary.
 
-After approval, the application proves sacred reachability and applies the patch atomically. Umbrella and Bloom activate. A new cast returns Stable, with the room dry and all twelve sacred ducks preserved.
+Here is the part that matters. A human says something the graph cannot infer: the ducks are funny, they stay. That becomes an executable constraint.
 
-Three causal rules and ninety-six variants separate grounded agents from unsafe shortcuts. Hex Machina turns a magical game into a deterministic gym.
+Watch what it changes. The cheapest repair deletes the duck branch entirely. With the constraint locked, that repair is no longer eligible, so the agent ranks a longer one instead.
+
+Before anything is applied, the human sees the exact operation ledger the agent received. Eight graph edits, what is preserved, and what the repair gives up.
+
+The patch is simulated first, without touching editor state. Then applied atomically, with preconditions revalidated at the moment of the write.
+
+The recast succeeds. All twelve ducks survive, they carry umbrellas, the room stays dry, and the moonflower blooms. The human's preference changed the solution, not just the score.
+
+One more thing, because a polished demo invites one question: is this on rails.
+
+The evaluation layer generates ninety six tasks across three different causal rules. Let me load a held out one, from a rule this run has never seen.
+
+Every rune, edge and effect identifier is freshly remapped. Nothing here was memorised. The same seven tools inspect it, cast it, trace it, and explain it.
+
+That is the claim. Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.

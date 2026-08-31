@@ -12,12 +12,7 @@
             "codec_type": "video",
             "width": 1920,
             "height": 1080,
-            "r_frame_rate": "30/1",
-            "side_data_list": [
-                {
-
-                }
-            ]
+            "r_frame_rate": "30/1"
         },
         {
             "index": 1,
@@ -27,7 +22,7 @@
         }
     ],
     "format": {
-        "duration": "75.000000",
-        "size": "2870771"
+        "duration": "154.433333",
+        "size": "12304650"
     }
 }

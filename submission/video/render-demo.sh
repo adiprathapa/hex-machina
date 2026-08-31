@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Renders the demo as a narrated screencast of a browser agent driving the seven
+# WebMCP tools. The earlier version concatenated three static screenshots, which
+# never showed a tool being called — the entire claim — and the challenge rules
+# let judges score a submission from the video alone.
+#
+# Requires a running instance. Point at it with HEX_MACHINA_DEMO_URL; defaults
+# to the local dev server.
+
 VIDEO_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$VIDEO_DIR/../.." && pwd)"
 VIDEO_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hex-machina-video.XXXXXX")"
@@ -9,33 +17,38 @@ trap 'rm -rf -- "$VIDEO_TMP_DIR"' EXIT
 VOICE="${HEX_MACHINA_VOICE:-Samantha}"
 NARRATION="$VIDEO_DIR/narration.txt"
 OUTPUT="$VIDEO_DIR/hex-machina-demo.mp4"
+DEMO_URL="${HEX_MACHINA_DEMO_URL:-http://localhost:4321/}"
 
 command -v ffmpeg >/dev/null
 command -v ffprobe >/dev/null
 command -v say >/dev/null
 
-say -v "$VOICE" -r 145 -f "$NARRATION" -o "$VIDEO_TMP_DIR/narration.aiff"
+say -v "$VOICE" -r 150 -f "$NARRATION" -o "$VIDEO_TMP_DIR/narration.aiff"
 NARRATION_SECONDS="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VIDEO_TMP_DIR/narration.aiff")"
-if ! awk -v duration="$NARRATION_SECONDS" 'BEGIN { exit !(duration <= 74) }'; then
-  printf 'Narration is %0.1f seconds; shorten it below 74 seconds to preserve the ending.\n' "$NARRATION_SECONDS" >&2
+
+# The challenge caps the demo under three minutes; leave headroom for the tail.
+if ! awk -v duration="$NARRATION_SECONDS" 'BEGIN { exit !(duration <= 165) }'; then
+  printf 'Narration is %0.1f seconds; shorten it below 165 seconds to stay under the cap.\n' "$NARRATION_SECONDS" >&2
   exit 1
 fi
 
-ffmpeg -hide_banner -loglevel warning -y \
-  -loop 1 -t 25 -i "$PROJECT_DIR/submission/screenshots/01-failure-diagnosis.jpg" \
-  -loop 1 -t 25 -i "$PROJECT_DIR/submission/screenshots/02-constraint-aware-patch.jpg" \
-  -loop 1 -t 25 -i "$PROJECT_DIR/submission/screenshots/03-successful-recast.jpg" \
+DEMO_VIDEO_DIR="$VIDEO_TMP_DIR/screencast"
+export DEMO_VIDEO_DIR
+mkdir -p "$DEMO_VIDEO_DIR"
+
+( cd "$PROJECT_DIR" && npx tsx "$VIDEO_DIR/record-screencast.mjs" "$DEMO_URL" )
+SCREENCAST="$(find "$DEMO_VIDEO_DIR" -name '*.webm' | head -1)"
+[ -n "$SCREENCAST" ] || { printf 'No screencast was recorded.\n' >&2; exit 1; }
+
+ffmpeg -hide_banner -loglevel error -y \
+  -i "$SCREENCAST" \
   -i "$VIDEO_TMP_DIR/narration.aiff" \
   -filter_complex \
-    "[0:v]scale=1920:1080,setsar=1,format=yuv420p[v0]; \
-     [1:v]scale=1920:1080,setsar=1,format=yuv420p[v1]; \
-     [2:v]scale=1920:1080,setsar=1,format=yuv420p[v2]; \
-     [v0][v1][v2]concat=n=3:v=1:a=0[v]; \
-     [3:a]volume=1.0,afade=t=out:st=71.2:d=0.5,apad=whole_dur=75[a]" \
-  -map "[v]" -map "[a]" \
-  -t 75 -r 30 \
-  -c:v libx264 -preset medium -crf 21 -profile:v high -level 4.1 \
-  -c:a aac -b:a 96k \
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=#0c0c0d,setsar=1,format=yuv420p[v]; \
+     [1:a]volume=1.0,adelay=1500|1500,apad[a]" \
+  -map "[v]" -map "[a]" -shortest -r 30 \
+  -c:v libx264 -preset slow -crf 20 -profile:v high -level 4.1 \
+  -c:a aac -b:a 128k \
   -movflags +faststart \
   "$OUTPUT"
 

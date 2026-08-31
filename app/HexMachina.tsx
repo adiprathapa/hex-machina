@@ -571,15 +571,6 @@ export function HexMachina() {
             <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
           </ol>
 
-          <div className="controls">
-            {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}
-            {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
-            {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectSubject}>{story.protect}</button>}
-            {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
-            {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
-            <button className="quiet" onClick={reset}>Reset lesson</button>
-          </div>
-
           {/* A judge arriving in a WebMCP browser needs the prompt in front of
               them, not in a README they were not told to open. */}
           <section className="agent-brief" aria-label="Drive this with a browser agent">
@@ -609,71 +600,20 @@ export function HexMachina() {
             </div>
           </section>
 
+          <div className="controls">
+            {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}
+            {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
+            {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectSubject}>{story.protect}</button>}
+            {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
+            {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
+            <button className="quiet" onClick={reset}>Reset lesson</button>
+          </div>
+
           <blockquote className={isSacred ? "wish active" : "wish"}>
             <span>Human intent</span>
             {`“${constraintText}”`}
           </blockquote>
 
-          {/* Loading a held-out task is the fastest way to show this is not a
-              scripted demo: every rune, edge and effect ID is remapped, and the
-              same seven tools still solve it. */}
-          <details className="tool-console scenario-lab">
-            <summary>
-              <span>
-                <strong>Task loader</strong>
-                <small>96 held-out variants · 3 causal rules</small>
-              </span>
-              <span aria-hidden="true">⌄</span>
-            </summary>
-            <p>
-              Swap the live workspace for any generated task. Identifiers are opaque and
-              remapped per task, so nothing here is memorised from the lesson above.
-            </p>
-            <div className="lab-controls">
-              <label>
-                Rule
-                <select
-                  aria-label="Causal family"
-                  value={labFamily}
-                  onChange={(event) => { setLabFamily(event.target.value as AgentGymFamilyId); setLabIndex(0); }}
-                >
-                  {familyIds.map((id) => (
-                    <option key={id} value={id}>{STORY[FAMILY_RULE[id]]?.lesson ?? id}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Split
-                <select
-                  aria-label="Evaluation split"
-                  value={labSplit}
-                  onChange={(event) => { setLabSplit(event.target.value as AgentGymSplit); setLabIndex(0); }}
-                >
-                  <option value="train">train</option>
-                  <option value="validation">validation</option>
-                  <option value="test">test (held out)</option>
-                </select>
-              </label>
-              <label>
-                Task
-                <select aria-label="Task index" value={labIndex} onChange={(event) => setLabIndex(Number(event.target.value))}>
-                  {Array.from({ length: AGENT_GYM_FAMILY_SPLIT_SIZES[labFamily][labSplit] }, (_, index) => (
-                    <option key={index} value={index}>{String(index).padStart(2, "0")}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="lab-actions">
-              <button type="button" className="quiet" onClick={loadRandomTask}>Surprise me</button>
-              <button type="button" className="primary" onClick={() => loadTask(labFamily, labSplit, labIndex)}>Load task</button>
-            </div>
-            {variant && (
-              <div className="lab-loaded">
-                <code>{variant.scenarioId}</code>
-                <small>seed {variant.seed} · protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
-              </div>
-            )}
-          </details>
         </aside>
 
         <section className="canvas-panel panel" aria-label="Executable spell graph">
@@ -965,6 +905,67 @@ export function HexMachina() {
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
             ))}
           </div>
+
+          {/* Loading a held-out task is the fastest way to show this is not a
+              scripted demo: every rune, edge and effect ID is remapped, and the
+              same seven tools still solve it. */}
+          <details className="tool-console scenario-lab">
+            <summary>
+              <span>
+                <strong>Task loader</strong>
+                <small>96 held-out variants · 3 causal rules</small>
+              </span>
+              <span aria-hidden="true">⌄</span>
+            </summary>
+            <p>
+              Swap the live workspace for any generated task. Identifiers are opaque and
+              remapped per task, so nothing here is memorised from the lesson above.
+            </p>
+            <div className="lab-controls">
+              <label>
+                Rule
+                <select
+                  aria-label="Causal family"
+                  value={labFamily}
+                  onChange={(event) => { setLabFamily(event.target.value as AgentGymFamilyId); setLabIndex(0); }}
+                >
+                  {familyIds.map((id) => (
+                    <option key={id} value={id}>{STORY[FAMILY_RULE[id]]?.lesson ?? id}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Split
+                <select
+                  aria-label="Evaluation split"
+                  value={labSplit}
+                  onChange={(event) => { setLabSplit(event.target.value as AgentGymSplit); setLabIndex(0); }}
+                >
+                  <option value="train">train</option>
+                  <option value="validation">validation</option>
+                  <option value="test">test (held out)</option>
+                </select>
+              </label>
+              <label>
+                Task
+                <select aria-label="Task index" value={labIndex} onChange={(event) => setLabIndex(Number(event.target.value))}>
+                  {Array.from({ length: AGENT_GYM_FAMILY_SPLIT_SIZES[labFamily][labSplit] }, (_, index) => (
+                    <option key={index} value={index}>{String(index).padStart(2, "0")}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="lab-actions">
+              <button type="button" className="quiet" onClick={loadRandomTask}>Surprise me</button>
+              <button type="button" className="primary" onClick={() => loadTask(labFamily, labSplit, labIndex)}>Load task</button>
+            </div>
+            {variant && (
+              <div className="lab-loaded">
+                <code>{variant.scenarioId}</code>
+                <small>seed {variant.seed} · protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
+              </div>
+            )}
+          </details>
 
           <details className="tool-console">
             <summary>

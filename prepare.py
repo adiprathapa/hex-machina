@@ -146,7 +146,7 @@ def demo_video_check() -> Check:
         (
             b"ftyp" in header,
             size >= 500_000,
-            74.9 <= duration <= 75.1,
+            20.0 <= duration < 180.0,
             video_stream is not None,
             audio_stream is not None,
             video_stream is not None and video_stream.get("codec_name") == "h264",
@@ -230,8 +230,9 @@ def release_evidence_checks(require_external: bool) -> list[Check]:
             local_problems.append("challenge-period provenance is not recorded")
         if devpost.get("copy_ready") is not True or not (ROOT / devpost.get("copy_path", "")).is_file():
             local_problems.append("Devpost copy is not ready")
-        if video.get("duration_seconds") != 75 or video.get("has_audio") is not True:
-            local_problems.append("local demo evidence is not a 75-second video with audio")
+        duration_seconds = video.get("duration_seconds")
+        if not isinstance(duration_seconds, (int, float)) or not (20 <= duration_seconds < 180) or video.get("has_audio") is not True:
+            local_problems.append("local demo evidence is not a narrated video under the three-minute cap")
         if not local_video.is_file() or local_video.stat().st_size < 500_000:
             local_problems.append("local demo video is missing or too small")
     except (OSError, KeyError, TypeError, json.JSONDecodeError) as error:
