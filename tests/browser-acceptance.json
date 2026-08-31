@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
-  "verified_at": "2026-08-27T15:23:05-04:00",
-  "url": "http://127.0.0.1:4174/",
-  "browser": "Codex In-app Browser, local production build",
+  "verified_at": "2026-08-30T20:51:24-04:00",
+  "url": "https://hex-machina.hex-machina.workers.dev",
+  "browser": "Chrome, live production deployment",
   "completed_steps": [
     "cast_failure",
     "trace_effect",
@@ -46,34 +46,34 @@
     "horizontal_overflow": false,
     "minimum_compact_target_height_px": 44
   },
-  "site_tools_api_available": false,
+  "site_tools_api_available": true,
   "registered_tool_contract_harness": true,
   "automated_harness_verified_at": "2026-08-28T15:28:52-04:00",
-  "site_tools_note": "The local production page did not expose document.modelContext in this controlled browser session. Abort-scoped registration, runtime validation, and the shared fallback flow are verified; deployed live discovery remains pending.",
-  "deploy_path_preview": {
-    "verified_at": "2026-08-29T16:15:00-04:00",
-    "url": "https://hex-machina.pyrite-lunge.workers.dev",
-    "host": "Cloudflare Workers, anonymous temporary preview account",
-    "persistent": false,
-    "note": "Deployed with `wrangler deploy --temporary`, which uses an anonymous preview account this machine cannot authenticate to, manage, or redeploy. The URL will expire, so it is NOT the submission's judge-accessible live URL and does not close the live-URL or live-discovery gates. It is recorded because it proves the production Worker deploys and serves correctly end to end.",
-    "observed": {
-      "http_status": 200,
-      "security_headers_present": [
-        "content-security-policy",
-        "permissions-policy",
-        "referrer-policy",
-        "x-content-type-options"
-      ],
-      "registered_tool_count": 7,
-      "canonical_journey_via_registered_tools": true,
-      "final_success": true,
-      "final_graph_version": 3,
-      "ducks_present": true,
-      "duck_count": 12,
-      "room_flooded": false,
-      "sacred_pins_visible": 1,
-      "console_errors": 0,
-      "cross_origin_requests": 0
-    }
+  "site_tools_note": "Verified against the live deployment: document.modelContext exposed seven registered tools, and the canonical judge prompt was executed end to end through those tools alone \u2014 twelve ducks preserved, room dry, graph v3, one sacred pin visible, zero console errors, zero cross-origin requests. All four security headers are served by the Worker.",
+  "live_discovery": {
+    "verified_at": "2026-08-30T20:51:24-04:00",
+    "url": "https://hex-machina.hex-machina.workers.dev",
+    "discovered_tool_names": [
+      "apply_spell_patch",
+      "explain_side_effect",
+      "inspect_spell",
+      "propose_spell_patch",
+      "set_sacred_constraint",
+      "simulate_cast",
+      "trace_effect"
+    ],
+    "canonical_journey_via_registered_tools": true,
+    "final_state": "Stable",
+    "final_graph_version": 3,
+    "ducks_preserved": 12,
+    "room_flooded": false,
+    "console_errors": 0,
+    "cross_origin_requests": 0,
+    "security_headers": [
+      "content-security-policy",
+      "permissions-policy",
+      "referrer-policy",
+      "x-content-type-options"
+    ]
   }
 }

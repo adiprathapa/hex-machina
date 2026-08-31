@@ -13,10 +13,12 @@
   },
   "site": {
     "sites_project_configured": true,
-    "access_before_release": "custom_owner_only",
-    "saved_versions": 0,
-    "live_url": null,
-    "webmcp_discovered_live": false
+    "access_before_release": "public",
+    "saved_versions": 1,
+    "live_url": "https://hex-machina.hex-machina.workers.dev",
+    "webmcp_discovered_live": true,
+    "host": "Cloudflare Workers (account: aprathapa01@gmail.com)",
+    "deployed_at": "2026-08-30T20:51:24-04:00"
   },
   "repository": {
     "url": "https://github.com/adiprathapa/hex-machina",

@@ -1,5 +1,7 @@
 # Hex Machina
 
+**Live: <https://hex-machina.hex-machina.workers.dev>**
+
 **Magic is just code with worse documentation.**
 
 > An agent-training environment disguised as a graph-native spell game.

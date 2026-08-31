@@ -32,14 +32,13 @@ The existing **Hex Machina** Sites project is active with custom owner-only acce
 The repository gate is closed: `main` is public under MIT at
 <https://github.com/adiprathapa/hex-machina>, and it is the source of truth.
 
-Three gates remain, and each needs an authenticated session this checkout does
-not have:
+One gate remains:
 
 | Gate | Blocked on | Records into |
 | --- | --- | --- |
-| Live URL | Saving and deploying a Sites version with public access | `site.live_url` |
+| ~~Live URL~~ | **Done 2026-08-30:** deployed to Cloudflare Workers at <https://hex-machina.hex-machina.workers.dev> | `site.live_url` |
 | Public demo | Uploading the existing 75-second MP4 to YouTube as public | `video.public_youtube_url` |
-| Live discovery | Running the canonical judge prompt against the live URL in a WebMCP-capable browser | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
+| ~~Live discovery~~ | **Done 2026-08-30:** seven tools discovered live; canonical prompt executed end to end through them | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
 
 The build is already deploy-shaped: `npm run test:deployment` validates the
 Worker entry, hashed client assets, hosting metadata, social metadata, and a

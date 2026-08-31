@@ -128,7 +128,7 @@ The app turns graph debugging into magical comedy without reducing WebMCP to a n
 
 ## How to test
 
-1. Open the live URL in ChatGPT’s in-app browser or WebMCP-enabled Chrome.
+1. Open <https://hex-machina.hex-machina.workers.dev> in ChatGPT’s in-app browser or WebMCP-enabled Chrome.
 2. Reset the lesson if it is not at graph v1.
 3. Give the browser agent this exact prompt:
 
