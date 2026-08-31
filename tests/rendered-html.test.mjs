@@ -16,13 +16,14 @@ function contrastRatio(foreground, background) {
 }
 
 test("ships Hex Machina instead of the starter preview", async () => {
-  const [page, layout, client, packageJson, css, policy] = await Promise.all([
+  const [page, layout, client, packageJson, css, policy, scenario] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/HexMachina.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../src/eval/policy-benchmark.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/scenarios/moonflower.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /<HexMachina \/>/);
@@ -37,7 +38,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(css, /var\(--font-fira-code\)/);
   assert.doesNotMatch(`${layout}\n${css}`, /Poppins|font-poppins/);
   assert.doesNotMatch(`${layout}\n${css}`, /font-geist/);
-  assert.match(client, /Water the moonflower/);
+  // The objective and the human constraint are rendered from the loaded task
+  // rather than written into the markup, so a held-out variant describes itself
+  // instead of narrating the canonical lesson.
+  assert.match(client, /\{graph\.desiredOutcome\}/);
+  assert.match(client, /constraintText/);
+  assert.match(client, /graph\.semantics\.effectId/);
+  assert.match(client, /graph\.semantics\.roles\.subject/);
+  assert.doesNotMatch(client, /"summon-ducks"|"flooded-observatory"/);
+  assert.match(scenario, /Water the moonflower/);
   assert.match(client, /The ducks are funny\. They stay\./);
   assert.match(client, /Drag runes to rearrange/);
   assert.match(client, /dragOffsetRef/);

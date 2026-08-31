@@ -1577,6 +1577,89 @@ kbd {
   font-size: 9px;
 }
 
+.lab-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.lab-controls label {
+  display: grid;
+  gap: 3px;
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.lab-controls label:first-child {
+  grid-column: 1 / -1;
+}
+
+.lab-controls select {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--ink);
+  font-size: 11px;
+}
+
+.lab-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.lab-actions button {
+  min-height: 32px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.lab-actions .primary {
+  border: 1px solid var(--blue-dark);
+  background: var(--blue-wash);
+  color: var(--acid);
+}
+
+.lab-actions .primary:hover {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+.lab-actions .quiet {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--muted);
+}
+
+.lab-actions .quiet:hover {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+.lab-loaded {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.lab-loaded code {
+  color: var(--acid);
+  font: 500 11px/1 var(--font-fira-code), monospace;
+}
+
+.lab-loaded small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
 .tool-console pre {
   max-height: 210px;
   margin: 0;

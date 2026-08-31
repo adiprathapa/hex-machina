@@ -30,7 +30,10 @@ test("production worker renders the complete playable shell", async () => {
   const html = await response.text();
   assert.match(html, /<title>Hex Machina \| Cooperative Spell Debugging<\/title>/i);
   assert.match(html, /The overenthusiastic rain spell/);
-  assert.match(html, /Water the moonflower\. Keep the room dry\./);
+  // The objective is rendered from the loaded task's own graph rather than
+  // written into the markup, so the shell shows the canonical scenario's
+  // desiredOutcome verbatim.
+  assert.match(html, /Water the moonflower without flooding the room\./);
   assert.match(html, /Cast spell/);
   assert.match(html, /Executable spell graph/);
   assert.match(html, /Local spell console/);

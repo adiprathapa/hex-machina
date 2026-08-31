@@ -16,6 +16,14 @@ import {
 } from "@/src/eval/agent-gym";
 import { AGENT_GYM_POLICY_BASELINES } from "@/src/eval/policy-benchmark";
 import { createMoonflowerScenario } from "@/src/scenarios/moonflower";
+import {
+  AGENT_GYM_FAMILY_SPLIT_SIZES,
+  generateAgentGymScenarioForFamily,
+  sampleAgentGymTask,
+  type AgentGymFamilyId,
+  type AgentGymScenarioVariant,
+  type AgentGymSplit,
+} from "@/src/scenarios/agent-gym-family";
 import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
@@ -76,6 +84,61 @@ const kindLabel: Record<RuneNode["kind"], string> = {
   sink: "Outcome",
 };
 
+const DEFAULT_CONSTRAINT = "The ducks are funny. They stay.";
+
+const familyIds = Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
+
+/** Which causal rule each family generates, for labelling the picker. */
+const FAMILY_RULE: Record<string, string> = {
+  "family-01-v1": "unshielded-amplified-carrier",
+  "family-02-v1": "resonant-feedback-cycle",
+  "family-03-v1": "unguarded-premature-action",
+};
+
+/**
+ * Per-rule narration. The graph carries its own objective and constraint, but
+ * the framing copy has to change with the family or the interface describes a
+ * flood while the agent is repairing a feedback loop.
+ */
+const STORY: Record<string, {
+  lesson: string; title: string; lede: string; canvas: string;
+  failure: string; success: string; read: string; nameStep: string; protect: string;
+}> = {
+  "unshielded-amplified-carrier": {
+    lesson: "Family 01 · amplified carrier",
+    title: "The overenthusiastic rain spell",
+    lede: "This spell is almost right. Cast it, find the unstable path, then repair it without losing what you love.",
+    canvas: "Rain for a moonflower",
+    failure: "Twelve ducks. One indoor lake.",
+    success: "The moonflower blooms",
+    read: "I can see the flood path. Tell me what must survive before I touch the spell.",
+    nameStep: "The ducks must remain.",
+    protect: "Protect the ducks",
+  },
+  "resonant-feedback-cycle": {
+    lesson: "Family 02 · resonant feedback",
+    title: "The spell that will not stop singing",
+    lede: "A note feeds itself. Cast it, find the cycle that keeps it alive, then break it without silencing the choir.",
+    canvas: "Harmony for a glass dome",
+    failure: "Seven thunderbirds. One shattered dome.",
+    success: "The bell rings true",
+    read: "The signal is feeding itself. Tell me what must survive before I touch the spell.",
+    nameStep: "The choir must remain.",
+    protect: "Protect the choir",
+  },
+  "unguarded-premature-action": {
+    lesson: "Family 03 · missing temporal guard",
+    title: "The spell that acts too early",
+    lede: "Everything here is correct except its timing. Cast it, find the missing guard, then add it without cutting anything out.",
+    canvas: "Pollination on a clock",
+    failure: "Nine moths. Nothing in bloom.",
+    success: "The orchard keeps time",
+    read: "It acts before it is allowed to. Tell me what must survive before I touch the spell.",
+    nameStep: "The moths must remain.",
+    protect: "Protect the moths",
+  },
+};
+
 export function HexMachina() {
   const [graph, setGraph] = useState<SpellGraph>(() => createMoonflowerScenario());
   const graphRef = useRef(graph);
@@ -84,7 +147,7 @@ export function HexMachina() {
   const [previewCast, setPreviewCast] = useState<CastResult | null>(null);
   const [patch, setPatch] = useState<ReviewedSpellPatch | null>(null);
   const [revertToken, setRevertToken] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>("multiply");
+  const [selected, setSelected] = useState<string | null>(() => graph.semantics.roles.multiplier);
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
   const [dragging, setDragging] = useState<string | null>(null);
   const [mcpReady, setMcpReady] = useState(false);
@@ -93,11 +156,30 @@ export function HexMachina() {
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [connectionDraft, setConnectionDraft] = useState<ConnectionDraft | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("Select a rune, then start a typed link.");
-  const [gymSession] = useState(() => new AgentGymSession());
+  // Stateful so loading a scenario rebuilds it. The session captures the family,
+  // seed and initial observation at construction and never re-reads the graph,
+  // so a swap without a new session reports the wrong episode in the scorecard
+  // and in the exported JSON. Replacing it also re-creates `handlers` through the
+  // memo below, which clears issued patch capabilities and re-registers WebMCP
+  // with the new scenario's identifiers.
+  const [gymSession, setGymSession] = useState(() => new AgentGymSession());
+  const [variant, setVariant] = useState<AgentGymScenarioVariant | null>(null);
+  const [labFamily, setLabFamily] = useState<AgentGymFamilyId>(() => familyIds[0]);
+  const [labSplit, setLabSplit] = useState<AgentGymSplit>("test");
+  const [labIndex, setLabIndex] = useState(0);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Every scenario-specific identifier is read from the graph's own semantics,
+  // so any of the generated task variants drives the same interface. Naming one
+  // story here is what previously made a loaded variant throw on the first tool
+  // call and silently stall the lesson at step three.
+  const effectId = graph.semantics.effectId;
+  const subjectId = graph.semantics.roles.subject;
+  const constraintText = variant?.humanConstraint ?? DEFAULT_CONSTRAINT;
+  const story = STORY[graph.semantics.ruleId] ?? STORY["unshielded-amplified-carrier"];
   const draggingRef = useRef<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const horizontalInset = canvasWidth ? Math.min(22, Math.max(8, (64 / canvasWidth) * 100)) : 9;
@@ -196,15 +278,12 @@ export function HexMachina() {
   };
 
   const diagnose = async () => {
-    await handlers.trace_effect({ effectId: "flooded-observatory" });
-    await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
+    await handlers.trace_effect({ effectId });
+    await handlers.explain_side_effect({ sideEffectId: effectId });
   };
 
-  const protectDucks = async () => {
-    await handlers.set_sacred_constraint({
-      targetId: "summon-ducks",
-      reason: "The ducks are funny. They must remain in the final spell.",
-    });
+  const protectSubject = async () => {
+    await handlers.set_sacred_constraint({ targetId: subjectId, reason: constraintText });
     setPatch(null);
   };
 
@@ -229,26 +308,68 @@ export function HexMachina() {
     setConsoleOutput(JSON.stringify(result, null, 2));
   };
 
-  const reset = () => {
-    const next = createMoonflowerScenario();
+  /**
+   * Load a task into the live workspace.
+   *
+   * A scenario swap is not just a new graph: the gym session captures family,
+   * seed and initial observation at construction, the tool handlers hold issued
+   * patch capabilities in a closure, and the WebMCP manifest advertises the
+   * current scenario's identifiers. Replacing the session rebuilds the handlers
+   * through their memo, which clears those capabilities and re-registers the
+   * tools, so all four stay consistent.
+   */
+  const loadScenario = (next: SpellGraph, loaded: AgentGymScenarioVariant | null, note: string) => {
     graphRef.current = next;
     setGraph(next);
+    setVariant(loaded);
     setCast(null);
     setPreviewCast(null);
     setPatch(null);
     setRevertToken(null);
     setActivity([]);
-    setSelected("multiply");
+    activityId.current = 0;
+    setSelected(next.semantics.roles.multiplier);
     setPositions(initialPositions(next));
     setDragging(null);
     draggingRef.current = null;
     dragOffsetRef.current = { x: 0, y: 0 };
-    setConsoleOutput("Lesson reset. Select a tool to inspect graph v1.");
+    setConsoleOutput(note);
     setConsoleBusy(null);
     setConnectFrom(null);
     setConnectionDraft(null);
     setConnectionMessage("Select a rune, then start a typed link.");
-    setGymSnapshot(gymSession.reset());
+
+    const session = loaded
+      ? new AgentGymSession({
+          familyId: loaded.familyId,
+          scenarioId: loaded.scenarioId,
+          seed: loaded.seed,
+          objective: loaded.objective,
+          humanConstraint: loaded.humanConstraint,
+          split: loaded.split,
+          variantIndex: loaded.index,
+          perturbations: loaded.perturbations,
+        }, next)
+      : new AgentGymSession();
+    setGymSession(session);
+    setGymSnapshot(session.snapshot());
+  };
+
+  const reset = () => loadScenario(
+    variant ? generateAgentGymScenarioForFamily(variant.familyId, variant.split, variant.index).graph : createMoonflowerScenario(),
+    variant,
+    "Task reset. Select a tool to inspect graph v1.",
+  );
+
+  const loadTask = (family: AgentGymFamilyId, split: AgentGymSplit, index: number) => {
+    const generated = generateAgentGymScenarioForFamily(family, split, index);
+    loadScenario(generated.graph, generated, `Loaded ${generated.scenarioId}. Every rune, edge and effect ID is freshly remapped.`);
+  };
+
+  const loadRandomTask = () => {
+    const seed = Math.floor(Math.random() * 0xffffffff);
+    const picked = sampleAgentGymTask("test", seed);
+    loadTask(picked.familyId, picked.split, picked.index);
   };
 
   const exportEpisode = () => {
@@ -349,15 +470,15 @@ export function HexMachina() {
       if (tool === "inspect_spell") {
         result = await handlers.inspect_spell();
       } else if (tool === "trace_effect") {
-        result = await handlers.trace_effect({ effectId: "flooded-observatory" });
+        result = await handlers.trace_effect({ effectId });
       } else if (tool === "simulate_cast") {
         result = await handlers.simulate_cast();
       } else if (tool === "explain_side_effect") {
-        result = await handlers.explain_side_effect({ sideEffectId: "flooded-observatory" });
+        result = await handlers.explain_side_effect({ sideEffectId: effectId });
       } else if (tool === "set_sacred_constraint") {
         result = await handlers.set_sacred_constraint({
-          targetId: "summon-ducks",
-          reason: "The ducks are funny. They must remain in the final spell.",
+          targetId: subjectId,
+          reason: constraintText,
         });
       } else if (tool === "propose_spell_patch") {
         result = await handlers.propose_spell_patch();
@@ -379,7 +500,7 @@ export function HexMachina() {
   const connectSource = graph.nodes.find((node) => node.id === connectFrom);
   const tracedNodeIds = activity[0]?.nodeIds ?? [];
   const highlightedIds = new Set(tracedNodeIds);
-  const isSacred = graph.constraints.some((item) => item.targetId === "summon-ducks");
+  const isSacred = graph.constraints.some((item) => item.targetId === subjectId);
   const familiarPrediction = useMemo(
     () => FAMILIAR_GNN_ENABLED && cast && !cast.success ? inferFamiliar(graph, cast) : null,
     [cast, graph],
@@ -415,7 +536,7 @@ export function HexMachina() {
         </div>
         <div className="mission-chip">
           <span>Objective</span>
-          <strong>Water the moonflower. Keep the room dry.</strong>
+          <strong>{graph.desiredOutcome}</strong>
         </div>
         <div className={`site-tool-state ${mcpReady ? "connected" : "local"}`}>
           <span className="status-dot" />
@@ -426,24 +547,24 @@ export function HexMachina() {
       <section className="workspace">
         <aside className="brief-panel panel">
           <div>
-            <p className="section-kicker">Lesson 01</p>
-            <h2>The overenthusiastic rain spell</h2>
+            <p className="section-kicker">{story.lesson}</p>
+            <h2>{story.title}</h2>
             <p className="lede">
-              This spell is almost right. Cast it, find the unstable path, then repair it without losing what you love.
+              {story.lede}
             </p>
           </div>
 
           <ol className="quest-steps" aria-label="Investigation steps">
             <li className={cast ? "done" : "current"}><span>01</span><div><strong>Cast the spell</strong><small>Observe before editing.</small></div></li>
             <li className={activity.some((item) => item.tool === "explain_side_effect") ? "done" : cast ? "current" : ""}><span>02</span><div><strong>Trace the glitch</strong><small>Find the causal path.</small></div></li>
-            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>The ducks must remain.</small></div></li>
+            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
             <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
           </ol>
 
           <div className="controls">
             {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}
             {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
-            {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectDucks}>Protect the ducks</button>}
+            {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectSubject}>{story.protect}</button>}
             {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
@@ -451,13 +572,74 @@ export function HexMachina() {
 
           <blockquote className={isSacred ? "wish active" : "wish"}>
             <span>Human intent</span>
-            “The ducks are funny. They stay.”
+            {`“${constraintText}”`}
           </blockquote>
+
+          {/* Loading a held-out task is the fastest way to show this is not a
+              scripted demo: every rune, edge and effect ID is remapped, and the
+              same seven tools still solve it. */}
+          <details className="tool-console scenario-lab">
+            <summary>
+              <span>
+                <strong>Task loader</strong>
+                <small>96 held-out variants · 3 causal rules</small>
+              </span>
+              <span aria-hidden="true">⌄</span>
+            </summary>
+            <p>
+              Swap the live workspace for any generated task. Identifiers are opaque and
+              remapped per task, so nothing here is memorised from the lesson above.
+            </p>
+            <div className="lab-controls">
+              <label>
+                Rule
+                <select
+                  aria-label="Causal family"
+                  value={labFamily}
+                  onChange={(event) => { setLabFamily(event.target.value as AgentGymFamilyId); setLabIndex(0); }}
+                >
+                  {familyIds.map((id) => (
+                    <option key={id} value={id}>{STORY[FAMILY_RULE[id]]?.lesson ?? id}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Split
+                <select
+                  aria-label="Evaluation split"
+                  value={labSplit}
+                  onChange={(event) => { setLabSplit(event.target.value as AgentGymSplit); setLabIndex(0); }}
+                >
+                  <option value="train">train</option>
+                  <option value="validation">validation</option>
+                  <option value="test">test (held out)</option>
+                </select>
+              </label>
+              <label>
+                Task
+                <select aria-label="Task index" value={labIndex} onChange={(event) => setLabIndex(Number(event.target.value))}>
+                  {Array.from({ length: AGENT_GYM_FAMILY_SPLIT_SIZES[labFamily][labSplit] }, (_, index) => (
+                    <option key={index} value={index}>{String(index).padStart(2, "0")}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="lab-actions">
+              <button type="button" className="quiet" onClick={loadRandomTask}>Surprise me</button>
+              <button type="button" className="primary" onClick={() => loadTask(labFamily, labSplit, labIndex)}>Load task</button>
+            </div>
+            {variant && (
+              <div className="lab-loaded">
+                <code>{variant.scenarioId}</code>
+                <small>seed {variant.seed} · protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
+              </div>
+            )}
+          </details>
         </aside>
 
         <section className="canvas-panel panel" aria-label="Executable spell graph">
           <div className="canvas-header">
-            <div><p className="section-kicker">Live spell · v{graph.version}</p><h2>Rain for a moonflower</h2></div>
+            <div><p className="section-kicker">Live spell · v{graph.version}</p><h2>{story.canvas}</h2></div>
             <span className={`cast-state ${cast?.success ? "success" : cast ? "danger" : "idle"}`}>
               {cast?.success ? "Stable" : cast ? "Side effect detected" : "Ready to cast"}
             </span>
@@ -598,7 +780,7 @@ export function HexMachina() {
           {/* Below the canvas, not over it: an overlay verdict hid the runes it
               was describing, including the dormant ones a repair has to use. */}
           <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
-            {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? "The moonflower blooms" : "Twelve ducks. One indoor lake."}</strong><span>{cast.summary}</span></>}
+            {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? story.success : story.failure}</strong><span>{cast.summary}</span></>}
           </div>
 
           <footer className={`node-inspector ${connectSource ? "connection-active" : ""}`}>
@@ -686,7 +868,7 @@ export function HexMachina() {
           ) : (
             <div className="familiar-message">
               <p className="section-kicker">Current read</p>
-              <p>{cast?.success ? "The graph is stable. Every promise survived the repair." : cast ? "I can see the flood path. Tell me what must survive before I touch the spell." : "Cast first. Good magic begins with evidence."}</p>
+              <p>{cast?.success ? "The graph is stable. Every promise survived the repair." : cast ? story.read : "Cast first. Good magic begins with evidence."}</p>
             </div>
           )}
 
