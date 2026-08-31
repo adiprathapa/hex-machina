@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -23,6 +24,10 @@ PROGRAM = ROOT / "program.md"
 PREPARE = ROOT / "prepare.py"
 STATE_DIR = ROOT / "work"
 STATE_FILE = STATE_DIR / "hex_machina_state.json"
+RELEASE_EVIDENCE = ROOT / "submission" / "release-evidence.json"
+YOUTUBE_URL_PATTERN = re.compile(
+    r"https://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[A-Za-z0-9_-]+(?:[&?][^\s]*)?"
+)
 
 MILESTONES = [
     ("skeleton", "Application skeleton and graph contracts"),
@@ -158,6 +163,46 @@ def command_note(state: dict[str, Any], text: str) -> int:
     return 0
 
 
+def record_youtube_release(evidence_path: Path, url: str) -> None:
+    """Record an already-public YouTube upload without changing other evidence."""
+    if not YOUTUBE_URL_PATTERN.fullmatch(url):
+        raise ValueError("Expected a public YouTube watch or youtu.be URL")
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    video = evidence.get("video")
+    if not isinstance(video, dict):
+        raise ValueError("Release evidence is missing its video record")
+    local_path = video.get("local_path")
+    if (
+        not isinstance(local_path, str)
+        or video.get("has_audio") is not True
+        or not isinstance(video.get("duration_seconds"), (int, float))
+        or not 0 < video["duration_seconds"] < 180
+    ):
+        raise ValueError("Local video evidence must have audio and remain below three minutes")
+    if evidence_path == RELEASE_EVIDENCE and not (ROOT / local_path).is_file():
+        raise ValueError("The recorded local video file does not exist")
+    video["public_youtube_url"] = url
+    temporary = evidence_path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(evidence_path)
+
+
+def command_record_youtube(url: str, evidence_path: Path) -> int:
+    try:
+        record_youtube_release(evidence_path, url)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"Could not record YouTube release: {error}", file=sys.stderr)
+        return 2
+    displayed_path = (
+        evidence_path.relative_to(ROOT)
+        if evidence_path.is_relative_to(ROOT)
+        else evidence_path
+    )
+    print(f"Public YouTube URL recorded in {displayed_path}.")
+    print("Next: run python3 prepare.py, then submit the unchanged three public URLs to Devpost.")
+    return 0
+
+
 def command_verify(state: dict[str, Any], quick: bool) -> int:
     command = [sys.executable, str(PREPARE)]
     if quick:
@@ -204,6 +249,18 @@ def build_parser() -> argparse.ArgumentParser:
     note_parser = subparsers.add_parser("note", help="Append a progress note")
     note_parser.add_argument("text")
 
+    youtube_parser = subparsers.add_parser(
+        "record-youtube",
+        help="Record the URL of an already-public YouTube demo",
+    )
+    youtube_parser.add_argument("url")
+    youtube_parser.add_argument(
+        "--evidence",
+        type=Path,
+        default=RELEASE_EVIDENCE,
+        help=argparse.SUPPRESS,
+    )
+
     verify_parser = subparsers.add_parser("verify", help="Run prepare.py")
     verify_parser.add_argument("--quick", action="store_true")
     return parser
@@ -226,6 +283,8 @@ def main() -> int:
         return command_set(state, args.milestone, args.status, args.evidence)
     if args.command == "note":
         return command_note(state, args.text)
+    if args.command == "record-youtube":
+        return command_record_youtube(args.url, args.evidence.resolve())
     if args.command == "verify":
         return command_verify(state, args.quick)
     return 2

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFile, readdir, stat, mkdtemp, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -169,4 +171,45 @@ test("captions describe and cover the real registered-tool screencast", async ()
   assert.match(captions, /Nobody is clicking/);
   assert.match(captions, /held-out one/);
   assert.match(captions, /freshly remapped/);
+});
+
+test("release operator can safely record an already-public YouTube URL", async () => {
+  const sourcePath = path.join(ROOT, "submission/release-evidence.json");
+  const original = JSON.parse(await readFile(sourcePath, "utf8"));
+  const directory = await mkdtemp(path.join(tmpdir(), "hex-machina-release-"));
+  const evidencePath = path.join(directory, "release-evidence.json");
+  await writeFile(evidencePath, `${JSON.stringify(original, null, 2)}\n`);
+
+  const invalid = spawnSync(
+    "python3",
+    [path.join(ROOT, "train.py"), "record-youtube", "https://example.com/not-youtube", "--evidence", evidencePath],
+    { cwd: ROOT, encoding: "utf8" },
+  );
+  assert.equal(invalid.status, 2);
+  assert.match(invalid.stderr, /Expected a public YouTube/);
+  assert.deepEqual(JSON.parse(await readFile(evidencePath, "utf8")), original, "invalid input leaves release evidence untouched");
+
+  const publicUrl = "https://youtu.be/AbC_123-xyZ";
+  const valid = spawnSync(
+    "python3",
+    [path.join(ROOT, "train.py"), "record-youtube", publicUrl, "--evidence", evidencePath],
+    { cwd: ROOT, encoding: "utf8" },
+  );
+  assert.equal(valid.status, 0, valid.stderr);
+  const recorded = JSON.parse(await readFile(evidencePath, "utf8"));
+  assert.equal(recorded.video.public_youtube_url, publicUrl);
+  recorded.video.public_youtube_url = original.video.public_youtube_url;
+  assert.deepEqual(recorded, original, "the recorder changes only the public video URL");
+});
+
+test("YouTube handoff covers every official media requirement", async () => {
+  const handoff = await readFile(path.join(ROOT, "submission/video/youtube-upload.md"), "utf8");
+  assert.match(handoff, /Public \(not Unlisted\)/);
+  assert.match(handoff, /less than three minutes/i);
+  assert.match(handoff, /audio/i);
+  assert.match(handoff, /no third-party music/i);
+  assert.match(handoff, /captions\.srt/);
+  assert.match(handoff, /python3 train\.py record-youtube/);
+  assert.match(handoff, /https:\/\/hex-machina\.hex-machina\.workers\.dev/);
+  assert.match(handoff, /https:\/\/github\.com\/adiprathapa\/hex-machina/);
 });
