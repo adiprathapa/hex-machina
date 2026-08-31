@@ -49,3 +49,7 @@ next-env.d.ts
 
 # local design/measurement probes
 /.shot
+
+# transient agent scratch
+/_skep_*
+/.audit-*
