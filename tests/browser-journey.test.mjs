@@ -161,6 +161,41 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByRole("region", { name: "Agent Gym evaluation" }), "the scored agent environment is visible");
     assert.match(await page.locator(".agent-gym").innerText(), /0\s*\/\s*23[\s\S]*0 steps/i);
     assert.equal(await page.getByRole("button", { name: "Export episode JSON" }).isDisabled(), true);
+    const judgeEntry = await page.evaluate(() => {
+      const panel = document.querySelector(".brief-panel");
+      const brief = document.querySelector(".agent-brief");
+      const actions = [...document.querySelectorAll(".agent-brief-actions .quiet")];
+      const controls = document.querySelector(".controls");
+      if (!panel || !brief || actions.length !== 2 || !controls) return null;
+
+      const panelRect = panel.getBoundingClientRect();
+      const briefRect = brief.getBoundingClientRect();
+      const visibleTop = Math.max(panelRect.top, briefRect.top, 0);
+      const visibleBottom = Math.min(panelRect.bottom, briefRect.bottom, innerHeight);
+      const visibleRatio = Math.max(0, visibleBottom - visibleTop) / briefRect.height;
+      const actionTargets = actions.map((action) => {
+        const rect = action.getBoundingClientRect();
+        const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        return {
+          bottom: rect.bottom,
+          top: rect.top,
+          hittable: hit === action || action.contains(hit),
+        };
+      });
+
+      return {
+        panelScrollTop: panel.scrollTop,
+        visibleRatio,
+        actionTargets,
+        controlsPosition: getComputedStyle(controls).position,
+      };
+    });
+    assert.ok(judgeEntry, "the browser-agent brief and human controls render");
+    assert.equal(judgeEntry.panelScrollTop, 0, "judge access does not depend on a pre-scrolled sidebar");
+    assert.ok(judgeEntry.visibleRatio >= 0.9, `at least 90% of the agent brief is initially visible (got ${judgeEntry.visibleRatio})`);
+    assert.equal(judgeEntry.actionTargets.every(({ top, bottom }) => top >= 0 && bottom <= 720), true, "both judge actions are inside the initial viewport");
+    assert.equal(judgeEntry.actionTargets.every(({ hittable }) => hittable), true, "both judge actions are unobscured and clickable");
+    assert.notEqual(judgeEntry.controlsPosition, "sticky", "human controls cannot cover the browser-agent brief");
     // Two type roles, and they must stay separated: the interface face for
     // anything a person reads, the code face only for machine data where
     // character alignment carries meaning. Setting every label in monospace

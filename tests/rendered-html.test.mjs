@@ -88,6 +88,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.ok(contrastRatio(cssColor("muted"), raisedPanel) >= 4.5);
   assert.ok(contrastRatio(cssColor("subtle"), raisedPanel) >= 4.5);
   assert.ok(contrastRatio("#12150b", cssColor("acid")) >= 4.5);
+  // These lighter semantic tokens are the text counterparts to the darker
+  // border/fill colours. Keep their WCAG AA floor executable: a future visual
+  // pass must not quietly put the mid-tone intent colours back on dark panels.
+  assert.ok(contrastRatio(cssColor("ember-text"), raisedPanel) >= 4.5);
+  assert.ok(contrastRatio(cssColor("aqua-text"), raisedPanel) >= 4.5);
+  assert.ok(contrastRatio(cssColor("blue-text"), raisedPanel) >= 4.5);
+  assert.match(css, /\.vision-symbol\s*\{[\s\S]*?color:\s*var\(--ember-text\)/);
+  assert.match(css, /\.vision-success \.vision-symbol\s*\{[\s\S]*?color:\s*var\(--aqua-text\)/);
+  assert.doesNotMatch(css, /\.controls\s*\{[^}]*position:\s*sticky/);
   const mobileStart = css.indexOf("@media (max-width: 760px)");
   const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)");
   assert.notEqual(mobileStart, -1);
