@@ -60,11 +60,13 @@ test("deployment output contains the worker and complete app-owned assets only",
   assert.ok(cssFiles.length > 0);
   assert.ok(relativeFiles.some((file) => /^client\/_next\/static\/_vinext_fonts\/.+\.woff2$/.test(file)));
   const builtCss = (await Promise.all(cssFiles.map((file) => readFile(path.join(DIST, file), "utf8")))).join("\n");
-  assert.match(builtCss, /--font-poppins/);
+  // Both faces survive the build and stay bound to their roles: the interface
+  // face for anything a person reads, monospace for machine data.
+  assert.match(builtCss, /--font-inter/);
   assert.match(builtCss, /--font-fira-code/);
-  assert.match(builtCss, /var\(--font-poppins\)/);
+  assert.match(builtCss, /var\(--font-inter\)/);
   assert.match(builtCss, /var\(--font-fira-code\)/);
-  assert.doesNotMatch(builtCss, /font-geist/);
+  assert.doesNotMatch(builtCss, /font-geist|font-poppins/);
   assert.deepEqual(
     relativeFiles.filter((file) => /(^|\/)(?:\.env|node_modules|submission|tests)(?:\/|$)|\.(?:map|pem)$/i.test(file)),
     [],
