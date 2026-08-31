@@ -292,7 +292,7 @@ summary:focus-visible {
 
 .lede {
   max-width: 34ch;
-  margin: 16px 0 26px;
+  margin: 14px 0 18px;
   color: var(--muted);
   font-size: var(--t-base);
   line-height: 1.65;
@@ -439,6 +439,14 @@ kbd {
 }
 
 .agent-brief-prompt {
+  /* The prompt is here to be copied, not read end to end. Left unbounded it is
+     taller than the rail on a 720px screen and pushes its own Copy button out
+     of the first view; scrolling in place keeps the whole prompt available
+     without the panel that introduces the tool falling below the fold. */
+  max-height: 128px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   margin: 8px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--blue-dark);
