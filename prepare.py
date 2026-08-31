@@ -489,7 +489,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "no preference groups match",
             "self.groups(split=split, family=family)",
         )
-    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists() and preference_adapter_path.exists()
+    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists() and preference_adapter_path.exists() and (ROOT / "tests" / "webmcp-multi-scenario.test.mjs").exists()
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 

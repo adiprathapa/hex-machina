@@ -28,6 +28,7 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `src/eval/replay-verifier.ts`: bounded independent verifier that reconstructs task variants, authenticates reset prompts/graphs/manifests, and rejects replay mismatches in metadata, actions, observations, rewards, results, state keys, or terminal state.
 - `src/eval/preference-dataset.ts`: deterministic five-policy group builder with centered reward advantages, ten pairwise preference margins, split export, and policy-regeneration verification.
 - `tests/browser-journey.test.mjs`: boots the built production server in system Chrome and proves the full failure, diagnosis, sacred-constraint, minimal-repair, stable-recast, reset, mobile, and keyboard journey without console errors.
+- `tests/webmcp-multi-scenario.test.mjs`: swaps through all 96 generated tasks, re-registers scenario-narrowed WebMCP schemas, completes the full nine-call repair through the registered definitions, and proves every retired seven-tool set is removed before the next task.
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements—but does not replace—the pending live deployment discovery test.
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
@@ -35,6 +36,8 @@ Hex Machina does not ask an agent to own or infer application state. The client 
 - `worker/index.ts`: Cloudflare-compatible request boundary adding same-origin content, capability, referrer, framing, and MIME security policies to built responses.
 
 The application has no database, object-storage binding, account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin.
+
+The visible Task loader reconstructs the graph, Agent Gym session, issued-patch capability closure, and WebMCP registration as one scenario-scoped unit. The UI returns its WebMCP indicator to a checking state during that handoff. This prevents a loaded opaque-ID task from inheriting the previous episode ledger, write authority, or schema enums.
 
 ## Agent Gym protocol
 

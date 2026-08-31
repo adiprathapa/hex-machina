@@ -238,6 +238,33 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByText("Ready to cast", { exact: true }), "reset returns to the initial state");
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/);
 
+    await page.locator(".scenario-lab > summary").click();
+    await page.getByRole("combobox", { name: "Causal family" }).selectOption("family-02-v1");
+    await page.getByRole("button", { name: "Load task", exact: true }).click();
+    await assertVisible(page.getByText("task-02-test-00", { exact: true }), "the selected held-out task is loaded");
+    await assertVisible(page.getByText("WebMCP · 7 tools registered", { exact: true }), "scenario swap re-registers WebMCP");
+    const swapped = await page.evaluate(async () => {
+      const tools = window.__hexWebMCPTools;
+      const inspect = tools.get("inspect_spell");
+      const explain = tools.get("explain_side_effect");
+      return {
+        names: [...tools.keys()].sort(),
+        runeIds: inspect.inputSchema.properties.nodeIds.items.enum,
+        effectIds: explain.inputSchema.properties.sideEffectId.enum,
+        inspection: await inspect.execute({}, { signal: new AbortController().signal }),
+      };
+    });
+    assert.equal(swapped.names.length, 7, "the old registration is removed rather than duplicated");
+    assert.equal(swapped.runeIds.length, 12);
+    assert.equal(swapped.runeIds.every((id) => /^r-[a-z0-9]+$/.test(id)), true);
+    assert.equal(swapped.effectIds.length, 1);
+    assert.match(swapped.effectIds[0], /^fx-[a-z0-9]+$/);
+    assert.deepEqual(swapped.inspection.nodes.map((node) => node.id).sort(), [...swapped.runeIds].sort());
+    assert.equal(swapped.inspection.graphVersion, 1);
+    assert.equal(swapped.inspection.scenarioState.status, "unstable");
+    await page.getByRole("button", { name: /Cast spell/ }).click();
+    await assertVisible(page.getByText("Seven thunderbirds. One shattered dome.", { exact: true }), "the loaded family drives its own visible failure");
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "networkidle" });
     await assertVisible(page.locator(".mission-chip"), "the compact objective remains visible");

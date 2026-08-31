@@ -145,7 +145,6 @@ test("waiting is bounded, abortable, and never registers after an unmount", asyn
 
 test("a missing document is detected instead of thrown on", async () => {
   const previousDocument = globalThis.document;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete globalThis.document;
   try {
     // `typeof document.modelContext` dereferences document first, so SSR, a

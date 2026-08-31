@@ -141,3 +141,32 @@ test("release evidence records local proof and never overclaims an external gate
 
   assert.equal(evidence.devpost.submitted, evidence.devpost.submitted === true);
 });
+
+test("captions describe and cover the real registered-tool screencast", async () => {
+  const captions = await readFile(path.join(ROOT, "submission/video/captions.srt"), "utf8");
+  const metadata = JSON.parse(await readFile(path.join(ROOT, "submission/video/metadata.json"), "utf8"));
+  const timestamps = [...captions.matchAll(
+    /(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/g,
+  )];
+  assert.ok(timestamps.length >= 20, "the final screencast needs readable caption beats");
+  const seconds = (match, offset) => (
+    Number(match[offset]) * 3600
+    + Number(match[offset + 1]) * 60
+    + Number(match[offset + 2])
+    + Number(match[offset + 3]) / 1000
+  );
+  let previousEnd = 0;
+  for (const timestamp of timestamps) {
+    const start = seconds(timestamp, 1);
+    const end = seconds(timestamp, 5);
+    assert.ok(start >= previousEnd, "caption cues must be ordered and non-overlapping");
+    assert.ok(end > start, "every caption cue must have positive duration");
+    previousEnd = end;
+  }
+  const videoDuration = Number(metadata.format.duration);
+  assert.ok(Math.abs(previousEnd - videoDuration) < 1, "captions must cover the final video tail");
+  assert.match(captions, /document\.modelContext/);
+  assert.match(captions, /Nobody is clicking/);
+  assert.match(captions, /held-out one/);
+  assert.match(captions, /freshly remapped/);
+});

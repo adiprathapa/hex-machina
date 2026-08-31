@@ -18,6 +18,8 @@ The research layer treats the live graph as an observation and the seven site to
 
 The on-screen Agent Gym card scores calls from both WebMCP and the local interface because it instruments the shared production handlers. Episodes can be exported as JSON for policy evaluation or dataset prototyping. Three causal families contain 96 deterministic variants: Moonflower has 32/8/8 train/validation/test tasks, while Resonant Aviary and Clockwork Orchard each have 16/4/4. They test an unshielded amplified carrier, reachable feedback cycle, and missing temporal guard respectively. Each variant remaps every node, edge, and effect to opaque IDs, shuffles serialized order, jitters layout, paraphrases the prompt, and activates a seeded one-to-three-edge decoy subgraph. The decoys are valid typed structures but causally irrelevant to the tracked failure, producing at least three distinct topologies per family without changing the answer-key route. Tests prove an inspection-driven policy reaches 23/23 on held-out variants from all three rules while memorized training IDs fail safely without mutation.
 
+The live **Task loader** can swap any of those 96 variants directly into the visible graph. Each swap resets the scored episode and patch capabilities, removes the previous WebMCP registrations, and advertises fresh rune/effect schemas before the new tools become live. An exhaustive integration test completes the nine-call, constraint-preserving journey through registered WebMCP definitions on every task; the production-browser journey additionally proves a real UI swap replaces the old seven-tool registration and renders the loaded family's failure.
+
 This is cross-rule robustness evidence—not broad agent generalization and not a training service. The default splits hold out identifiers, and the suite says so: it fingerprints every task and derives the claim a held-out score is entitled to support, rather than asserting one. For structural evidence, `npm run gym:transfer` withholds an entire family from training — a grounded policy scores 23/23 with every constraint preserved on a structure it never saw, while an otherwise identical policy that memorized the training family's vocabulary scores −1 and completes nothing.
 
 Run the reproducible baseline over every split:
@@ -200,7 +202,7 @@ Patch proposals include a compact minimality certificate—rank, edit count, can
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
-The [narrated 75-second demo](submission/video/hex-machina-demo.mp4) packages that verified journey as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+The [narrated 154.4-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
 
 ## Architecture
 

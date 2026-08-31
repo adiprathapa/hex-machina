@@ -155,7 +155,6 @@ export function HexMachina() {
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
   const [dragging, setDragging] = useState<string | null>(null);
   const [mcpState, setMcpState] = useState<"checking" | "live" | "unavailable">("checking");
-  const mcpReady = mcpState === "live";
   const [consoleOutput, setConsoleOutput] = useState("Select a tool to inspect its structured result.");
   const [consoleBusy, setConsoleBusy] = useState<ConsoleTool | null>(null);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
@@ -344,6 +343,7 @@ export function HexMachina() {
     setConnectFrom(null);
     setConnectionDraft(null);
     setConnectionMessage("Select a rune, then start a typed link.");
+    setMcpState("checking");
 
     const session = loaded
       ? new AgentGymSession({

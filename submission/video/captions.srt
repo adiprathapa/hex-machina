@@ -1,34 +1,107 @@
 1
-00:00:00,000 --> 00:00:08,000
-Hex Machina is an agent evaluation environment disguised as a spell game.
-The executable graph is shared by a person and their agent.
+00:00:01,500 --> 00:00:06,900
+This is Hex Machina. It is a debugger for executable graphs,
 
 2
-00:00:08,000 --> 00:00:18,000
-This spell should water a rare Moonflower.
-Instead, twelve lunar ducks flood the observatory.
+00:00:06,900 --> 00:00:12,400
+and a browser agent is about to drive it through seven WebMCP tools.
 
 3
-00:00:18,000 --> 00:00:30,000
-Moth suggests suspicious runes. WebMCP tools inspect the exact graph
-and trace the responsible path. The simulator remains authoritative.
+00:00:12,400 --> 00:00:17,600
+The page registers those tools on document.modelContext.
 
 4
-00:00:30,000 --> 00:00:42,000
-The human contributes taste: “The ducks are funny.”
-They become sacred, so deleting them is no longer valid.
+00:00:17,600 --> 00:00:22,800
+Everything you are about to see is the agent calling them. Nobody is clicking.
 
 5
-00:00:42,000 --> 00:00:57,000
-The agent ranks bounded rewrites. The eight-edit umbrella route
-is the only eligible candidate and waits for approval.
+00:00:22,800 --> 00:00:28,700
+First it inspects the live graph, then it casts the spell.
 
 6
-00:00:57,000 --> 00:01:08,000
-The application proves sacred reachability and applies atomically.
-The recast is Stable: the room is dry and all twelve ducks remain.
+00:00:28,700 --> 00:00:34,500
+The spell should water a moonflower. Instead, twelve ducks flood the observatory.
 
 7
-00:01:08,000 --> 00:01:15,000
-Three causal rules and ninety-six variants separate grounded agents
-from unsafe shortcuts. Hex Machina is a deterministic gym.
+00:00:34,500 --> 00:00:40,400
+Now it traces the effect. This is a bounded graph traversal, not a guess.
+
+8
+00:00:40,400 --> 00:00:46,300
+It returns the ordered causal path and every edge responsible for it.
+
+9
+00:00:46,300 --> 00:00:51,500
+Then it proves the diagnosis.
+
+10
+00:00:51,500 --> 00:00:56,700
+The explanation returns the smallest subgraph and proves each edge is necessary.
+
+11
+00:00:56,700 --> 00:01:02,300
+Here is the part that matters. A human says something the graph cannot infer:
+
+12
+00:01:02,300 --> 00:01:08,000
+the ducks are funny, they stay. That becomes an executable constraint.
+
+13
+00:01:08,000 --> 00:01:14,800
+The cheapest repair deletes the duck branch entirely.
+
+14
+00:01:14,800 --> 00:01:21,600
+With the constraint locked, it is ineligible, so the agent ranks a longer repair.
+
+15
+00:01:21,600 --> 00:01:27,500
+Before anything is applied, the human sees the exact operation ledger.
+
+16
+00:01:27,500 --> 00:01:33,300
+Eight graph edits, what is preserved, and what the repair gives up.
+
+17
+00:01:33,300 --> 00:01:38,000
+The patch is simulated first, without touching editor state.
+
+18
+00:01:38,000 --> 00:01:42,800
+Then it is applied atomically, with its preconditions revalidated.
+
+19
+00:01:42,800 --> 00:01:49,100
+The recast succeeds. All twelve ducks survive, and the room stays dry.
+
+20
+00:01:49,100 --> 00:01:55,500
+The moonflower blooms. The human's preference changed the solution, not just the score.
+
+21
+00:01:55,500 --> 00:02:01,800
+One more thing, because a polished demo invites one question: is this on rails?
+
+22
+00:02:01,800 --> 00:02:07,900
+The evaluation layer generates ninety-six tasks across three causal rules.
+
+23
+00:02:07,900 --> 00:02:14,000
+Let me load a held-out one, from a rule this run has never seen.
+
+24
+00:02:14,000 --> 00:02:19,900
+Every rune, edge, and effect identifier is freshly remapped. Nothing was memorised.
+
+25
+00:02:19,900 --> 00:02:25,700
+The same seven tools inspect it, cast it, trace it, and explain it.
+
+26
+00:02:25,700 --> 00:02:30,000
+Graph interfaces let people and agents negotiate executable intent,
+
+27
+00:02:30,000 --> 00:02:34,300
+and the application proves every mutation.
