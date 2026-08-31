@@ -1,27 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  /* Type roles. Monospace is reserved for machine data: identifiers, ledgers,
-     scores. Everything a person reads as prose or as a label uses the UI face,
-     because caps-locked monospace chrome reads as a terminal, not a product. */
+  /* Palette grounded in Palantir's Blueprint scale, which is built for dense
+     operator tooling: near-black grounds, cool greys, one intent colour per
+     meaning. A dark instrument panel also puts the graph — the actual subject —
+     at the highest contrast on screen.
 
-  --ink: #111827;
-  --muted: #4b5563;
-  --subtle: #576574;
-  --paper: #f2f6f9;
-  --panel: #f8fafc;
-  --panel-raised: #ffffff;
-  --line: #d7e1e8;
-  --line-strong: #b8c8d3;
-  --blue: #0671a4;
-  --blue-dark: #04577f;
-  --blue-wash: #e1f0f7;
-  --acid: #9ddcf7;
-  --lilac: #6657a8;
-  --ember: #c6543b;
-  --aqua: #287a5b;
-  --success-wash: #e4f1eb;
-  --failure-wash: #f8e8e3;
+     Type roles: monospace is reserved for machine data (identifiers, ledgers,
+     scores) where character alignment carries meaning. Everything a person
+     reads as prose or as a label uses the interface face. */
+
+  /* Grounds */
+  --black: #0c0c0d;
+  --paper: #131315;
+  --panel: #1a1a1d;
+  --panel-raised: #202024;
+
+  /* Structure */
+  --line: #2c2c31;
+  --line-strong: #3a3a41;
+
+  /* Text */
+  --ink: #ededef;
+  --muted: #a1a1aa;
+  --subtle: #8e8e97;
+
+  /* Intent — one colour per meaning, never decorative */
+  --blue: #4c90f0;
+  --blue-dark: #2d72d2;
+  --blue-wash: rgba(45, 114, 210, .18);
+  --acid: #8abbff;
+  --lilac: #c274c2;
+  --ember: #e76a6e;
+  --aqua: #72ca9b;
+  --success-wash: rgba(50, 164, 103, .16);
+  --failure-wash: rgba(205, 66, 70, .16);
+
+  /* Geometry. Blueprint moved to 2px because at operator density a large
+     radius reads as a consumer card rather than a panel. */
+  --radius: 2px;
+  --radius-control: 2px;
 }
 
 * {
@@ -37,7 +55,7 @@ body {
   min-width: 320px;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-poppins), Arial, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 button,
@@ -86,7 +104,7 @@ summary:focus-visible {
   width: 30px;
   height: 30px;
   border: 1px solid var(--blue);
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--blue);
   font: 600 15px/1 var(--font-fira-code), monospace;
 }
@@ -112,7 +130,7 @@ summary:focus-visible {
 .section-kicker {
   margin: 0 0 4px;
   color: var(--subtle);
-  font: 600 11px/1.25 var(--font-poppins), Arial, sans-serif;
+  font: 600 11px/1.25 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .mission-chip {
@@ -129,7 +147,7 @@ summary:focus-visible {
 
 .mission-chip span {
   color: var(--blue);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .mission-chip strong {
@@ -143,7 +161,7 @@ summary:focus-visible {
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .status-dot {
@@ -216,12 +234,12 @@ summary:focus-visible {
   align-items: center;
   padding: 10px 8px 10px 0;
   border-top: 1px solid var(--line);
-  color: #6c7883;
+  color: var(--subtle);
 }
 
 .quest-steps li > span {
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .quest-steps li strong,
@@ -277,7 +295,7 @@ summary:focus-visible {
 
 .controls button {
   min-height: 44px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
@@ -293,15 +311,17 @@ summary:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 0 13px;
-  border: 1px solid var(--blue);
-  background: var(--blue);
-  color: #ffffff;
-  font-size: 11px;
+  border: 1px solid var(--blue-dark);
+  background: var(--blue-wash);
+  color: var(--acid);
+  font-size: 12px;
   font-weight: 600;
 }
 
 .controls .primary:hover {
-  background: var(--blue-dark);
+  border-color: var(--blue);
+  background: rgba(45, 114, 210, .3);
+  color: var(--ink);
 }
 
 .controls .quiet {
@@ -318,8 +338,8 @@ summary:focus-visible {
 
 kbd {
   padding: 3px 5px;
-  border: 1px solid rgba(255,255,255,.45);
-  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   font: 500 9px/1 var(--font-fira-code), monospace;
 }
 
@@ -337,7 +357,7 @@ kbd {
   display: block;
   margin-bottom: 5px;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .wish.active {
@@ -352,7 +372,7 @@ kbd {
   min-height: 0;
   margin: 0 18px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--panel-raised);
   overflow: hidden;
 }
@@ -375,10 +395,10 @@ kbd {
   position: relative;
   padding: 5px 8px 5px 17px;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--subtle);
   background: var(--panel);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .cast-state::before {
@@ -393,7 +413,7 @@ kbd {
 }
 
 .cast-state.danger {
-  border-color: #e3a99a;
+  border-color: var(--ember);
   color: #8f3825;
   background: var(--failure-wash);
 }
@@ -416,10 +436,10 @@ kbd {
   position: relative;
   flex: 1;
   min-height: 0;
-  background-color: #fbfcfd;
+  background-color: var(--paper);
   background-image:
-    linear-gradient(rgba(74,105,126,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74,105,126,.06) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
   background-size: 24px 24px;
   overflow: hidden;
   touch-action: none;
@@ -509,9 +529,9 @@ kbd {
   margin: 0;
   padding: 7px 9px;
   border: 1px solid var(--line);
-  background: rgba(255,255,255,.92);
+  background: var(--panel-raised);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .graph-legend span {
@@ -552,9 +572,9 @@ kbd {
   gap: 8px;
   padding: 8px 9px 8px 7px;
   border: 1px solid var(--line-strong);
-  border-left: 3px solid #8299aa;
-  border-radius: 8px;
-  background: rgba(255,255,255,.97);
+  border-left: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
   color: var(--ink);
   text-align: left;
   cursor: grab;
@@ -605,7 +625,7 @@ kbd {
 .rune:hover,
 .rune.selected {
   border-color: var(--blue);
-  background: #f6fbfd;
+  background: var(--panel);
 }
 
 .rune.selected {
@@ -624,9 +644,15 @@ kbd {
 }
 
 .rune.dormant {
-  opacity: .34;
   border-style: dashed;
-  background: #edf1f3;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--subtle);
+  opacity: .5;
+}
+
+.rune.dormant .rune-glyph {
+  opacity: .6;
 }
 
 .rune.patch-activate {
@@ -639,7 +665,7 @@ kbd {
 .rune.connect-source {
   opacity: 1;
   border-color: var(--lilac);
-  background: #f0eef9;
+  background: var(--blue-wash);
 }
 
 .rune.connect-compatible {
@@ -664,8 +690,8 @@ kbd {
   padding: 3px 5px;
   overflow: hidden;
   border: 1px solid var(--lilac);
-  border-radius: 6px;
-  background: #ffffff;
+  border-radius: var(--radius);
+  background: var(--panel-raised);
   color: var(--lilac);
   font: 500 9px/1 var(--font-fira-code), monospace;
   text-align: center;
@@ -685,7 +711,7 @@ kbd {
   bottom: 10px;
   margin: 0;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
   pointer-events: none;
 }
 
@@ -700,10 +726,10 @@ kbd {
   width: 32px;
   height: 32px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: var(--panel);
   color: var(--blue);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .rune-modifier .rune-glyph {
@@ -729,7 +755,7 @@ kbd {
 .rune-copy small {
   margin-top: 2px;
   color: var(--subtle);
-  font: 500 10px/1.2 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .sacred-pin {
@@ -740,10 +766,10 @@ kbd {
   place-items: center;
   width: 30px;
   height: 18px;
-  border-radius: 6px;
-  color: #ffffff;
+  border-radius: var(--radius);
+  color: var(--ink);
   background: var(--blue);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 /* The cast verdict reads as a status bar under the canvas. As an overlay it
@@ -773,7 +799,7 @@ kbd {
   padding: 3px 9px;
   border-radius: 999px;
   background: var(--ember);
-  color: #ffffff;
+  color: var(--ink);
   font-size: 11px;
   font-weight: 600;
 }
@@ -803,11 +829,11 @@ kbd {
   gap: 10px;
   padding: 10px 14px;
   border-top: 1px solid var(--line);
-  background: #f7f9fb;
+  background: var(--panel);
 }
 
 .node-inspector.connection-active {
-  background: #f2effa;
+  background: var(--blue-wash);
 }
 
 .inspector-glyph {
@@ -816,9 +842,9 @@ kbd {
   width: 30px;
   height: 30px;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--blue);
-  font-family: var(--font-poppins), Arial, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .node-inspector small,
@@ -828,7 +854,7 @@ kbd {
 
 .node-inspector small {
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .node-inspector strong {
@@ -867,7 +893,7 @@ kbd {
 .connection-editor select {
   min-height: 28px;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 10px;
 }
 
@@ -883,14 +909,14 @@ kbd {
 
 .start-link,
 .cancel-link {
-  background: #ffffff;
+  background: var(--panel-raised);
   color: var(--muted);
 }
 
 .confirm-link {
   border-color: var(--aqua) !important;
   background: var(--aqua);
-  color: #ffffff;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -899,12 +925,12 @@ kbd {
   align-items: center;
   gap: 5px;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .connection-editor select {
   padding: 0 6px;
-  background: #ffffff;
+  background: var(--panel-raised);
   color: var(--ink);
 }
 
@@ -966,14 +992,14 @@ kbd {
   margin-top: 10px;
   padding: 8px;
   border: 1px solid #a8cfbd;
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: var(--success-wash);
 }
 
 .preview-verdict span,
 .preview-verdict small {
   color: var(--subtle);
-  font: 500 10px/1.2 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .preview-verdict strong {
@@ -1010,7 +1036,7 @@ kbd {
 .patch-card dt,
 .patch-card dd {
   margin: 0;
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .patch-card dt {
@@ -1023,7 +1049,7 @@ kbd {
   margin: 0 0 10px;
   padding: 8px 9px;
   border-left: 2px solid var(--lilac);
-  background: #f0eef8;
+  background: var(--blue-wash);
 }
 
 .patch-preflight span {
@@ -1053,7 +1079,7 @@ kbd {
 .patch-tradeoffs {
   margin-top: 10px;
   padding: 9px 11px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--panel);
   color: var(--muted);
   font-size: 11px;
@@ -1082,7 +1108,7 @@ kbd {
   min-height: 40px;
   padding: 0 8px;
   line-height: 1.25;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 10px;
   font-weight: 600;
@@ -1090,14 +1116,14 @@ kbd {
 
 .patch-simulate {
   border: 1px solid var(--line-strong);
-  background: #ffffff;
+  background: var(--panel-raised);
   color: var(--muted);
 }
 
 .patch-apply {
   border: 1px solid var(--aqua);
   background: var(--aqua);
-  color: #ffffff;
+  color: var(--ink);
 }
 
 .patch-actions button:active {
@@ -1106,8 +1132,8 @@ kbd {
 
 .patch-ledger {
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #fbfcfd;
+  border-radius: var(--radius);
+  background: var(--panel);
 }
 
 .patch-ledger summary {
@@ -1133,7 +1159,7 @@ kbd {
   gap: 5px;
   align-items: start;
   padding: 6px;
-  border-top: 1px solid #edf1f4;
+  border-top: 1px solid var(--line);
 }
 
 .patch-ledger li > span {
@@ -1185,9 +1211,9 @@ kbd {
 .familiar-signal-heading > span {
   padding: 3px 5px;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .familiar-signal ol {
@@ -1222,18 +1248,18 @@ kbd {
 .familiar-signal li button b {
   margin-right: 7px;
   color: var(--lilac);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .familiar-signal li button > strong {
   color: var(--blue);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .signal-meter {
   display: block;
   height: 2px;
-  background: #e5ebef;
+  background: var(--line);
   overflow: hidden;
 }
 
@@ -1253,9 +1279,9 @@ kbd {
 .agent-gym {
   margin-top: 16px;
   padding: 12px;
-  border: 1px solid var(--line-strong);
-  border-left: 3px solid var(--blue);
-  background: var(--blue-wash);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
 }
 
 .agent-gym-heading,
@@ -1283,8 +1309,8 @@ kbd {
   padding: 4px 6px;
   border: 1px solid var(--line-strong);
   color: var(--blue-dark);
-  background: #ffffff;
-  font: 600 10px/1 var(--font-poppins), Arial, sans-serif;
+  background: var(--panel-raised);
+  font: 600 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .agent-gym-heading > span.complete {
@@ -1308,14 +1334,14 @@ kbd {
 .gym-score > span,
 .gym-foot small {
   color: var(--subtle);
-  font: 500 10px/1.35 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .gym-meter {
   height: 4px;
   margin: 9px 0 10px;
   overflow: hidden;
-  background: #cadce6;
+  background: var(--line);
 }
 
 .gym-meter i {
@@ -1377,9 +1403,9 @@ kbd {
   min-height: 36px;
   padding: 0 9px;
   border: 1px solid var(--blue);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--blue-dark);
-  background: #ffffff;
+  background: var(--panel-raised);
   cursor: pointer;
   font-size: 9px;
   font-weight: 600;
@@ -1397,7 +1423,7 @@ kbd {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-header small {
@@ -1423,14 +1449,14 @@ kbd {
   width: 20px;
   height: 20px;
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--blue);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-list strong {
   color: var(--ink);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-list p,
@@ -1508,8 +1534,8 @@ kbd {
   gap: 6px;
   padding: 7px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #ffffff;
+  border-radius: var(--radius);
+  background: var(--panel-raised);
   color: var(--ink);
   cursor: pointer;
 }
@@ -1543,7 +1569,7 @@ kbd {
   padding: 8px 0;
   border-top: 1px solid var(--line);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-poppins), Arial, sans-serif;
+  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .console-result-header small {
@@ -1558,7 +1584,7 @@ kbd {
   overflow: auto;
   border: 1px solid var(--line);
   color: #355063;
-  background: #f7f9fb;
+  background: var(--panel);
   font: 500 10px/1.5 var(--font-fira-code), monospace;
   white-space: pre-wrap;
   word-break: break-word;

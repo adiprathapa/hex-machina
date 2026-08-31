@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Fira_Code, Poppins } from "next/font/google";
+import { Fira_Code, Inter } from "next/font/google";
 import "./globals.css";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+// Inter over a geometric display face: this is an operator's instrument, and a
+// friendly rounded grotesk reads as consumer marketing rather than a tool.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -66,7 +68,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} ${firaCode.variable} antialiased`}
+        className={`${inter.variable} ${firaCode.variable} antialiased`}
       >
         {children}
       </body>

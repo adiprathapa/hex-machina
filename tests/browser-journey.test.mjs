@@ -170,8 +170,8 @@ test("production browser completes the constraint-preserving spell journey", { t
       semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
       machineData: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
     }));
-    assert.match(computedFonts.body, /Poppins/i, "the production body uses the intended display typeface");
-    assert.match(computedFonts.semanticLabel, /Poppins/i, "interface labels use the interface typeface");
+    assert.match(computedFonts.body, /Inter/i, "the production body uses the intended interface typeface");
+    assert.match(computedFonts.semanticLabel, /Inter/i, "interface labels use the interface typeface");
     assert.match(computedFonts.machineData, /Fira Code/i, "machine data keeps the code typeface");
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "failure spectacle is visible");

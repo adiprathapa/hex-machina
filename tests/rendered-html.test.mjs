@@ -27,12 +27,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
 
   assert.match(page, /<HexMachina \/>/);
   assert.match(layout, /Hex Machina \| Cooperative Spell Debugging/);
-  assert.match(layout, /Poppins/);
+  // Two faces, two roles: a neutral grotesk for anything a person reads, a
+  // monospace for machine data where character alignment carries meaning.
+  assert.match(layout, /Inter/);
   assert.match(layout, /Fira_Code/);
-  assert.match(layout, /--font-poppins/);
+  assert.match(layout, /--font-inter/);
   assert.match(layout, /--font-fira-code/);
-  assert.match(css, /var\(--font-poppins\)/);
+  assert.match(css, /var\(--font-inter\)/);
   assert.match(css, /var\(--font-fira-code\)/);
+  assert.doesNotMatch(`${layout}\n${css}`, /Poppins|font-poppins/);
   assert.doesNotMatch(`${layout}\n${css}`, /font-geist/);
   assert.match(client, /Water the moonflower/);
   assert.match(client, /The ducks are funny\. They stay\./);
@@ -66,7 +69,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(layout, /—/);
-  assert.match(layout, /Poppins/);
+  assert.match(layout, /Inter/);
   assert.match(layout, /Fira_Code/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /button:focus-visible/);
