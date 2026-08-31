@@ -57,3 +57,6 @@ next-env.d.ts
 # transient agent scratch
 _skep*
 .audit-*
+/skep-*.tmp.ts
+/vis-check.ts
+/vis[0-9]*.ts

@@ -41,6 +41,20 @@ test("all local Markdown links in the judge package resolve", async () => {
   assert.deepEqual(missing, []);
 });
 
+test("public source package contains no root-level analysis probes", async () => {
+  const entries = await readdir(ROOT, { withFileTypes: true });
+  const probes = entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => (
+      /^_?skep/i.test(name)
+      || /^\.audit-/i.test(name)
+      || /^vis(?:-|\d).*\.ts$/i.test(name)
+    ))
+    .sort();
+  assert.deepEqual(probes, [], "throwaway localhost/browser probes do not belong in the judge-facing repository");
+});
+
 test("Devpost copy directly answers every required explanation and judging criterion", async () => {
   const copy = await readFile(path.join(ROOT, "submission/devpost-entry.md"), "utf8");
   for (const heading of [
