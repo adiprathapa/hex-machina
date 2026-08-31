@@ -94,8 +94,35 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.ok(contrastRatio(cssColor("ember-text"), raisedPanel) >= 4.5);
   assert.ok(contrastRatio(cssColor("aqua-text"), raisedPanel) >= 4.5);
   assert.ok(contrastRatio(cssColor("blue-text"), raisedPanel) >= 4.5);
-  assert.match(css, /\.vision-symbol\s*\{[\s\S]*?color:\s*var\(--ember-text\)/);
-  assert.match(css, /\.vision-success \.vision-symbol\s*\{[\s\S]*?color:\s*var\(--aqua-text\)/);
+  // The palette is a single hue, so success and failure cannot be told apart by
+  // colour alone (WCAG 1.4.1). Failure is an outline on a dark wash; success
+  // reverses out of a solid fill at the brightest step. Both also carry their
+  // own word, "Cast failed" and "Verified". Pin the two-channel difference, not
+  // just the token names — the previous assertion matched `border-color` and
+  // would have passed on a design that dropped the distinction entirely.
+  const visionFailure = css.match(/\.vision-symbol\s*\{([^}]*)\}/)?.[1] ?? "";
+  const visionSuccess = css.match(/\.vision-success \.vision-symbol\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(visionFailure, /background:\s*var\(--failure-wash\)/);
+  assert.match(visionFailure, /\bcolor:\s*var\(--ember-text\)/);
+  assert.match(visionSuccess, /background:\s*var\(--aqua-text\)/);
+  assert.match(visionSuccess, /\bcolor:\s*var\(--black\)/);
+  assert.ok(
+    contrastRatio(cssColor("black"), cssColor("aqua-text")) >= 4.5,
+    "the success chip reverses out of its fill legibly",
+  );
+
+  // One hue only: no other named colour may enter the palette.
+  const paletteHues = [...css.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})/gi)]
+    .filter(([, name]) => !/^(black|paper|panel|panel-raised|ink|muted|subtle)$/.test(name))
+    .map(([, name, hex]) => {
+      const [r, g, b] = hex.match(/[a-f\d]{2}/gi).map((v) => Number.parseInt(v, 16));
+      return { name, hex, blueDominant: b >= r && b >= g };
+    });
+  assert.deepEqual(
+    paletteHues.filter((entry) => !entry.blueDominant),
+    [],
+    "every intent colour is a step on the one blue ramp",
+  );
   assert.doesNotMatch(css, /\.controls\s*\{[^}]*position:\s*sticky/);
   const mobileStart = css.indexOf("@media (max-width: 760px)");
   const reducedMotionStart = css.indexOf("@media (prefers-reduced-motion: reduce)");
@@ -121,5 +148,12 @@ test("ships Hex Machina instead of the starter preview", async () => {
     [],
     "controls size themselves from --control-min-h, not a hard-coded pointer height",
   );
+  // The panning wrapper must be layout-transparent anywhere but the compact
+  // layout. Left as a real box it sits between .canvas-panel's flex column and
+  // the canvas, the canvas loses its height, and every absolutely-positioned
+  // rune collapses onto a single row.
+  assert.match(css, /\.canvas-viewport\s*\{\s*display:\s*contents;\s*\}/);
+  assert.match(mobileCss, /\.canvas-viewport\s*\{[\s\S]*?overflow-x:\s*auto;/);
+
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });

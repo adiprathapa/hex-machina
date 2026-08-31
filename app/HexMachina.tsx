@@ -777,6 +777,11 @@ export function HexMachina() {
             </span>
           </div>
 
+          {/* A node graph cannot tile a phone-width canvas: a rune is a third of
+              the available width, so any layout that fits three columns on a
+              desktop collides on a phone. The diagram keeps its proportions and
+              pans instead, which is how diagrams behave on phones. */}
+          <div className="canvas-viewport">
           <div
             className={`spell-canvas ${dragging ? "is-rearranging" : ""} ${connectSource ? "is-connecting" : ""}`}
             role="application"
@@ -926,6 +931,7 @@ export function HexMachina() {
 
             <p className="canvas-hint">Drag runes to rearrange · Arrow keys nudge</p>
 
+          </div>
           </div>
 
           {/* Below the canvas, not over it: an overlay verdict hid the runes it

@@ -25,23 +25,38 @@
   --muted: #a1a1aa;
   --subtle: #8e8e97;
 
-  /* Intent — one colour per meaning, never decorative */
+  /* One hue, eight steps, plus the neutral grounds above. Meaning is carried by
+     fill versus outline, by weight, by dash pattern and by an explicit label —
+     never by hue alone, which is what WCAG 1.4.1 asks for anyway and what a
+     red/green pair never gave a colour-blind reader. Ratios below are measured
+     against --panel-raised, the lightest ground any of them sits on. */
+  --blue-1: #0e1d31;   /* washes only */
+  --blue-2: #16345a;   /* washes only */
+  --blue-3: #1f4f8f;   /* decorative rules */
+  --blue-4: #2d72d2;   /* 3.44:1 — borders and fills */
+  --blue-5: #4c90f0;   /* 5.07:1 — primary intent, borders, fills, text */
+  --blue-6: #7cb2ff;   /* 7.48:1 — text */
+  --blue-7: #a9ccff;   /* 9.87:1 — text */
+  --blue-8: #d3e4ff;   /* 12.61:1 — the brightest step, reserved for success */
+
   --blue: #4c90f0;
   --blue-dark: #2d72d2;
-  --blue-wash: rgba(45, 114, 210, .18);
-  --acid: #8abbff;
-  --lilac: #c274c2;
-  --ember: #e76a6e;
-  --aqua: #72ca9b;
-  --success-wash: rgba(50, 164, 103, .16);
-  --failure-wash: rgba(205, 66, 70, .16);
+  --blue-wash: rgba(45, 114, 210, .2);
+  --acid: #a9ccff;
+  --lilac: #7cb2ff;
 
-  /* Intent colours legible enough to set text in. The mid-tone versions above
-     carry meaning in borders and fills; used as type on a near-black ground
-     they measure near 2.7:1, so text takes the lighter step. */
-  --ember-text: #ff9d9f;
-  --aqua-text: #7fd8a8;
-  --blue-text: #8abbff;
+  /* State. The spell either holds or it does not: holding is filled and bright,
+     failing is outlined and a step dimmer. Both always carry their word too. */
+  --aqua: #4c90f0;
+  --ember: #2d72d2;
+  --success-wash: rgba(76, 144, 240, .18);
+  --failure-wash: rgba(22, 52, 90, .55);
+
+  /* Text counterparts. Two distinct steps, so success and failure stay
+     distinguishable in prose as well as in shape. */
+  --ember-text: #7cb2ff;
+  --aqua-text: #d3e4ff;
+  --blue-text: #7cb2ff;
 
   /* Type scale. Seven steps, nothing below 11px. The interface had eleven
      rendered sizes with 61% of its text at 10px or under, including a 7px
@@ -261,11 +276,15 @@ summary:focus-visible,
   position: relative;
   z-index: 1;
   display: grid;
+  /* Proportional rather than clamped. The clamps capped both rails at 420 and
+     480px, so a wide window left 340px of unused width beside them and 566px of
+     dead vertical tail inside them, while the same rails overflowed and had to
+     scroll at 1280. Fractions let every region take its share of whatever
+     window it is given, and the canvas stays the largest of the three. */
   grid-template-columns:
-    clamp(232px, 19vw, 420px)
-    minmax(520px, 1320px)
-    clamp(280px, 22vw, 480px);
-  justify-content: center;
+    minmax(232px, 0.9fr)
+    minmax(520px, 2.6fr)
+    minmax(280px, 1.05fr);
   flex: 1;
   min-height: 0;
   padding-top: 14px;
@@ -570,18 +589,28 @@ kbd {
   background: var(--failure-wash);
 }
 
+/* Failing reads as an outline: a hollow ring on a dim ground. */
 .cast-state.danger::before {
-  background: var(--ember);
+  background: transparent;
+  border: 1.5px solid var(--ember-text);
+  border-radius: 999px;
 }
 
 .cast-state.success {
   border-color: var(--aqua);
-  color: var(--aqua);
+  color: var(--aqua-text);
   background: var(--success-wash);
+  font-weight: 600;
 }
 
+/* Holding reads as a fill: a solid disc at the brightest step. */
 .cast-state.success::before {
-  background: var(--aqua);
+  background: var(--aqua-text);
+  border-radius: 999px;
+}
+
+.canvas-viewport {
+  display: contents;
 }
 
 .spell-canvas {
@@ -615,7 +644,7 @@ kbd {
 }
 
 .edge-layer line {
-  stroke: #8299aa;
+  stroke: #7d8896;
   stroke-width: .24;
   marker-end: url(#arrow-default);
   vector-effect: non-scaling-stroke;
@@ -634,13 +663,13 @@ kbd {
 }
 
 .edge-layer line.triggers {
-  stroke: #9a6a31;
+  stroke: var(--blue-4);
   stroke-dasharray: .7 .35 .15 .35;
 }
 
 .edge-layer line.requires,
 .edge-layer line.excepts {
-  stroke: #526e82;
+  stroke: var(--blue-3);
   stroke-dasharray: .22 .4;
 }
 
@@ -656,17 +685,17 @@ kbd {
 }
 
 .edge-layer line.patch-remove {
-  stroke: var(--ember);
-  stroke-width: .5;
-  stroke-dasharray: .8 .35;
-  opacity: .74;
+  stroke: var(--blue-4);
+  stroke-width: .42;
+  stroke-dasharray: .55 .55;
+  opacity: .7;
 }
 
 .edge-layer line.patch-add {
-  stroke: var(--aqua);
-  stroke-width: .58;
-  stroke-dasharray: .2 .55;
-  opacity: .9;
+  stroke: var(--blue-8);
+  stroke-width: .72;
+  stroke-dasharray: none;
+  opacity: 1;
   marker-end: url(#arrow-add);
   animation: draft-line .7s ease-out both;
 }
@@ -690,7 +719,7 @@ kbd {
 .graph-legend i {
   width: 14px;
   height: 2px;
-  background: #8299aa;
+  background: #7d8896;
 }
 
 .graph-legend .legend-target i {
@@ -952,9 +981,9 @@ kbd {
 }
 
 .vision-success .vision-symbol {
-  border-color: var(--aqua);
-  background: var(--success-wash);
-  color: var(--aqua-text);
+  border-color: var(--aqua-text);
+  background: var(--aqua-text);
+  color: var(--black);
 }
 
 .cast-vision strong {
@@ -1141,7 +1170,7 @@ kbd {
   gap: 4px 8px;
   margin-top: 10px;
   padding: 8px;
-  border: 1px solid #a8cfbd;
+  border: 1px solid var(--blue-5);
   border-radius: var(--radius);
   background: var(--success-wash);
 }
@@ -1505,8 +1534,8 @@ kbd {
 
 .policy-baselines {
   margin: 10px 0;
-  border-top: 1px solid #bfd2dd;
-  border-bottom: 1px solid #bfd2dd;
+  border-top: 1px solid var(--blue-6);
+  border-bottom: 1px solid var(--blue-6);
 }
 
 .policy-baselines-heading,
@@ -1550,12 +1579,13 @@ kbd {
 }
 
 .policy-baseline strong {
-  color: var(--aqua);
+  color: var(--aqua-text);
   font-size: var(--t-xs);
 }
 
 .policy-baseline strong.negative {
-  color: var(--ember);
+  color: var(--ember-text);
+  font-weight: 500;
 }
 
 .gym-foot button {
@@ -1600,6 +1630,26 @@ kbd {
   display: grid;
   gap: 0;
   align-content: start;
+}
+
+/* The feed is the one region in this rail with no natural height, so on a tall
+   window it takes the slack rather than leaving up to 566px of nothing under
+   the panel. Gated on height on purpose: where the rail already overflows there
+   is no slack to absorb, and making the feed a second scroll container inside a
+   scrolling rail puts the controls below it out of reach. */
+@media (min-height: 950px) {
+  .familiar-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .activity-list {
+    flex: 1 1 auto;
+    min-height: 96px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
 }
 
 .activity-list article {
@@ -1901,7 +1951,21 @@ kbd {
   .lede { max-width: none; }
   .controls { margin-top: 0; }
   .canvas-panel { margin: 0; }
-  .spell-canvas { min-height: 570px; }
+  /* The diagram keeps a workable width and the viewport pans to it. The page
+     itself never scrolls sideways; only this region does. */
+  .canvas-viewport {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .spell-canvas {
+    min-height: 570px;
+    min-width: 560px;
+  }
   .graph-legend { display: none; }
   .rune { width: 99px; grid-template-columns: 28px 1fr; padding: 7px; }
   .rune-glyph { width: 27px; height: 27px; font-size: var(--t-base); }

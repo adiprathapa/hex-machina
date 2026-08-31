@@ -307,7 +307,23 @@ test("production browser completes the constraint-preserving spell journey", { t
       const brief = document.querySelector(".brief-panel")?.getBoundingClientRect();
       const canvas = document.querySelector(".canvas-panel")?.getBoundingClientRect();
       const linkButton = document.querySelector(".start-link")?.getBoundingClientRect();
+      // A rune is a third of a phone-width canvas, so a layout that tiles three
+      // columns on a desktop stacks them on top of each other here. The diagram
+      // keeps a workable width and pans inside its own viewport instead.
+      const runes = [...document.querySelectorAll(".rune")].map((el) => el.getBoundingClientRect());
+      let overlaps = 0;
+      for (let a = 0; a < runes.length; a += 1) {
+        for (let b = a + 1; b < runes.length; b += 1) {
+          const overlapX = Math.min(runes[a].right, runes[b].right) - Math.max(runes[a].left, runes[b].left);
+          const overlapY = Math.min(runes[a].bottom, runes[b].bottom) - Math.max(runes[a].top, runes[b].top);
+          if (overlapX > 0 && overlapY > 0) overlaps += 1;
+        }
+      }
+      const viewport = document.querySelector(".canvas-viewport");
       return {
+        runeOverlaps: overlaps,
+        canvasWidth: document.querySelector(".spell-canvas")?.getBoundingClientRect().width,
+        canvasPans: viewport ? getComputedStyle(viewport).overflowX === "auto" : false,
         briefTop: brief?.top,
         canvasTop: canvas?.top,
         linkHeight: linkButton?.height,
@@ -317,6 +333,9 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.ok(responsiveLayout.briefTop < responsiveLayout.canvasTop, "onboarding precedes the graph on mobile");
     assert.equal(responsiveLayout.horizontalOverflow, false, "mobile layout does not overflow horizontally");
     assert.ok(responsiveLayout.linkHeight >= 44, "compact graph controls retain a 44px touch target");
+    assert.equal(responsiveLayout.runeOverlaps, 0, "no two runes overlap on a phone");
+    assert.equal(responsiveLayout.canvasPans, true, "the diagram pans inside its own viewport rather than squeezing");
+    assert.ok(responsiveLayout.canvasWidth >= 520, "the diagram keeps a width its layout can actually use");
 
     const moonwell = page.getByRole("button", { name: /Moonwell, Source/ });
     await moonwell.focus();
