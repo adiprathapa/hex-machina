@@ -1910,6 +1910,27 @@ kbd {
   to { opacity: .9; }
 }
 
+/* Below this the canvas is narrower than the diagram needs, so it keeps a
+   workable width and the viewport pans to it. The page itself never scrolls
+   sideways; only this region does. */
+@media (max-width: 940px) {
+  .canvas-viewport {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .spell-canvas {
+    /* Wide enough that the relaxation's separation, once mapped into the
+       drawable area, still exceeds a rune's width. Below about 680px it does
+       not, and runes collide. */
+    min-width: 680px;
+  }
+}
+
 @media (max-width: 1100px) {
   .machina { height: auto; min-height: 100svh; overflow: visible; }
   .workspace { min-height: 0; }
@@ -1951,21 +1972,7 @@ kbd {
   .lede { max-width: none; }
   .controls { margin-top: 0; }
   .canvas-panel { margin: 0; }
-  /* The diagram keeps a workable width and the viewport pans to it. The page
-     itself never scrolls sideways; only this region does. */
-  .canvas-viewport {
-    display: block;
-    flex: 1;
-    min-height: 0;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .spell-canvas {
-    min-height: 570px;
-    min-width: 560px;
-  }
+  .spell-canvas { min-height: 570px; }
   .graph-legend { display: none; }
   .rune { width: 99px; grid-template-columns: 28px 1fr; padding: 7px; }
   .rune-glyph { width: 27px; height: 27px; font-size: var(--t-base); }

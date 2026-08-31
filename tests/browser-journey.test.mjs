@@ -342,7 +342,10 @@ test("production browser completes the constraint-preserving spell journey", { t
     const beforeLeft = await moonwell.evaluate((element) => Number.parseFloat(element.style.left));
     await moonwell.press("ArrowRight");
     const afterLeft = await moonwell.evaluate((element) => Number.parseFloat(element.style.left));
-    assert.equal(afterLeft, beforeLeft + 2, "arrow keys nudge a focused rune by two percent");
+    assert.ok(
+      Math.abs(afterLeft - (beforeLeft + 2)) < 0.001,
+      `arrow keys nudge a focused rune by two percent of the canvas (moved ${afterLeft - beforeLeft})`,
+    );
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.reload({ waitUntil: "networkidle" });

@@ -153,7 +153,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
   // the canvas, the canvas loses its height, and every absolutely-positioned
   // rune collapses onto a single row.
   assert.match(css, /\.canvas-viewport\s*\{\s*display:\s*contents;\s*\}/);
-  assert.match(mobileCss, /\.canvas-viewport\s*\{[\s\S]*?overflow-x:\s*auto;/);
+  // The three-column layout stops working before the phone breakpoint: the
+  // canvas drops under 560px from about 940px down, and a 154px rune cannot
+  // tile it. Panning starts there, not at 760, or a tablet in portrait stacks
+  // runes on top of each other.
+  const panStart = css.indexOf("@media (max-width: 940px)");
+  assert.notEqual(panStart, -1, "the diagram pans from the width where the canvas gets too narrow");
+  const panCss = css.slice(panStart, css.indexOf("@media", panStart + 10));
+  assert.match(panCss, /\.canvas-viewport\s*\{[\s\S]*?overflow-x:\s*auto;/);
+  assert.match(panCss, /\.spell-canvas\s*\{[\s\S]*?min-width:\s*680px;/);
 
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });
