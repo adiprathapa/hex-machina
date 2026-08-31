@@ -219,3 +219,28 @@ test("YouTube handoff covers every official media requirement", async () => {
   assert.match(handoff, /https:\/\/hex-machina\.hex-machina\.workers\.dev/);
   assert.match(handoff, /https:\/\/github\.com\/adiprathapa\/hex-machina/);
 });
+
+test("every npm command the judge package advertises actually exists", async () => {
+  const { scripts } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const docs = ["README.md", "submission/devpost-entry.md", "submission/agent-gym-adversarial-audit.md",
+    "submission/acceptance-matrix.md", "submission/deployment.md", "submission/description.md",
+    "submission/video/README.md", "submission/screenshots/README.md"];
+
+  // Two documents advertised `npm run gym:replay` under headings promising that
+  // every number regenerates. It has never existed. A judge's first copy-paste
+  // from the reproducibility block exited non-zero.
+  const missing = [];
+  for (const doc of docs) {
+    let text;
+    try {
+      text = await readFile(new URL(`../${doc}`, import.meta.url), "utf8");
+    } catch {
+      continue;
+    }
+    for (const [, name] of text.matchAll(/npm run (?:--silent )?([a-z0-9:_-]+)/g)) {
+      if (!(name in scripts)) missing.push(`${doc}: npm run ${name}`);
+    }
+  }
+
+  assert.deepEqual([...new Set(missing)], [], "the judge package advertises npm scripts that do not exist");
+});
