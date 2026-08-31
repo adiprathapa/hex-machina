@@ -260,6 +260,24 @@ export function HexMachina() {
   );
   /* eslint-enable react-hooks/refs */
 
+  // The Cast control advertises Enter with a key badge, so Enter has to work.
+  // It fires whichever step is currently primary, and stands down whenever the
+  // person is typing or a modifier is held.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (target?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "A") return;
+      const primary = document.querySelector<HTMLButtonElement>(".controls .primary");
+      if (!primary || primary.disabled) return;
+      event.preventDefault();
+      primary.click();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   useEffect(() => {
     const registration = new AbortController();
     let active = true;
@@ -534,7 +552,24 @@ export function HexMachina() {
     <main className={`machina stage-${stage}`}>
       <header className="topbar">
         <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">HX</span>
+          {/* A hexagon holding a three-node causal path: the subject of the
+              product, drawn rather than abbreviated. "HX" in a bordered box read
+              as a placeholder. Inline SVG keeps it under the CSP with no request. */}
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="presentation" focusable="false">
+              <path
+                d="M16 2.6 27.2 9v14L16 29.4 4.8 23V9z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path d="M11 20.5 16 12.4l5 4.7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="11" cy="20.5" r="2.1" fill="currentColor" />
+              <circle cx="16" cy="12.4" r="2.1" fill="currentColor" />
+              <circle cx="21" cy="17.1" r="2.1" fill="currentColor" />
+            </svg>
+          </span>
           <div>
             <p className="eyebrow">The cooperative spell debugger</p>
             <h1>Hex Machina</h1>
