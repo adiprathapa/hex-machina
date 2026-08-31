@@ -265,7 +265,7 @@ test("production browser completes the constraint-preserving spell journey", { t
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.reload({ waitUntil: "networkidle" });
-    await assertVisible(page.getByText("7 site tools live", { exact: true }), "production WebMCP registration is visible");
+    await assertVisible(page.getByText("WebMCP · 7 tools registered", { exact: true }), "production WebMCP registration names the protocol");
     const registeredNames = await page.evaluate(() => [...window.__hexWebMCPTools.keys()].sort());
     assert.deepEqual(registeredNames, [
       "apply_spell_patch",

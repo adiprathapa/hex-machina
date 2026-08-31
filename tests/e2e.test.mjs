@@ -36,7 +36,12 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /Water the moonflower without flooding the room\./);
   assert.match(html, /Cast spell/);
   assert.match(html, /Executable spell graph/);
-  assert.match(html, /Local spell console/);
+  // The shell must name the protocol a judge was told to test, and ship the
+  // canonical prompt, rather than leaving both in a README.
+  assert.match(html, /WebMCP/);
+  assert.match(html, /document\.modelContext/);
+  assert.match(html, /Copy prompt/);
+  assert.match(html, /github\.com\/adiprathapa\/hex-machina/);
   assert.match(html, /Agent Gym · evaluation mode/);
   assert.match(html, /Scored, replayable episode/);
   assert.match(html, /reward plus before\/after graph observations/);

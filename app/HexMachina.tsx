@@ -86,6 +86,10 @@ const kindLabel: Record<RuneNode["kind"], string> = {
 
 const DEFAULT_CONSTRAINT = "The ducks are funny. They stay.";
 
+const JUDGE_PROMPT = "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The ducks are funny, so preserve them as a sacred constraint. Find the smallest repair that waters the moonflower without flooding the room, show me the proposed patch, apply it, and cast the spell again.";
+
+const REPO_URL = "https://github.com/adiprathapa/hex-machina";
+
 const familyIds = Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
 
 /** Which causal rule each family generates, for labelling the picker. */
@@ -150,7 +154,8 @@ export function HexMachina() {
   const [selected, setSelected] = useState<string | null>(() => graph.semantics.roles.multiplier);
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => initialPositions(graph));
   const [dragging, setDragging] = useState<string | null>(null);
-  const [mcpReady, setMcpReady] = useState(false);
+  const [mcpState, setMcpState] = useState<"checking" | "live" | "unavailable">("checking");
+  const mcpReady = mcpState === "live";
   const [consoleOutput, setConsoleOutput] = useState("Select a tool to inspect its structured result.");
   const [consoleBusy, setConsoleBusy] = useState<ConsoleTool | null>(null);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
@@ -167,6 +172,7 @@ export function HexMachina() {
   const [labFamily, setLabFamily] = useState<AgentGymFamilyId>(() => familyIds[0]);
   const [labSplit, setLabSplit] = useState<AgentGymSplit>("test");
   const [labIndex, setLabIndex] = useState(0);
+  const [promptCopied, setPromptCopied] = useState(false);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const activityId = useRef(0);
@@ -260,10 +266,10 @@ export function HexMachina() {
     let active = true;
     registerWebMCPTools(handlers, registration.signal, { scenario: graphRef.current })
       .then((supported) => {
-        if (active) setMcpReady(supported);
+        if (active) setMcpState(supported ? "live" : "unavailable");
       })
       .catch(() => {
-        if (active) setMcpReady(false);
+        if (active) setMcpState("unavailable");
       });
     return () => {
       active = false;
@@ -538,9 +544,13 @@ export function HexMachina() {
           <span>Objective</span>
           <strong>{graph.desiredOutcome}</strong>
         </div>
-        <div className={`site-tool-state ${mcpReady ? "connected" : "local"}`}>
+        <div className={`site-tool-state ${mcpState}`} title="This page registers seven semantic tools with document.modelContext for a visiting browser agent.">
           <span className="status-dot" />
-          {mcpReady ? "7 site tools live" : "Local spell console"}
+          {mcpState === "live"
+            ? "WebMCP · 7 tools registered"
+            : mcpState === "checking"
+              ? "WebMCP · looking for a host…"
+              : "WebMCP unavailable · using the local tool console"}
         </div>
       </header>
 
@@ -569,6 +579,35 @@ export function HexMachina() {
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
+
+          {/* A judge arriving in a WebMCP browser needs the prompt in front of
+              them, not in a README they were not told to open. */}
+          <section className="agent-brief" aria-label="Drive this with a browser agent">
+            <p className="section-kicker">Drive this with a browser agent</p>
+            <p className="agent-brief-note">
+              This page registers seven semantic tools on <code>document.modelContext</code>.
+              Paste this into a WebMCP-capable browser agent and watch the canvas.
+            </p>
+            <p className="agent-brief-prompt">{JUDGE_PROMPT}</p>
+            <div className="agent-brief-actions">
+              <button
+                type="button"
+                className="quiet"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(JUDGE_PROMPT);
+                    setPromptCopied(true);
+                    window.setTimeout(() => setPromptCopied(false), 1800);
+                  } catch {
+                    setPromptCopied(false);
+                  }
+                }}
+              >
+                {promptCopied ? "Copied" : "Copy prompt"}
+              </button>
+              <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source &amp; evidence</a>
+            </div>
+          </section>
 
           <blockquote className={isSacred ? "wish active" : "wish"}>
             <span>Human intent</span>
