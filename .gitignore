@@ -46,3 +46,6 @@ next-env.d.ts
 /outputs/
 /work/
 .gstack/
+
+# local design/measurement probes
+/.shot

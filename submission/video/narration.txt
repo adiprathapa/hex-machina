@@ -1,4 +1,4 @@
-This is Hex Machina. It is a debugger for executable graphs, and a browser agent is about to drive it through seven WebMCP tools.
+This is Hex Machina. It is an agent gym for constraint aware repair, and a browser agent is about to drive it through seven WebMCP tools.
 
 The page registers those tools on document dot modelContext. Everything you are about to see is the agent calling them. Nobody is clicking.
 

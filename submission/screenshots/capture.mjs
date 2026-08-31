@@ -89,6 +89,11 @@ async function capture(page, filename) {
     document.body.scrollLeft = 0;
     document.body.scrollTop = 0;
     window.scrollTo(0, 0);
+    // The rails are their own scroll containers. Focusing a control inside one
+    // leaves it scrolled mid-sentence, which reads as a cropped screenshot.
+    for (const rail of document.querySelectorAll(".brief-panel, .familiar-panel")) {
+      rail.scrollTop = 0;
+    }
   });
   await page.screenshot({
     path: path.join(SCREENSHOT_DIR, filename),

@@ -17,8 +17,8 @@
   --panel-raised: #202024;
 
   /* Structure */
-  --line: rgba(255, 255, 255, .10);
-  --line-strong: rgba(255, 255, 255, .17);
+  --line: rgba(255, 255, 255, .13);
+  --line-strong: rgba(255, 255, 255, .26);
 
   /* Text */
   --ink: #ededef;
@@ -43,6 +43,18 @@
   --aqua-text: #7fd8a8;
   --blue-text: #8abbff;
 
+  /* Type scale. Seven steps, nothing below 11px. The interface had eleven
+     rendered sizes with 61% of its text at 10px or under, including a 7px
+     rule — dense is a layout property, not a font size, and type that small
+     reads as a screenshot of an app rather than an app. */
+  --t-xs: 11px;
+  --t-sm: 12px;
+  --t-base: 13px;
+  --t-md: 15px;
+  --t-lg: 18px;
+  --t-xl: clamp(20px, 1.35vw, 24px);
+  --t-display: clamp(26px, 2vw, 34px);
+
   /* Geometry. Blueprint moved to 2px because at operator density a large
      radius reads as a consumer card rather than a panel. */
   --radius: 2px;
@@ -51,6 +63,12 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* The UA shrinks <small> to 0.8em, which silently pushed labels under the
+   scale's floor wherever a rule set a size on the parent instead of the small. */
+small {
+  font-size: inherit;
 }
 
 html {
@@ -102,7 +120,17 @@ summary:focus-visible {
 .familiar-title {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
+}
+
+/* Align to the wordmark's own line, not to the centre of the stacked pair. */
+.brand-lockup {
+  align-items: center;
+}
+
+.brand-lockup > div {
+  display: grid;
+  gap: 1px;
 }
 
 .brand-mark,
@@ -116,9 +144,14 @@ summary:focus-visible {
 }
 
 .brand-mark svg {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: block;
+}
+
+/* Weight to match the wordmark rather than sit beside it as wire. */
+.brand-mark svg path {
+  stroke-width: 2.1;
 }
 
 /* The Familiar is a persona, not the product, so it stays a lettermark — but a
@@ -127,7 +160,7 @@ summary:focus-visible {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--subtle);
-  font: 600 13px/1 var(--font-fira-code), monospace;
+  font: 600 var(--t-base)/1 var(--font-fira-code), monospace;
 }
 
 .topbar h1,
@@ -142,16 +175,23 @@ summary:focus-visible {
   letter-spacing: -0.025em;
 }
 
+.brand-lockup .eyebrow {
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
 .topbar h1 {
-  font-size: 18px;
+  font-size: var(--t-xl);
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .eyebrow,
 .section-kicker {
   margin: 0 0 4px;
   color: var(--subtle);
-  font: 600 11px/1.25 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 600 var(--t-xs)/1.25 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .mission-chip {
@@ -168,11 +208,11 @@ summary:focus-visible {
 
 .mission-chip span {
   color: var(--blue);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .mission-chip strong {
-  font-size: 13px;
+  font-size: var(--t-base);
   font-weight: 500;
 }
 
@@ -182,7 +222,7 @@ summary:focus-visible {
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .status-dot {
@@ -211,9 +251,10 @@ summary:focus-visible {
   z-index: 1;
   display: grid;
   grid-template-columns:
-    clamp(232px, 18vw, 380px)
-    minmax(520px, 1fr)
-    clamp(280px, 21vw, 440px);
+    clamp(232px, 19vw, 420px)
+    minmax(520px, 1320px)
+    clamp(280px, 22vw, 480px);
+  justify-content: center;
   flex: 1;
   min-height: 0;
   padding-top: 14px;
@@ -226,7 +267,7 @@ summary:focus-visible {
 
 .brief-panel,
 .familiar-panel {
-  padding: 12px 18px 0;
+  padding: 12px 18px 14px;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -244,16 +285,16 @@ summary:focus-visible {
 
 .brief-panel h2 {
   max-width: 16ch;
-  font-size: clamp(24px, 2.1vw, 38px);
+  font-size: var(--t-display);
   font-weight: 500;
-  line-height: 1.06;
+  line-height: 1.12;
 }
 
 .lede {
   max-width: 34ch;
   margin: 16px 0 26px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-base);
   line-height: 1.65;
 }
 
@@ -278,7 +319,7 @@ summary:focus-visible {
 
 .quest-steps li > span {
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .quest-steps li strong,
@@ -287,13 +328,13 @@ summary:focus-visible {
 }
 
 .quest-steps li strong {
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
 .quest-steps li small {
   margin-top: 2px;
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .quest-steps li.current {
@@ -348,7 +389,7 @@ summary:focus-visible {
   border: 1px solid var(--blue-dark);
   background: var(--blue-wash);
   color: var(--acid);
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
@@ -362,7 +403,7 @@ summary:focus-visible {
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .controls .quiet:hover {
@@ -374,7 +415,7 @@ kbd {
   padding: 3px 5px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  font: 500 9px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .agent-brief {
@@ -388,13 +429,13 @@ kbd {
 .agent-brief-note {
   margin: 0 0 8px;
   color: var(--subtle);
-  font-size: 11px;
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
 
 .agent-brief-note code {
   color: var(--acid);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .agent-brief-prompt {
@@ -403,7 +444,7 @@ kbd {
   border-left: 2px solid var(--blue-dark);
   background: var(--panel-raised);
   color: var(--muted);
-  font: 400 11px/1.5 var(--font-fira-code), monospace;
+  font: 400 var(--t-sm)/1.5 var(--font-fira-code), monospace;
 }
 
 .agent-brief-actions {
@@ -420,7 +461,7 @@ kbd {
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -433,10 +474,11 @@ kbd {
 
 .wish {
   margin: 16px 0 0;
+  margin-top: auto;
   padding: 11px 0 11px 12px;
   border-left: 3px solid var(--line-strong);
   color: var(--subtle);
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-style: normal;
   line-height: 1.45;
 }
@@ -445,7 +487,7 @@ kbd {
   display: block;
   margin-bottom: 5px;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .wish.active {
@@ -475,7 +517,7 @@ kbd {
 }
 
 .canvas-header h2 {
-  font-size: 16px;
+  font-size: var(--t-md);
   font-weight: 600;
 }
 
@@ -486,7 +528,7 @@ kbd {
   border-radius: var(--radius);
   color: var(--subtle);
   background: var(--panel);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .cast-state::before {
@@ -608,18 +650,13 @@ kbd {
 }
 
 .graph-legend {
-  position: absolute;
-  z-index: 3;
-  top: 12px;
-  left: 12px;
   display: flex;
-  gap: 12px;
-  margin: 0;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  background: var(--panel-raised);
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 auto 0 24px;
+  margin-right: auto;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .graph-legend span {
@@ -652,7 +689,7 @@ kbd {
   transform: translate(-50%, -50%);
   width: max-content;
   min-width: clamp(118px, 9.5vw, 168px);
-  max-width: clamp(190px, 15vw, 260px);
+  max-width: clamp(168px, 13vw, 240px);
   min-height: clamp(58px, 4.4vw, 76px);
   display: grid;
   grid-template-columns: clamp(34px, 2.6vw, 44px) 1fr;
@@ -733,14 +770,15 @@ kbd {
 
 .rune.dormant {
   border-style: dashed;
-  border-color: var(--line);
-  background: transparent;
+  border-color: var(--line-strong);
+  background: var(--panel);
   color: var(--subtle);
-  opacity: .5;
+  opacity: .78;
 }
 
-.rune.dormant .rune-glyph {
-  opacity: .6;
+.rune.dormant .rune-copy strong {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .rune.patch-activate {
@@ -781,7 +819,7 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel-raised);
   color: var(--lilac);
-  font: 500 9px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -799,7 +837,7 @@ kbd {
   bottom: 10px;
   margin: 0;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
   pointer-events: none;
 }
 
@@ -817,7 +855,7 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--blue);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .rune-modifier .rune-glyph {
@@ -843,7 +881,7 @@ kbd {
 .rune-copy small {
   margin-top: 2px;
   color: var(--subtle);
-  font: 500 clamp(10px, .68vw, 12px)/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 clamp(var(--t-xs), .7vw, var(--t-sm))/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .sacred-pin {
@@ -857,7 +895,7 @@ kbd {
   border-radius: var(--radius);
   color: var(--ink);
   background: var(--blue);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 /* The cast verdict reads as a status bar under the canvas. As an overlay it
@@ -889,7 +927,7 @@ kbd {
   border-radius: 999px;
   background: var(--failure-wash);
   color: var(--ember-text);
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
@@ -901,14 +939,14 @@ kbd {
 
 .cast-vision strong {
   flex: none;
-  font-size: 13px;
+  font-size: var(--t-base);
   font-weight: 600;
 }
 
 .cast-vision span {
   min-width: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--t-sm);
   line-height: 1.45;
 }
 
@@ -945,18 +983,18 @@ kbd {
 
 .node-inspector small {
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .node-inspector strong {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--t-sm);
 }
 
 .node-inspector p {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-sm);
   line-height: 1.45;
 }
 
@@ -973,7 +1011,7 @@ kbd {
   flex-basis: 100%;
   overflow: hidden;
   color: var(--subtle);
-  font-size: 9px;
+  font-size: var(--t-xs);
   line-height: 1.25;
   text-align: right;
   text-overflow: ellipsis;
@@ -982,10 +1020,10 @@ kbd {
 
 .connection-editor button,
 .connection-editor select {
-  min-height: 28px;
+  min-height: 32px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .connection-editor button {
@@ -1017,7 +1055,7 @@ kbd {
   align-items: center;
   gap: 5px;
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .connection-editor select {
@@ -1028,7 +1066,7 @@ kbd {
 
 .connection-prompt {
   color: var(--aqua);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .familiar-panel {
@@ -1042,7 +1080,7 @@ kbd {
 }
 
 .familiar-title h2 {
-  font-size: 16px;
+  font-size: var(--t-md);
   font-weight: 600;
 }
 
@@ -1060,7 +1098,7 @@ kbd {
 .patch-card > p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-base);
   line-height: 1.6;
 }
 
@@ -1071,7 +1109,7 @@ kbd {
 
 .patch-card h3 {
   margin: 8px 0 0;
-  font-size: 16px;
+  font-size: var(--t-md);
   font-weight: 600;
   letter-spacing: -.02em;
 }
@@ -1091,13 +1129,13 @@ kbd {
 .preview-verdict span,
 .preview-verdict small {
   color: var(--subtle);
-  font: 500 10px/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .preview-verdict strong {
   justify-self: end;
   color: var(--aqua);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .preview-verdict small {
@@ -1128,7 +1166,7 @@ kbd {
 .patch-card dt,
 .patch-card dd {
   margin: 0;
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .patch-card dt {
@@ -1146,18 +1184,18 @@ kbd {
 
 .patch-preflight span {
   color: var(--lilac);
-  font: 500 9px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .patch-preflight strong {
   color: var(--muted);
-  font: 500 10px/1.35 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1.35 var(--font-fira-code), monospace;
 }
 
 .preserves {
   margin-top: 10px;
   color: var(--aqua);
-  font-size: 11px;
+  font-size: var(--t-sm);
 }
 
 /* Nothing protected is a warning, not a reassurance. */
@@ -1174,7 +1212,7 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
 
@@ -1202,7 +1240,7 @@ kbd {
   line-height: 1.25;
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
 }
 
@@ -1233,7 +1271,7 @@ kbd {
   padding: 9px 10px;
   color: var(--ink);
   cursor: pointer;
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .patch-ledger ol {
@@ -1257,7 +1295,7 @@ kbd {
 
 .patch-ledger li > span {
   color: var(--aqua);
-  font: 600 11px/1 var(--font-fira-code), monospace;
+  font: 600 var(--t-sm)/1 var(--font-fira-code), monospace;
 }
 
 .patch-ledger li[data-patch-kind="disconnect"] > span {
@@ -1271,7 +1309,7 @@ kbd {
 .patch-ledger li p {
   margin: 0;
   color: var(--muted);
-  font: 500 10px/1.35 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1.35 var(--font-fira-code), monospace;
 }
 
 .familiar-signal {
@@ -1298,7 +1336,7 @@ kbd {
 }
 
 .familiar-signal-heading strong {
-  font-size: 12px;
+  font-size: var(--t-sm);
 }
 
 .familiar-signal-heading > span {
@@ -1306,7 +1344,7 @@ kbd {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .familiar-signal ol {
@@ -1334,19 +1372,19 @@ kbd {
 .familiar-signal li button span {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11px;
+  font-size: var(--t-sm);
   white-space: nowrap;
 }
 
 .familiar-signal li button b {
   margin-right: 7px;
   color: var(--lilac);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .familiar-signal li button > strong {
   color: var(--blue);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .signal-meter {
@@ -1365,7 +1403,7 @@ kbd {
 .familiar-signal > p {
   margin: 11px 0 0;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.45;
 }
 
@@ -1393,7 +1431,7 @@ kbd {
 .agent-gym h3 {
   margin: 3px 0 0;
   color: var(--ink);
-  font-size: 12px;
+  font-size: var(--t-sm);
 }
 
 .agent-gym-heading > span {
@@ -1402,7 +1440,7 @@ kbd {
   color: var(--blue-text);
   background: var(--panel-raised);
   border-radius: var(--radius);
-  font: 600 11px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 600 var(--t-sm)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .agent-gym-heading > span.complete {
@@ -1413,7 +1451,7 @@ kbd {
 .agent-gym > p {
   margin: 10px 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.45;
 }
 
@@ -1426,7 +1464,7 @@ kbd {
 .gym-score > span,
 .gym-foot small {
   color: var(--subtle);
-  font: 500 10px/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .gym-meter {
@@ -1450,6 +1488,13 @@ kbd {
 }
 
 .policy-baselines-heading,
+.policy-baselines-note {
+  margin: 0 0 6px;
+  color: var(--subtle);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+}
+
 .policy-baseline {
   display: flex;
   align-items: center;
@@ -1460,14 +1505,14 @@ kbd {
 .policy-baselines-heading {
   padding: 6px 0 4px;
   color: var(--subtle);
-  font: 600 8px/1.2 var(--font-fira-code), monospace;
+  font: 600 var(--t-xs)/1.2 var(--font-fira-code), monospace;
 }
 
 .policy-baseline {
   min-height: 27px;
   border-top: 1px solid rgb(191 210 221 / 55%);
   color: var(--ink);
-  font: 600 9px/1.1 var(--font-fira-code), monospace;
+  font: 600 var(--t-xs)/1.1 var(--font-fira-code), monospace;
 }
 
 .policy-baseline > span {
@@ -1478,13 +1523,13 @@ kbd {
 
 .policy-baseline small {
   color: var(--subtle);
-  font-size: 7px;
+  font-size: var(--t-xs);
   font-weight: 500;
 }
 
 .policy-baseline strong {
   color: var(--aqua);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .policy-baseline strong.negative {
@@ -1499,7 +1544,7 @@ kbd {
   color: var(--blue-text);
   background: var(--panel-raised);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1511,6 +1556,7 @@ kbd {
 
 .gym-foot button:disabled {
   cursor: not-allowed;
+  cursor: not-allowed;
   opacity: .55;
 }
 
@@ -1521,7 +1567,7 @@ kbd {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-header small {
@@ -1531,6 +1577,7 @@ kbd {
 .activity-list {
   display: grid;
   gap: 0;
+  align-content: start;
 }
 
 .activity-list article {
@@ -1549,19 +1596,19 @@ kbd {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--blue);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-list strong {
   color: var(--ink);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .activity-list p,
 .empty-activity {
   margin: 4px 0 0;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.45;
 }
 
@@ -1574,7 +1621,7 @@ kbd {
 }
 
 .tool-console summary {
-  min-height: 46px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1595,13 +1642,13 @@ kbd {
 
 .tool-console summary strong {
   color: var(--ink);
-  font: 500 10px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .tool-console summary small {
   margin-top: 4px;
   color: var(--subtle);
-  font-size: 9px;
+  font-size: var(--t-xs);
 }
 
 .tool-console[open] summary {
@@ -1612,7 +1659,7 @@ kbd {
   margin: 0;
   padding: 10px 0 0;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.45;
 }
 
@@ -1625,7 +1672,7 @@ kbd {
 
 .tool-console-grid button {
   min-width: 0;
-  min-height: 36px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1652,13 +1699,23 @@ kbd {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 10px;
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+.tool-console-grid button code {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--subtle);
+  font: 400 var(--t-xs)/1.2 var(--font-fira-code), monospace;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tool-console-grid button small {
   color: var(--subtle);
-  font: 500 9px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .console-result-header {
@@ -1667,12 +1724,12 @@ kbd {
   padding: 8px 0;
   border-top: 1px solid var(--line);
   color: var(--subtle);
-  font: 500 10px/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .console-result-header small {
   color: var(--aqua);
-  font-size: 9px;
+  font-size: var(--t-xs);
 }
 
 .lab-controls {
@@ -1686,7 +1743,7 @@ kbd {
   display: grid;
   gap: 3px;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .lab-controls label:first-child {
@@ -1700,7 +1757,7 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel-raised);
   color: var(--ink);
-  font-size: 11px;
+  font-size: var(--t-sm);
 }
 
 .lab-actions {
@@ -1713,7 +1770,7 @@ kbd {
   min-height: 32px;
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
@@ -1750,12 +1807,12 @@ kbd {
 
 .lab-loaded code {
   color: var(--acid);
-  font: 500 11px/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-sm)/1 var(--font-fira-code), monospace;
 }
 
 .lab-loaded small {
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .tool-console pre {
@@ -1766,7 +1823,7 @@ kbd {
   border: 1px solid var(--line);
   color: var(--muted);
   background: var(--panel);
-  font: 500 10px/1.5 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1.5 var(--font-fira-code), monospace;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -1815,7 +1872,7 @@ kbd {
     border-top: 1px solid var(--line);
     border-left: 0;
   }
-  .site-tool-state { font-size: 10px; }
+  .site-tool-state { font-size: var(--t-xs); }
   .workspace { display: flex; flex-direction: column; }
   .brief-panel { border-right: 0; padding: 18px 4px; }
   .brief-panel h2,
@@ -1825,8 +1882,8 @@ kbd {
   .spell-canvas { min-height: 570px; }
   .graph-legend { display: none; }
   .rune { width: 99px; grid-template-columns: 28px 1fr; padding: 7px; }
-  .rune-glyph { width: 27px; height: 27px; font-size: 13px; }
-  .rune-copy strong { font-size: 9px; }
+  .rune-glyph { width: 27px; height: 27px; font-size: var(--t-base); }
+  .rune-copy strong { font-size: var(--t-xs); }
   .familiar-panel { padding: 20px 4px; border: 0; border-top: 1px solid var(--line); }
   .activity-list { grid-template-columns: 1fr; }
   .tool-console-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1847,4 +1904,71 @@ kbd {
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+
+/* Things that look clickable must answer the pointer. Four controls carried
+   cursor: pointer with no hover response at all, which reads as a dead
+   interface even when the click works. */
+.start-link:hover,
+.cancel-link:hover {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+.tool-console > summary:hover,
+.scenario-lab > summary:hover,
+.patch-ledger > summary:hover {
+  color: var(--ink);
+  background: var(--panel-raised);
+}
+
+.gym-foot button:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: var(--ink);
+}
+
+/* A link is not a button, but it is still focusable, and the UA ring is
+   invisible on this ground. */
+a:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Focusing the already-selected rune produced no visual change, because the
+   selected outline outranked the focus ring. */
+.rune.selected:focus-visible {
+  outline: 3px solid var(--acid);
+  outline-offset: 3px;
+}
+
+/* Runes excluded from a connection were still focusable at .14 opacity, so a
+   keyboard user could land on something effectively invisible. */
+.rune.connect-incompatible {
+  pointer-events: none;
+}
+
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: -60px;
+  z-index: 50;
+  padding: 9px 14px;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--ink);
+  font: 500 var(--t-sm)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+
+.skip-link:focus-visible {
+  top: 12px;
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.workspace:focus {
+  outline: none;
 }

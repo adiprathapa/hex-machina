@@ -1,4 +1,5 @@
 import { cloneGraph, type SpellEdge, type SpellGraph } from "../domain/spell.ts";
+import { relaxLayoutOverlaps } from "../domain/layout.ts";
 import { createMoonflowerScenario } from "./moonflower.ts";
 import { createResonantAviaryScenario } from "./resonant-aviary.ts";
 import { createClockworkOrchardScenario } from "./clockwork-orchard.ts";
@@ -213,6 +214,7 @@ export function generateAgentGymScenarioForFamily(
     x: Math.min(93, Math.max(7, node.x + jitter())),
     y: Math.min(90, Math.max(7, node.y + jitter())),
   }));
+  relaxLayoutOverlaps(graph.nodes);
   graph.edges = graph.edges.map((edge) => ({
     ...edge,
     id: mapEdgeId(edge.id),

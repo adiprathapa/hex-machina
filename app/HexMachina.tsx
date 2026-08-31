@@ -61,7 +61,7 @@ const consoleTools: Array<{ name: ConsoleTool; label: string; mutates: boolean }
   { name: "trace_effect", label: "Trace", mutates: false },
   { name: "simulate_cast", label: "Simulate", mutates: false },
   { name: "explain_side_effect", label: "Explain", mutates: false },
-  { name: "set_sacred_constraint", label: "Protect ducks", mutates: true },
+  { name: "set_sacred_constraint", label: "Protect", mutates: true },
   { name: "propose_spell_patch", label: "Propose", mutates: false },
   { name: "apply_spell_patch", label: "Apply patch", mutates: true },
 ];
@@ -69,6 +69,13 @@ const consoleTools: Array<{ name: ConsoleTool; label: string; mutates: boolean }
 function initialPositions(graph: SpellGraph): Record<string, NodePosition> {
   return Object.fromEntries(graph.nodes.map((node) => [node.id, { x: node.x, y: node.y }]));
 }
+
+// The bounds the scenario generator authors and relaxes layouts within. Mapping
+// from this range rather than 0-100 means the authored graph fills the canvas
+// instead of leaving a dead margin on all four sides.
+const AUTHORED = { minX: 7, maxX: 93, minY: 7, maxY: 90 };
+
+const spanY = AUTHORED.maxY - AUTHORED.minY;
 
 function clampPosition(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
@@ -86,7 +93,6 @@ const kindLabel: Record<RuneNode["kind"], string> = {
 
 const DEFAULT_CONSTRAINT = "The ducks are funny. They stay.";
 
-const JUDGE_PROMPT = "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The ducks are funny, so preserve them as a sacred constraint. Find the smallest repair that waters the moonflower without flooding the room, show me the proposed patch, apply it, and cast the spell again.";
 
 const REPO_URL = "https://github.com/adiprathapa/hex-machina";
 
@@ -107,6 +113,7 @@ const FAMILY_RULE: Record<string, string> = {
 const STORY: Record<string, {
   lesson: string; title: string; lede: string; canvas: string;
   failure: string; success: string; read: string; nameStep: string; protect: string;
+  prompt: string;
 }> = {
   "unshielded-amplified-carrier": {
     lesson: "Family 01 · amplified carrier",
@@ -118,6 +125,7 @@ const STORY: Record<string, {
     read: "I can see the flood path. Tell me what must survive before I touch the spell.",
     nameStep: "The ducks must remain.",
     protect: "Protect the ducks",
+    prompt: "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The ducks are funny, so preserve them as a sacred constraint. Find the smallest repair that waters the moonflower without flooding the room, show me the proposed patch, apply it, and cast the spell again.",
   },
   "resonant-feedback-cycle": {
     lesson: "Family 02 · resonant feedback",
@@ -129,6 +137,7 @@ const STORY: Record<string, {
     read: "The signal is feeding itself. Tell me what must survive before I touch the spell.",
     nameStep: "The choir must remain.",
     protect: "Protect the choir",
+    prompt: "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The choir is the point of the piece, so preserve the thunderbirds as a sacred constraint. Find the smallest repair that rings the crystal bell without shattering the glass dome, show me the proposed patch, apply it, and cast the spell again.",
   },
   "unguarded-premature-action": {
     lesson: "Family 03 · missing temporal guard",
@@ -140,6 +149,7 @@ const STORY: Record<string, {
     read: "It acts before it is allowed to. Tell me what must survive before I touch the spell.",
     nameStep: "The moths must remain.",
     protect: "Protect the moths",
+    prompt: "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The clockwork moths do the pollinating, so preserve them as a sacred constraint. Find the smallest repair that pollinates the Sun Orchid without dusting the sealed bloom, show me the proposed patch, apply it, and cast the spell again.",
   },
 };
 
@@ -174,6 +184,7 @@ export function HexMachina() {
   const [promptCopied, setPromptCopied] = useState(false);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
+  const [canvasHeight, setCanvasHeight] = useState(0);
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -187,7 +198,36 @@ export function HexMachina() {
   const story = STORY[graph.semantics.ruleId] ?? STORY["unshielded-amplified-carrier"];
   const draggingRef = useRef<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
-  const horizontalInset = canvasWidth ? Math.min(22, Math.max(8, (64 / canvasWidth) * 100)) : 9;
+  // Runes are drawn from their centre, so the outer ~half-rune of the canvas on
+  // each side cannot hold a centre without clipping. Clamping authored
+  // coordinates into that safe area collapses distinct positions onto the same
+  // edge value — six of twelve runes stacked on two columns. Map the authored
+  // 0-100 range onto the safe area instead: nothing clips, and the spacing the
+  // layout was authored with survives.
+  const horizontalInset = canvasWidth ? Math.min(22, Math.max(8, (100 / canvasWidth) * 100)) : 9;
+  // Half a rune's height against the measured canvas, for the same reason.
+  const verticalInset = canvasHeight ? Math.min(16, Math.max(5, (38 / canvasHeight) * 100)) : 6;
+  const toCanvasY = useCallback(
+    (value: number) => verticalInset + ((value - AUTHORED.minY) / spanY) * (100 - verticalInset * 2),
+    [verticalInset],
+  );
+  const fromCanvasY = useCallback(
+    (value: number) => AUTHORED.minY + ((value - verticalInset) / (100 - verticalInset * 2)) * spanY,
+    [verticalInset],
+  );
+  const toCanvasX = useCallback(
+    (value: number) =>
+      horizontalInset
+      + ((value - AUTHORED.minX) / (AUTHORED.maxX - AUTHORED.minX)) * (100 - horizontalInset * 2),
+    [horizontalInset],
+  );
+  const fromCanvasX = useCallback(
+    (value: number) =>
+      AUTHORED.minX
+      + ((value - horizontalInset) / (100 - horizontalInset * 2)) * (AUTHORED.maxX - AUTHORED.minX),
+    [horizontalInset],
+  );
+
 
   useEffect(() => {
     graphRef.current = graph;
@@ -196,7 +236,10 @@ export function HexMachina() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const measure = () => setCanvasWidth(canvas.clientWidth);
+    const measure = () => {
+      setCanvasWidth(canvas.clientWidth);
+      setCanvasHeight(canvas.clientHeight);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(canvas);
@@ -410,11 +453,11 @@ export function HexMachina() {
     setPositions((current) => ({
       ...current,
       [nodeId]: {
-        x: clampPosition(x, horizontalInset, 100 - horizontalInset),
-        y: clampPosition(y, 7, 90),
+        x: clampPosition(x, AUTHORED.minX, AUTHORED.maxX),
+        y: clampPosition(y, AUTHORED.minY, AUTHORED.maxY),
       },
     }));
-  }, [horizontalInset]);
+  }, []);
 
   const moveNodeFromPointer = useCallback((clientX: number, clientY: number) => {
     const nodeId = draggingRef.current;
@@ -422,16 +465,27 @@ export function HexMachina() {
     if (!nodeId || !bounds) return;
     moveNode(
       nodeId,
-      ((clientX - bounds.left - dragOffsetRef.current.x) / bounds.width) * 100,
-      ((clientY - bounds.top - dragOffsetRef.current.y) / bounds.height) * 100,
+      fromCanvasX(((clientX - bounds.left - dragOffsetRef.current.x) / bounds.width) * 100),
+      fromCanvasY(((clientY - bounds.top - dragOffsetRef.current.y) / bounds.height) * 100),
     );
-  }, [moveNode]);
+  }, [moveNode, fromCanvasX, fromCanvasY]);
 
   const finishDragging = useCallback(() => {
     draggingRef.current = null;
     dragOffsetRef.current = { x: 0, y: 0 };
     setDragging(null);
   }, []);
+
+  // Every step of the link flow unmounts the control that was just activated,
+  // which drops keyboard focus to <body>. Hand focus to wherever the next
+  // decision lives instead.
+  const pendingFocus = useRef<string | null>(null);
+  useEffect(() => {
+    const selector = pendingFocus.current;
+    if (!selector) return;
+    pendingFocus.current = null;
+    document.querySelector<HTMLElement>(selector)?.focus();
+  });
 
   const chooseRune = (nodeId: string) => {
     setSelected(nodeId);
@@ -446,6 +500,7 @@ export function HexMachina() {
       return;
     }
     setConnectionDraft({ fromId: source.id, toId: target.id, edgeType: validTypes[0], validTypes });
+    pendingFocus.current = ".connection-editor select";
     setConnectionMessage(`${source.label} → ${target.label} supports ${validTypes.join(" or ")}.`);
   };
 
@@ -454,12 +509,14 @@ export function HexMachina() {
     setConnectFrom(selectedNode.id);
     setConnectionDraft(null);
     setConnectionMessage(`Linking from ${selectedNode.label}. Choose a highlighted compatible rune.`);
+    pendingFocus.current = ".rune.connect-compatible";
   };
 
   const cancelConnection = () => {
     setConnectFrom(null);
     setConnectionDraft(null);
     setConnectionMessage("Typed link cancelled. The spell was not changed.");
+    pendingFocus.current = ".start-link";
   };
 
   const confirmConnection = () => {
@@ -482,6 +539,7 @@ export function HexMachina() {
       setConnectFrom(null);
       setConnectionDraft(null);
       setConnectionMessage(`Added ${connectionDraft.edgeType}: ${from?.label} → ${to?.label}. Spell advanced to v${next.version}.`);
+      pendingFocus.current = ".start-link";
     } catch (error) {
       setConnectionMessage(error instanceof Error ? error.message : "The typed connection was rejected.");
     }
@@ -546,10 +604,10 @@ export function HexMachina() {
     (entry): entry is typeof entry & { fromId: string; toId: string } =>
       entry.kind === "connect" && Boolean(entry.fromId && entry.toId),
   );
-  const stage = cast?.success ? "stable" : patch ? "patch" : isSacred ? "constraint" : cast ? "failure" : "ready";
 
   return (
-    <main className={`machina stage-${stage}`}>
+    <main className="machina">
+      <a className="skip-link" href="#workspace">Skip to the spell workspace</a>
       <header className="topbar">
         <div className="brand-lockup">
           {/* A hexagon holding a three-node causal path: the subject of the
@@ -571,8 +629,8 @@ export function HexMachina() {
             </svg>
           </span>
           <div>
-            <p className="eyebrow">The cooperative spell debugger</p>
             <h1>Hex Machina</h1>
+            <p className="eyebrow">Agent gym for constraint-aware repair</p>
           </div>
         </div>
         <div className="mission-chip">
@@ -593,7 +651,7 @@ export function HexMachina() {
         </div>
       </header>
 
-      <section className="workspace">
+      <section className="workspace" id="workspace" tabIndex={-1}>
         <aside className="brief-panel panel">
           <div>
             <p className="section-kicker">{story.lesson}</p>
@@ -608,8 +666,10 @@ export function HexMachina() {
           <section className="agent-brief" aria-label="Drive this with a browser agent">
             <p className="section-kicker">Drive this with a browser agent</p>
             <p className="agent-brief-note">
-              This page registers seven semantic tools on <code>document.modelContext</code>.
-              Paste this into a WebMCP-capable browser agent and watch the canvas.
+              A spell is an executable graph. The seven tools on <code>document.modelContext</code>
+              let an agent inspect it, prove why it fails, and repair it without breaking a
+              constraint you set — the same problem shape as a workflow builder or a data
+              pipeline. Paste this into a WebMCP-capable browser agent and watch the canvas.
             </p>
             <div className="agent-brief-actions">
               <button
@@ -617,7 +677,7 @@ export function HexMachina() {
                 className="quiet"
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(JUDGE_PROMPT);
+                    await navigator.clipboard.writeText(story.prompt);
                     setPromptCopied(true);
                     window.setTimeout(() => setPromptCopied(false), 1800);
                   } catch {
@@ -627,9 +687,9 @@ export function HexMachina() {
               >
                 {promptCopied ? "Copied" : "Copy prompt"}
               </button>
-              <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source &amp; evidence</a>
+              <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
             </div>
-            <p className="agent-brief-prompt">{JUDGE_PROMPT}</p>
+            <p className="agent-brief-prompt">{story.prompt}</p>
           </section>
 
           <ol className="quest-steps" aria-label="Investigation steps">
@@ -644,6 +704,34 @@ export function HexMachina() {
             {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
             {cast && !cast.success && activity.some((item) => item.tool === "explain_side_effect") && !isSacred && <button className="primary" onClick={protectSubject}>{story.protect}</button>}
             {isSacred && !patch && !cast?.success && <button className="primary" onClick={proposeRepair}>Find a repair</button>}
+            {/* Once a patch exists the decision moves to the review card in the
+                other rail, and the primary action used to simply vanish from
+                here. This keeps the thread: it says where the next step went and
+                takes you to it. */}
+            {patch && !cast?.success && (
+              <button
+                className="primary"
+                onClick={() => {
+                  const card = document.querySelector(".patch-card");
+                  card?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  card?.querySelector<HTMLButtonElement>(".patch-apply")?.focus();
+                }}
+              >
+                Review the patch
+              </button>
+            )}
+            {cast?.success && (
+              <button
+                className="primary"
+                onClick={() => {
+                  const lab = document.querySelector(".scenario-lab");
+                  lab?.setAttribute("open", "");
+                  lab?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+              >
+                Try a held-out task
+              </button>
+            )}
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
@@ -658,6 +746,12 @@ export function HexMachina() {
         <section className="canvas-panel panel" aria-label="Executable spell graph">
           <div className="canvas-header">
             <div><p className="section-kicker">Live spell · v{graph.version}</p><h2>{story.canvas}</h2></div>
+            <p className="graph-legend" aria-label="Graph edge legend">
+              <span><i /> Flow</span>
+              <span className="legend-target"><i /> Target</span>
+              <span className="legend-modifier"><i /> Modify</span>
+              <span className="legend-patch"><i /> Proposed</span>
+            </p>
             <span className={`cast-state ${cast?.success ? "success" : cast ? "danger" : "idle"}`}>
               {cast?.success ? "Stable" : cast ? "Side effect detected" : "Ready to cast"}
             </span>
@@ -665,6 +759,14 @@ export function HexMachina() {
 
           <div
             className={`spell-canvas ${dragging ? "is-rearranging" : ""} ${connectSource ? "is-connecting" : ""}`}
+            role="application"
+            aria-label={`Spell graph, version ${graph.version}: ${graph.nodes.length} runes and ${graph.edges.length} connections. ${
+              graph.edges.map((edge) => {
+                const from = graph.nodes.find((node) => node.id === edge.from)?.label ?? edge.from;
+                const to = graph.nodes.find((node) => node.id === edge.to)?.label ?? edge.to;
+                return `${from} ${edge.type.replace("_", " ")} ${to}`;
+              }).join(". ")
+            }`}
             ref={canvasRef}
             onPointerMove={(event) => moveNodeFromPointer(event.clientX, event.clientY)}
             onPointerUp={finishDragging}
@@ -687,8 +789,8 @@ export function HexMachina() {
                 const to = graph.nodes.find((node) => node.id === edge.to)!;
                 const rawFromPosition = positions[from.id] ?? from;
                 const rawToPosition = positions[to.id] ?? to;
-                const fromPosition = { ...rawFromPosition, x: clampPosition(rawFromPosition.x, horizontalInset, 100 - horizontalInset) };
-                const toPosition = { ...rawToPosition, x: clampPosition(rawToPosition.x, horizontalInset, 100 - horizontalInset) };
+                const fromPosition = { x: toCanvasX(rawFromPosition.x), y: toCanvasY(rawFromPosition.y) };
+                const toPosition = { x: toCanvasX(rawToPosition.x), y: toCanvasY(rawToPosition.y) };
                 const dx = toPosition.x - fromPosition.x;
                 const dy = toPosition.y - fromPosition.y;
                 const distance = Math.hypot(dx, dy) || 1;
@@ -709,8 +811,8 @@ export function HexMachina() {
                 const to = graph.nodes.find((node) => node.id === entry.toId)!;
                 const rawFromPosition = positions[from.id] ?? from;
                 const rawToPosition = positions[to.id] ?? to;
-                const fromPosition = { ...rawFromPosition, x: clampPosition(rawFromPosition.x, horizontalInset, 100 - horizontalInset) };
-                const toPosition = { ...rawToPosition, x: clampPosition(rawToPosition.x, horizontalInset, 100 - horizontalInset) };
+                const fromPosition = { x: toCanvasX(rawFromPosition.x), y: toCanvasY(rawFromPosition.y) };
+                const toPosition = { x: toCanvasX(rawToPosition.x), y: toCanvasY(rawToPosition.y) };
                 const dx = toPosition.x - fromPosition.x;
                 const dy = toPosition.y - fromPosition.y;
                 const distance = Math.hypot(dx, dy) || 1;
@@ -719,18 +821,11 @@ export function HexMachina() {
               })}
             </svg>
 
-            <p className="graph-legend" aria-label="Graph edge legend">
-              <span><i /> Flow</span>
-              <span className="legend-target"><i /> Target</span>
-              <span className="legend-modifier"><i /> Modify</span>
-              <span className="legend-patch"><i /> Proposed</span>
-            </p>
-
             {graph.nodes.map((node) => {
               const sacred = graph.constraints.some((item) => item.targetId === node.id);
               const highlighted = highlightedIds.has(node.id);
               const rawPosition = positions[node.id] ?? node;
-              const position = { ...rawPosition, x: clampPosition(rawPosition.x, horizontalInset, 100 - horizontalInset) };
+              const position = { x: toCanvasX(rawPosition.x), y: toCanvasY(rawPosition.y) };
               const validPortTypes = connectSource && node.id !== connectSource.id
                 ? getValidEdgeTypes(connectSource.kind, node.kind)
                 : [];
@@ -746,6 +841,7 @@ export function HexMachina() {
                   key={node.id}
                   className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${activatedPatchNodeIds.has(node.id) ? "patch-activate" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""} ${connectionClass}`}
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                  tabIndex={connectionClass === "connect-incompatible" ? -1 : undefined}
                   onPointerDown={(event) => {
                     if (connectSource) return;
                     const nodeBounds = event.currentTarget.getBoundingClientRect();
@@ -763,17 +859,21 @@ export function HexMachina() {
                     canvasRef.current?.setPointerCapture(event.pointerId);
                   }}
                   onKeyDown={(event) => {
-                    const delta = event.shiftKey ? 5 : 2;
+                    // Nudges are specified as a share of the canvas the user can
+                    // see, so convert into the authored space positions live in.
+                    const step = event.shiftKey ? 5 : 2;
+                    const deltaX = step / ((100 - horizontalInset * 2) / (AUTHORED.maxX - AUTHORED.minX));
+                    const deltaY = step / ((100 - verticalInset * 2) / (AUTHORED.maxY - AUTHORED.minY));
                     const offsets: Partial<Record<string, NodePosition>> = {
-                      ArrowLeft: { x: -delta, y: 0 },
-                      ArrowRight: { x: delta, y: 0 },
-                      ArrowUp: { x: 0, y: -delta },
-                      ArrowDown: { x: 0, y: delta },
+                      ArrowLeft: { x: -deltaX, y: 0 },
+                      ArrowRight: { x: deltaX, y: 0 },
+                      ArrowUp: { x: 0, y: -deltaY },
+                      ArrowDown: { x: 0, y: deltaY },
                     };
                     const offset = offsets[event.key];
                     if (!offset) return;
                     event.preventDefault();
-                    moveNode(node.id, position.x + offset.x, position.y + offset.y);
+                    moveNode(node.id, rawPosition.x + offset.x, rawPosition.y + offset.y);
                   }}
                   onClick={() => chooseRune(node.id)}
                   aria-label={`${node.label}, ${kindLabel[node.kind]}. ${connectSource ? node.id === connectSource.id ? "Connection source." : validPortTypes.length ? `Compatible ${validPortTypes.join(" or ")} port.` : "Incompatible port." : "Drag to rearrange; arrow keys nudge."}`}
@@ -797,7 +897,7 @@ export function HexMachina() {
 
           {/* Below the canvas, not over it: an overlay verdict hid the runes it
               was describing, including the dormant ones a repair has to use. */}
-          <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`} aria-live="polite">
+          <div className={`cast-vision ${cast ? "visible" : ""} ${cast?.success ? "vision-success" : "vision-failure"}`}>
             {cast && <><div className="vision-symbol" aria-hidden="true">{cast.success ? "Verified" : "Cast failed"}</div><strong>{cast.success ? story.success : story.failure}</strong><span>{cast.summary}</span></>}
           </div>
 
@@ -805,7 +905,7 @@ export function HexMachina() {
             <span className="inspector-glyph">{selectedNode?.glyph ?? "·"}</span>
             <div><small>{selectedNode ? kindLabel[selectedNode.kind] : "Rune"}</small><strong>{selectedNode?.label ?? "Select a rune"}</strong></div>
             <p>{selectedNode?.description}</p>
-            <div className="connection-editor" aria-live="polite">
+            <div className="connection-editor">
               {connectionDraft ? (
                 <>
                   <label>
@@ -843,7 +943,7 @@ export function HexMachina() {
               <h3>{patch.title}</h3>
               <p>{patch.rationale}</p>
               {previewCast && (
-                <div className="preview-verdict" role="status">
+                <div className="preview-verdict">
                   <span>Predicted</span>
                   <strong>{previewCast.success ? "Stable" : "Unstable"}</strong>
                   <small>Editor remains at graph v{graph.version}</small>
@@ -917,13 +1017,17 @@ export function HexMachina() {
               <span className={gymSnapshot.status}>{gymSnapshot.status}</span>
             </div>
             <p>Every site-tool call records reward plus before/after graph observations. The interface and visiting agents use the same handlers.</p>
-            <div className="gym-score" aria-live="polite">
+            <div className="gym-score">
               <strong>{gymSnapshot.score}<small> / {gymSnapshot.maxScore}</small></strong>
               <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
             <div className="policy-baselines" aria-label="Held-out policy benchmark">
               <div className="policy-baselines-heading"><span>Held-out policy</span><span>Mean reward</span></div>
+              <p className="policy-baselines-note">
+                Scripted control policies scored on held-out tasks, not options to choose.
+                They exist to show the reward separates good repair from cheap repair.
+              </p>
               {AGENT_GYM_POLICY_BASELINES.map((baseline) => (
                 <div className="policy-baseline" key={baseline.id}>
                   <span>{baseline.label}<small>{baseline.outcome}</small></span>
@@ -938,7 +1042,7 @@ export function HexMachina() {
           </section>
 
           <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting"}</small></div>
-          <div className="activity-list" aria-live="polite">
+          <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity">
             {activity.length === 0 && <p className="empty-activity">Semantic tool calls will appear here with visible evidence.</p>}
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
@@ -952,7 +1056,7 @@ export function HexMachina() {
             <summary>
               <span>
                 <strong>Task loader</strong>
-                <small>96 held-out variants · 3 causal rules</small>
+                <small>Swap in any of 96 generated tasks · 3 causal rules</small>
               </span>
               <span aria-hidden="true">⌄</span>
             </summary>
@@ -964,7 +1068,7 @@ export function HexMachina() {
               <label>
                 Rule
                 <select
-                  aria-label="Causal family"
+                  aria-label="Rule"
                   value={labFamily}
                   onChange={(event) => { setLabFamily(event.target.value as AgentGymFamilyId); setLabIndex(0); }}
                 >
@@ -976,7 +1080,7 @@ export function HexMachina() {
               <label>
                 Split
                 <select
-                  aria-label="Evaluation split"
+                  aria-label="Split"
                   value={labSplit}
                   onChange={(event) => { setLabSplit(event.target.value as AgentGymSplit); setLabIndex(0); }}
                 >
@@ -987,7 +1091,7 @@ export function HexMachina() {
               </label>
               <label>
                 Task
-                <select aria-label="Task index" value={labIndex} onChange={(event) => setLabIndex(Number(event.target.value))}>
+                <select aria-label="Task" value={labIndex} onChange={(event) => setLabIndex(Number(event.target.value))}>
                   {Array.from({ length: AGENT_GYM_FAMILY_SPLIT_SIZES[labFamily][labSplit] }, (_, index) => (
                     <option key={index} value={index}>{String(index).padStart(2, "0")}</option>
                   ))}
@@ -1020,9 +1124,11 @@ export function HexMachina() {
                   onClick={() => runConsoleTool(tool.name)}
                   disabled={consoleBusy !== null || (tool.name === "apply_spell_patch" && !patch)}
                   title={tool.name}
+                  aria-label={`${tool.name} — ${tool.mutates ? "mutating" : "read-only"}`}
                 >
                   <span>{tool.label}</span>
                   <small>{tool.mutates ? "Write" : "Read"}</small>
+                  <code>{tool.name}</code>
                 </button>
               ))}
             </div>
@@ -1030,7 +1136,7 @@ export function HexMachina() {
               <span>Structured result</span>
               <small>{consoleBusy ? `Running ${consoleBusy}` : `Graph v${graph.version}`}</small>
             </div>
-            <pre aria-live="polite" aria-label="Tool result JSON">{consoleOutput}</pre>
+            <pre aria-label="Tool result JSON">{consoleOutput}</pre>
           </details>
         </aside>
       </section>

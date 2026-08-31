@@ -10,7 +10,7 @@
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/agent-gym.test.mjs tests/agent-gym-constraint.test.mjs tests/agent-gym-diversity.test.mjs tests/agent-gym-evidence.test.mjs tests/agent-gym-state-key.test.mjs tests/agent-gym-transfer.test.mjs tests/agent-gym-state-key.test.mjs tests/agent-gym-protocol.test.mjs tests/familiar-gnn.test.mjs tests/patch-review-honesty.test.mjs tests/rendered-html.test.mjs tests/spell-engine.test.mjs tests/tool-evidence-contract.test.mjs tests/webmcp-multi-scenario.test.mjs tests/webmcp-registration.test.mjs tests/webmcp-tools.test.mjs",
+    "test": "tsx --test tests/agent-gym.test.mjs tests/agent-gym-constraint.test.mjs tests/agent-gym-diversity.test.mjs tests/agent-gym-layout.test.mjs tests/agent-gym-evidence.test.mjs tests/agent-gym-state-key.test.mjs tests/agent-gym-transfer.test.mjs tests/agent-gym-state-key.test.mjs tests/agent-gym-protocol.test.mjs tests/familiar-gnn.test.mjs tests/patch-review-honesty.test.mjs tests/rendered-html.test.mjs tests/spell-engine.test.mjs tests/tool-evidence-contract.test.mjs tests/webmcp-multi-scenario.test.mjs tests/webmcp-registration.test.mjs tests/webmcp-tools.test.mjs",
     "test:e2e": "node --test tests/e2e.test.mjs tests/browser-journey.test.mjs",
     "test:deployment": "node --test tests/deployment-readiness.test.mjs",
     "test:submission": "node --test tests/submission-package.test.mjs",

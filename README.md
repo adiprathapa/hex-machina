@@ -4,7 +4,7 @@
 
 **Magic is just code with worse documentation.**
 
-> An agent-training environment disguised as a graph-native spell game.
+> An agent gym where humans decide what matters and agents prove the smallest repair. An agent-evaluation environment disguised as a graph-native spell game.
 
 Hex Machina is a deterministic WebMCP environment for evaluating whether an agent can inspect state, explain causality, preserve human intent, and make a safe repair. The playable spell game makes that evaluation understandable at a glance: the human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same typed graph both participants can see.
 

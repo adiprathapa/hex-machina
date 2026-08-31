@@ -27,7 +27,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   ]);
 
   assert.match(page, /<HexMachina \/>/);
-  assert.match(layout, /Hex Machina \| Cooperative Spell Debugging/);
+  assert.match(layout, /Hex Machina \| Agent Gym for Constraint-Aware Repair/);
   // Two faces, two roles: a neutral grotesk for anything a person reads, a
   // monospace for machine data where character alignment carries meaning.
   assert.match(layout, /Inter/);

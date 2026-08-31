@@ -16,9 +16,9 @@ const firaCode = Fira_Code({
   subsets: ["latin"],
 });
 
-const title = "Hex Machina | Cooperative Spell Debugging";
+const title = "Hex Machina | Agent Gym for Constraint-Aware Repair";
 const description =
-  "Build executable spell graphs with an agent. Preserve what you love, repair what breaks, and cast again.";
+  "An agent gym where humans decide what matters and agents prove the smallest repair, over seven WebMCP tools on one executable graph.";
 
 function safeOrigin(host: string | null, forwardedProtocol: string | null) {
   const safeHost = host && /^[a-z0-9.-]+(?::[0-9]+)?$/i.test(host)
@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       title,
       description,
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina spell graph with umbrella-equipped ducks and a blooming moonflower" }],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina: an agent gym for constraint-aware repair" }],
     },
     twitter: {
       card: "summary_large_image",

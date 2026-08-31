@@ -1,7 +1,8 @@
 import type { SpellGraph } from "../domain/spell.ts";
+import { relaxLayoutOverlaps } from "../domain/layout.ts";
 
 export function createMoonflowerScenario(): SpellGraph {
-  return {
+  const graph: SpellGraph = {
     id: "spell-moonflower-01",
     version: 1,
     scenario: "moonflower",
@@ -40,7 +41,7 @@ export function createMoonflowerScenario(): SpellGraph {
         glyph: "◐",
         description: "Allows an effect only while the observatory moon is rising.",
         x: 8,
-        y: 14,
+        y: 9,
         dormant: true,
       },
       {
@@ -49,8 +50,8 @@ export function createMoonflowerScenario(): SpellGraph {
         label: "Multiply",
         glyph: "×12",
         description: "Repeats the next effect twelve times.",
-        x: 28,
-        y: 19,
+        x: 30,
+        y: 25,
       },
       {
         id: "summon-ducks",
@@ -87,7 +88,7 @@ export function createMoonflowerScenario(): SpellGraph {
         glyph: "□",
         description: "Everything inside the observatory laboratory.",
         x: 87,
-        y: 18,
+        y: 24,
       },
       {
         id: "moonflower",
@@ -104,8 +105,8 @@ export function createMoonflowerScenario(): SpellGraph {
         label: "Bloom",
         glyph: "✺",
         description: "The desired terminal state.",
-        x: 69,
-        y: 82,
+        x: 68,
+        y: 75,
         dormant: true,
       },
       {
@@ -124,8 +125,8 @@ export function createMoonflowerScenario(): SpellGraph {
         label: "Silver mirror",
         glyph: "◈",
         description: "A reflective decoy target kept on the workshop shelf.",
-        x: 89,
-        y: 88,
+        x: 90,
+        y: 89,
         dormant: true,
       },
       {
@@ -134,8 +135,8 @@ export function createMoonflowerScenario(): SpellGraph {
         label: "Release",
         glyph: "⇡",
         description: "Lets a bound effect go without choosing a new destination.",
-        x: 69,
-        y: 12,
+        x: 66,
+        y: 9,
         dormant: true,
       },
     ],
@@ -146,4 +147,9 @@ export function createMoonflowerScenario(): SpellGraph {
       { id: "e-pour-room", from: "pour", to: "room", type: "targets" },
     ],
   };
+
+  // The authored layout is relaxed the same way generated variants are, so
+  // the default lesson can never render two runes on top of each other.
+  relaxLayoutOverlaps(graph.nodes);
+  return graph;
 }

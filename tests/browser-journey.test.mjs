@@ -274,7 +274,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/);
 
     await page.locator(".scenario-lab > summary").click();
-    await page.getByRole("combobox", { name: "Causal family" }).selectOption("family-02-v1");
+    await page.getByRole("combobox", { name: "Rule" }).selectOption("family-02-v1");
     await page.getByRole("button", { name: "Load task", exact: true }).click();
     await assertVisible(page.getByText("task-02-test-00", { exact: true }), "the selected held-out task is loaded");
     await assertVisible(page.getByText("WebMCP · 7 tools registered", { exact: true }), "scenario swap re-registers WebMCP");
