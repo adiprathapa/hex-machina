@@ -4,11 +4,11 @@ This is Hex Machina.
 
 2
 00:00:02,851 --> 00:00:10,956
-It is an agent gym for constraint aware repair, and a WebMCP client is about to drive it through seven registered tools.
+It is an agent gym for constraint-aware repair, and a WebMCP client is about to drive it through seven registered tools.
 
 3
 00:00:10,956 --> 00:00:21,265
-The page registers those tools on document dot modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet.
+The page registers those tools on document.modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet.
 
 4
 00:00:21,265 --> 00:00:25,613
@@ -84,15 +84,15 @@ One more thing, because a polished demo invites one question: is this on rails.
 
 22
 00:01:55,577 --> 00:02:01,073
-The evaluation layer generates ninety six tasks across three different causal rules.
+The evaluation layer generates 96 tasks across three different causal rules.
 
 23
 00:02:01,073 --> 00:02:06,635
-I will use the interface to load a held out one, from a rule this run has never seen.
+I will use the interface to load a held-out one, from a rule this run has never seen.
 
 24
 00:02:06,635 --> 00:02:13,058
-Every rune, edge and effect identifier is freshly remapped. Nothing here was memorised.
+Every rune, edge and effect identifier is freshly remapped. Nothing here was memorized.
 
 25
 00:02:13,058 --> 00:02:18,004
@@ -103,5 +103,5 @@ The same seven tools inspect it, cast it, trace it, and explain it.
 That is the claim.
 
 27
-00:02:19,261 --> 00:02:26,937
+00:02:19,261 --> 00:02:37,367
 Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.

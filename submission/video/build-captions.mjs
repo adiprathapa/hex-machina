@@ -3,8 +3,12 @@
 // did. Reads a JSON manifest of {text, seconds} produced by render-demo.sh.
 import { readFile, writeFile } from "node:fs/promises";
 
-const [manifestPath, outputPath, leadInArg] = process.argv.slice(2);
+const [manifestPath, outputPath, leadInArg, videoSecondsArg] = process.argv.slice(2);
 const leadIn = Number(leadInArg ?? 0);
+// The screencast runs on past the last line of narration; the final beat is
+// still on screen, so the last cue holds through it rather than leaving the
+// tail uncaptioned.
+const videoSeconds = Number(videoSecondsArg ?? 0);
 const parts = JSON.parse(await readFile(manifestPath, "utf8"));
 
 // narration.txt is a text-to-speech script, so it spells things the way they
@@ -54,8 +58,12 @@ for (const { text, seconds } of parts) {
   }
 }
 
+if (videoSeconds > clock && cues.length > 0) {
+  cues[cues.length - 1].end = videoSeconds;
+}
+
 await writeFile(
   outputPath,
   cues.map((cue, index) => `${index + 1}\n${stamp(cue.start)} --> ${stamp(cue.end)}\n${cue.text}\n`).join("\n"),
 );
-process.stdout.write(`Wrote ${cues.length} cues covering ${clock.toFixed(1)}s\n`);
+process.stdout.write(`Wrote ${cues.length} cues covering ${(cues.at(-1)?.end ?? 0).toFixed(1)}s\n`);

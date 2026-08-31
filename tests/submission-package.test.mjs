@@ -168,7 +168,13 @@ test("captions describe and cover the real registered-tool screencast", async ()
   const videoDuration = Number(metadata.format.duration);
   assert.ok(Math.abs(previousEnd - videoDuration) < 1, "captions must cover the final video tail");
   assert.match(captions, /document\.modelContext/);
-  assert.match(captions, /Nobody is clicking/);
+  assert.match(captions, /stands in for a WebMCP host/);
+  assert.match(captions, /tool call, not a click/);
+  assert.doesNotMatch(
+    captions,
+    /Nobody is clicking/,
+    "the recorder clicks through the task swap, so the narration must not claim otherwise",
+  );
   assert.match(captions, /held-out one/);
   assert.match(captions, /freshly remapped/);
 });

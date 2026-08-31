@@ -51,7 +51,7 @@ NARRATION_SECONDS="$(ffprobe -v error -show_entries format=duration -of default=
 
 python3 -c 'import json,sys; print(json.dumps([json.loads(l) for l in open(sys.argv[1]) if l.strip()]))' \
   "$VIDEO_TMP_DIR/manifest.jsonl" > "$VIDEO_TMP_DIR/manifest.json"
-node "$VIDEO_DIR/build-captions.mjs" "$VIDEO_TMP_DIR/manifest.json" "$VIDEO_DIR/captions.srt" 1.5
+
 
 # The challenge caps the demo under three minutes; leave headroom for the tail.
 if ! awk -v duration="$NARRATION_SECONDS" 'BEGIN { exit !(duration <= 165) }'; then
@@ -82,5 +82,8 @@ ffmpeg -hide_banner -loglevel error -y \
 ffprobe -v error \
   -show_entries format=duration,size:stream=index,codec_type,codec_name,width,height,r_frame_rate \
   -of json "$OUTPUT" > "$VIDEO_DIR/metadata.json"
+
+VIDEO_SECONDS="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$OUTPUT")"
+node "$VIDEO_DIR/build-captions.mjs" "$VIDEO_TMP_DIR/manifest.json" "$VIDEO_DIR/captions.srt" 1.5 "$VIDEO_SECONDS"
 
 printf 'Rendered %s\n' "$OUTPUT"

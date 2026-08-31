@@ -51,8 +51,37 @@ test("deployment output contains the worker and complete app-owned assets only",
   const ogImage = path.join(DIST, "client/og.png");
   const favicon = path.join(DIST, "client/favicon.png");
   assert.ok((await stat(worker)).size > 100_000);
-  assert.ok((await stat(ogImage)).size > 500_000);
-  assert.ok((await stat(favicon)).size > 20_000);
+
+  // File size was standing in for "a real image, not a placeholder", which
+  // stopped meaning anything once the assets were generated from the shipped
+  // brand mark and dropped from 1MB to 59KB. Check the thing that actually
+  // matters: a valid PNG at the exact dimensions each surface requires.
+  const pngShape = async (file) => {
+    const bytes = await readFile(file);
+    assert.deepEqual(
+      [...bytes.subarray(0, 8)],
+      [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+      `${path.basename(file)} is a PNG`,
+    );
+    assert.equal(bytes.subarray(12, 16).toString("ascii"), "IHDR", `${path.basename(file)} starts with IHDR`);
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), bytes: bytes.length };
+  };
+
+  const og = await pngShape(ogImage);
+  assert.deepEqual(
+    { width: og.width, height: og.height },
+    { width: 1200, height: 630 },
+    "the sharing card is the size every platform crops to",
+  );
+  assert.ok(og.bytes > 10_000, "the sharing card has real content");
+
+  const icon = await pngShape(favicon);
+  assert.deepEqual(
+    { width: icon.width, height: icon.height },
+    { width: 256, height: 256 },
+    "the favicon is served at the largest size browsers ask for",
+  );
+  assert.ok(icon.bytes > 1_000, "the favicon has real content");
 
   const relativeFiles = (await filesBelow(DIST)).map((file) => path.relative(DIST, file));
   assert.ok(relativeFiles.some((file) => /^client\/_next\/static\/chunks\/.+\.js$/.test(file)));
@@ -84,6 +113,13 @@ test("built worker emits canonical host-derived sharing metadata and release hea
   const html = await response.text();
   assert.match(html, /<meta property="og:image" content="https:\/\/hex-machina\.example\/og\.png"/);
   assert.match(html, /<meta name="twitter:card" content="summary_large_image"/);
-  assert.match(html, /umbrella-equipped ducks and a blooming moonflower/);
+  // The alt text describes the sharing card, so it has to name the product
+  // rather than the scene from a card that no longer exists.
+  const ogAlt = html.match(/property="og:image:alt" content="([^"]+)"/)?.[1]
+    ?? html.match(/name="twitter:image:alt" content="([^"]+)"/)?.[1]
+    ?? html.match(/"alt":"([^"]+)"/)?.[1];
+  assert.ok(ogAlt, "the sharing card carries alt text");
+  assert.match(ogAlt, /Hex Machina/, "the alt text names the product");
+  assert.ok(ogAlt.length > 20, "the alt text describes the card rather than labelling it");
   assert.doesNotMatch(html, /localhost:3000|codex-preview|react-loading-skeleton/);
 });

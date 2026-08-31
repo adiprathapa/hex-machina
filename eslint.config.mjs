@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Throwaway probe scripts written into the repo root by analysis runs.
+    // They are not project source and must not fail the lint gate.
+    "_skep*",
+    ".audit-*",
+    ".shot/**",
   ]),
 ]);
 
