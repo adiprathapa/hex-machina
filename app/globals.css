@@ -447,6 +447,9 @@ kbd {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+  /* macOS hides the scrollbar until it is used, so without this the clamp reads
+     as text that was cut off rather than text that continues. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
   margin: 8px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--blue-dark);
