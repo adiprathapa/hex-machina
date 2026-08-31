@@ -196,6 +196,17 @@ export function HexMachina() {
   const subjectId = graph.semantics.roles.subject;
   const constraintText = variant?.humanConstraint ?? DEFAULT_CONSTRAINT;
   const story = STORY[graph.semantics.ruleId] ?? STORY["unshielded-amplified-carrier"];
+  // Every step of the link flow unmounts the control that was just activated,
+  // which drops keyboard focus to <body>. Hand focus to wherever the next
+  // decision lives instead.
+  const pendingFocus = useRef<string | null>(null);
+  useEffect(() => {
+    const selector = pendingFocus.current;
+    if (!selector) return;
+    pendingFocus.current = null;
+    document.querySelector<HTMLElement>(selector)?.focus();
+  });
+
   const draggingRef = useRef<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   // Runes are drawn from their centre, so the outer ~half-rune of the canvas on
@@ -337,24 +348,43 @@ export function HexMachina() {
     };
   }, [handlers]);
 
+  // Each step of the journey replaces the primary button with the next one, so
+  // activating it unmounts the element that had focus. Without this, keyboard
+  // and screen-reader users are dropped to <body> four times in five steps.
+  const keepFocusOnPrimary = () => {
+    pendingFocus.current = ".controls .primary";
+    // A handler whose last state update has already been flushed produces no
+    // further render, so the effect that consumes pendingFocus never runs. Try
+    // again on the next frame; whichever path gets there first clears the ref.
+    requestAnimationFrame(() => {
+      if (pendingFocus.current !== ".controls .primary") return;
+      pendingFocus.current = null;
+      document.querySelector<HTMLElement>(".controls .primary")?.focus();
+    });
+  };
+
   const castSpell = async () => {
     setRevertToken(null);
     await handlers.inspect_spell();
     await handlers.simulate_cast();
+    keepFocusOnPrimary();
   };
 
   const diagnose = async () => {
     await handlers.trace_effect({ effectId });
     await handlers.explain_side_effect({ sideEffectId: effectId });
+    keepFocusOnPrimary();
   };
 
   const protectSubject = async () => {
     await handlers.set_sacred_constraint({ targetId: subjectId, reason: constraintText });
     setPatch(null);
+    keepFocusOnPrimary();
   };
 
   const proposeRepair = async () => {
     await handlers.propose_spell_patch();
+    keepFocusOnPrimary();
   };
 
   const applyRepair = async () => {
@@ -476,17 +506,6 @@ export function HexMachina() {
     setDragging(null);
   }, []);
 
-  // Every step of the link flow unmounts the control that was just activated,
-  // which drops keyboard focus to <body>. Hand focus to wherever the next
-  // decision lives instead.
-  const pendingFocus = useRef<string | null>(null);
-  useEffect(() => {
-    const selector = pendingFocus.current;
-    if (!selector) return;
-    pendingFocus.current = null;
-    document.querySelector<HTMLElement>(selector)?.focus();
-  });
-
   const chooseRune = (nodeId: string) => {
     setSelected(nodeId);
     if (!connectFrom || nodeId === connectFrom) return;
@@ -606,7 +625,7 @@ export function HexMachina() {
   );
 
   return (
-    <main className="machina">
+    <div className="machina">
       <a className="skip-link" href="#workspace">Skip to the spell workspace</a>
       <header className="topbar">
         <div className="brand-lockup">
@@ -651,8 +670,8 @@ export function HexMachina() {
         </div>
       </header>
 
-      <section className="workspace" id="workspace" tabIndex={-1}>
-        <aside className="brief-panel panel">
+      <main className="workspace" id="workspace" tabIndex={-1}>
+        <aside className="brief-panel panel" aria-label="Lesson and browser-agent brief">
           <div>
             <p className="section-kicker">{story.lesson}</p>
             <h2>{story.title}</h2>
@@ -727,6 +746,7 @@ export function HexMachina() {
                   const lab = document.querySelector(".scenario-lab");
                   lab?.setAttribute("open", "");
                   lab?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  lab?.querySelector<HTMLElement>("summary")?.focus();
                 }}
               >
                 Try a held-out task
@@ -876,7 +896,20 @@ export function HexMachina() {
                     moveNode(node.id, rawPosition.x + offset.x, rawPosition.y + offset.y);
                   }}
                   onClick={() => chooseRune(node.id)}
-                  aria-label={`${node.label}, ${kindLabel[node.kind]}. ${connectSource ? node.id === connectSource.id ? "Connection source." : validPortTypes.length ? `Compatible ${validPortTypes.join(" or ")} port.` : "Incompatible port." : "Drag to rearrange; arrow keys nudge."}`}
+                  aria-pressed={selected === node.id}
+                  aria-label={`${node.label}, ${kindLabel[node.kind]}.${
+                    sacred ? " Protected by a sacred constraint." : ""
+                  }${node.dormant ? " Dormant; not part of the live spell." : ""}${
+                    activatedPatchNodeIds.has(node.id) ? " Activated by the proposed patch." : ""
+                  }${highlighted ? " On the traced causal path." : ""} ${
+                    connectSource
+                      ? node.id === connectSource.id
+                        ? "Connection source."
+                        : validPortTypes.length
+                          ? `Compatible ${validPortTypes.join(" or ")} port.`
+                          : "Incompatible port."
+                      : "Drag to rearrange; arrow keys nudge."
+                  }`}
                   aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 >
                   <span className="rune-glyph" aria-hidden="true">{node.glyph}</span>
@@ -934,7 +967,7 @@ export function HexMachina() {
           </footer>
         </section>
 
-        <aside className="familiar-panel panel">
+        <aside className="familiar-panel panel" aria-label="Agent evidence and evaluation">
           <div className="familiar-title"><span className="familiar-orb">M</span><div><p className="section-kicker">Field note</p><h2>Moth</h2></div></div>
 
           {patch ? (
@@ -1124,7 +1157,7 @@ export function HexMachina() {
                   onClick={() => runConsoleTool(tool.name)}
                   disabled={consoleBusy !== null || (tool.name === "apply_spell_patch" && !patch)}
                   title={tool.name}
-                  aria-label={`${tool.name} — ${tool.mutates ? "mutating" : "read-only"}`}
+                  aria-label={`${tool.label} — ${tool.name}, ${tool.mutates ? "mutating" : "read-only"}`}
                 >
                   <span>{tool.label}</span>
                   <small>{tool.mutates ? "Write" : "Read"}</small>
@@ -1139,7 +1172,7 @@ export function HexMachina() {
             <pre aria-label="Tool result JSON">{consoleOutput}</pre>
           </details>
         </aside>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }

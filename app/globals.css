@@ -59,7 +59,12 @@
      radius reads as a consumer card rather than a panel. */
   --radius: 2px;
   --radius-control: 2px;
+
+  /* Control height. Pointer-sized by default, touch-sized in the compact
+     layout, so no rule has to restate the touch target. */
+  --control-min-h: 32px;
 }
+
 
 * {
   box-sizing: border-box;
@@ -90,9 +95,15 @@ select {
   font: inherit;
 }
 
+/* Scroll containers become keyboard focusable in Chrome, and without this they
+   fall back to the UA ring, which measures 2.9:1 on these grounds. */
 button:focus-visible,
 select:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+.agent-brief-prompt:focus-visible,
+.patch-edits:focus-visible,
+.tool-console pre:focus-visible,
+.activity-list:focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
@@ -467,7 +478,7 @@ kbd {
 .agent-brief-actions .quiet {
   display: grid;
   place-items: center;
-  min-height: 32px;
+  min-height: var(--control-min-h);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: transparent;
@@ -555,7 +566,7 @@ kbd {
 
 .cast-state.danger {
   border-color: var(--ember);
-  color: var(--ember);
+  color: var(--ember-text);
   background: var(--failure-wash);
 }
 
@@ -783,8 +794,7 @@ kbd {
   border-style: dashed;
   border-color: var(--line-strong);
   background: var(--panel);
-  color: var(--subtle);
-  opacity: .78;
+  color: var(--muted);
 }
 
 .rune.dormant .rune-copy strong {
@@ -793,7 +803,6 @@ kbd {
 }
 
 .rune.patch-activate {
-  opacity: .86;
   border-color: var(--aqua);
   border-style: dashed;
   background: var(--success-wash);
@@ -904,9 +913,9 @@ kbd {
   width: 30px;
   height: 18px;
   border-radius: var(--radius);
-  color: var(--ink);
-  background: var(--blue);
-  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  color: var(--black);
+  background: var(--blue-text);
+  font: 600 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 /* The cast verdict reads as a status bar under the canvas. As an overlay it
@@ -1031,7 +1040,7 @@ kbd {
 
 .connection-editor button,
 .connection-editor select {
-  min-height: 32px;
+  min-height: var(--control-min-h);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   font-size: var(--t-xs);
@@ -1246,7 +1255,9 @@ kbd {
 }
 
 .patch-actions button {
-  min-height: 40px;
+  /* The most consequential pair on the page gets a larger pointer target, and
+     still grows with the token on touch. */
+  min-height: max(var(--control-min-h), 40px);
   padding: 0 8px;
   line-height: 1.25;
   border-radius: var(--radius);
@@ -1548,7 +1559,7 @@ kbd {
 }
 
 .gym-foot button {
-  min-height: 32px;
+  min-height: var(--control-min-h);
   padding: 0 10px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -1683,7 +1694,7 @@ kbd {
 
 .tool-console-grid button {
   min-width: 0;
-  min-height: 32px;
+  min-height: var(--control-min-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1762,7 +1773,7 @@ kbd {
 }
 
 .lab-controls select {
-  min-height: 32px;
+  min-height: var(--control-min-h);
   padding: 0 6px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -1778,7 +1789,7 @@ kbd {
 }
 
 .lab-actions button {
-  min-height: 32px;
+  min-height: var(--control-min-h);
   border-radius: var(--radius);
   cursor: pointer;
   font-size: var(--t-sm);
@@ -1898,13 +1909,17 @@ kbd {
   .familiar-panel { padding: 20px 4px; border: 0; border-top: 1px solid var(--line); }
   .activity-list { grid-template-columns: 1fr; }
   .tool-console-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .tool-console-grid button,
-  .familiar-signal li button,
-  .gym-foot button,
-  .controls button,
-  .patch-actions button,
-  .connection-editor button,
-  .connection-editor select { min-height: 44px; }
+  :root { --control-min-h: 44px; }
+
+  /* Anything interactive that never set its own height still needs the touch
+     target; an allowlist of named controls drifted every time one was added. */
+  .machina button,
+  .machina select,
+  .machina summary,
+  .machina a,
+  .skip-link { min-height: var(--control-min-h); }
+  .machina a,
+  .machina summary { display: flex; align-items: center; }
   .node-inspector { grid-template-columns: 34px 92px 1fr; }
 }
 

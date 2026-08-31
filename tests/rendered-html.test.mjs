@@ -104,6 +104,22 @@ test("ships Hex Machina instead of the starter preview", async () => {
   const mobileCss = css.slice(mobileStart, reducedMotionStart);
   assert.match(mobileCss, /\.mission-chip\s*\{[\s\S]*?display:\s*flex;[\s\S]*?justify-content:\s*center;/);
   assert.doesNotMatch(mobileCss, /\.canvas-panel\s*\{\s*order:\s*-1/);
-  assert.match(mobileCss, /\.tool-console-grid button,[\s\S]*?\.connection-editor select\s*\{\s*min-height:\s*44px;/);
+  // Compact touch targets come from one token rather than a list of named
+  // controls, which kept drifting as controls were added — the task loader, the
+  // prompt actions and the source link all measured 32px while the list said 44.
+  assert.match(mobileCss, /:root\s*\{\s*--control-min-h:\s*44px;\s*\}/);
+  assert.match(mobileCss, /\.machina button,[\s\S]*?\.skip-link\s*\{\s*min-height:\s*var\(--control-min-h\);/);
+  assert.match(css, /--control-min-h:\s*32px;/);
+  // No control may pin itself to a pointer-sized height and escape the compact
+  // override. A rule may still ask for something taller, as long as it does so
+  // through the token (max(var(--control-min-h), …)) rather than around it.
+  const pinnedControlHeights = (css.match(/min-height:\s*[^;]+;/g) ?? [])
+    .filter((rule) => /\b(30|32|36|40)px/.test(rule))
+    .filter((rule) => !rule.includes("--control-min-h"));
+  assert.deepEqual(
+    pinnedControlHeights,
+    [],
+    "controls size themselves from --control-min-h, not a hard-coded pointer height",
+  );
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });
