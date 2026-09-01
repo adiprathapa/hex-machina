@@ -25,8 +25,14 @@ import {
   type AgentGymSplit,
 } from "@/src/scenarios/agent-gym-family";
 import type { CastResult } from "@/src/simulator/cast";
+import { createSpellToolManifest } from "@/src/tools/definitions";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
+
+/* The feed lists every registered tool before any is called, so the roster is
+   the same manifest WebMCP registers, in manifest order. A tool leaves the
+   roster the moment its first call lands in the feed. */
+const TOOL_ROSTER = createSpellToolManifest().tools.map(({ name, description }) => ({ name, description }));
 
 interface Activity {
   id: number;
@@ -998,6 +1004,10 @@ export function HexMachina() {
         </section>
 
         <aside className="familiar-panel panel" aria-label="Agent evidence and evaluation">
+          {/* The rail itself never scrolls at desktop widths. This narrative
+              zone and the feed below each scroll on their own, so the Task
+              loader and Local tool console stay pinned and reachable. */}
+          <div className="familiar-scroll">
           <div className="familiar-title"><span className="familiar-orb">M</span><div><p className="section-kicker">Field note</p><h2>Moth</h2></div></div>
 
           {patch ? (
@@ -1017,6 +1027,10 @@ export function HexMachina() {
                 <span>Preflight · graph v{patch.preconditions.expectedGraphVersion}</span>
                 <strong>{patch.preconditions.requiredEdgeIds.length} live edges · {patch.preconditions.requiredDormantNodeIds.length} dormant runes · {patch.preconditions.requiredConstraintIds.length} sacred lock</strong>
               </div>
+              <div className="patch-actions">
+                {!previewCast && <button type="button" className="patch-simulate" onClick={previewRepair}>Simulate patch safely</button>}
+                <button type="button" className="patch-apply" onClick={applyRepair}>Apply patch & recast</button>
+              </div>
               <details className="patch-ledger" open>
                 <summary>Review {patchPreview.length} graph edits</summary>
                 <ol>
@@ -1028,10 +1042,6 @@ export function HexMachina() {
                   ))}
                 </ol>
               </details>
-              <div className="patch-actions">
-                {!previewCast && <button type="button" className="patch-simulate" onClick={previewRepair}>Simulate patch safely</button>}
-                <button type="button" className="patch-apply" onClick={applyRepair}>Apply patch & recast</button>
-              </div>
               {patch.tradeoffs.length > 0 && (
                 <div className="patch-tradeoffs" role="note">
                   <strong>What this repair does</strong>
@@ -1110,12 +1120,18 @@ export function HexMachina() {
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>
+          </div>
 
-          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting"}</small></div>
+          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting · 7 tools registered"}</small></div>
           <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity">
-            {activity.length === 0 && <p className="empty-activity">Semantic tool calls will appear here with visible evidence.</p>}
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
+            ))}
+            {TOOL_ROSTER.filter((tool) => !activity.some((item) => item.tool === tool.name)).map((tool) => (
+              <article key={tool.name} className="waiting" aria-label={`${tool.name} registered, not yet called`}>
+                <span className="activity-mark" aria-hidden="true">·</span>
+                <div><strong>{tool.name}</strong><p>{tool.description}</p></div>
+              </article>
             ))}
           </div>
 

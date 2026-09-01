@@ -1700,23 +1700,43 @@ kbd {
   align-content: start;
 }
 
-/* The feed is the one region in this rail with no natural height, so on a tall
-   window it takes the slack rather than leaving up to 566px of nothing under
-   the panel. Gated on height on purpose: where the rail already overflows there
-   is no slack to absorb, and making the feed a second scroll container inside a
-   scrolling rail puts the controls below it out of reach. */
-@media (min-height: 950px) {
+/* At desktop widths the rail itself never scrolls. The narrative zone
+   (.familiar-scroll: field note, patch card, signal, Agent Gym) and the feed
+   each scroll on their own, and the Task loader and Local tool console are
+   pinned with flex: none, so the controls stay reachable in every state and
+   the feed takes the slack on a tall window instead of leaving it empty.
+   Gated on width rather than height so a short window gets the same
+   structure; below 1100px the rail returns to block flow (see the
+   max-width: 1100px block further down). */
+@media (min-width: 1101px) {
   .familiar-panel {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+  }
+
+  .familiar-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+  }
+
+  .activity-header {
+    flex: none;
   }
 
   .activity-list {
-    flex: 1 1 auto;
-    min-height: 96px;
+    flex: 1 1 140px;
+    min-height: 140px;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
+  }
+
+  .tool-console {
+    flex: none;
   }
 }
 
@@ -1726,6 +1746,17 @@ kbd {
   gap: 7px;
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
+}
+
+/* Registered-but-uncalled tools sit in the feed as quiet placeholders so the
+   roster is visible before the first call and the feed never reads as empty. */
+.activity-list article.waiting .activity-mark {
+  border-style: dashed;
+  color: var(--subtle);
+}
+
+.activity-list article.waiting strong {
+  color: var(--subtle);
 }
 
 .activity-mark {
@@ -1744,8 +1775,7 @@ kbd {
   font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
-.activity-list p,
-.empty-activity {
+.activity-list p {
   margin: 4px 0 0;
   color: var(--subtle);
   font-size: var(--t-xs);
