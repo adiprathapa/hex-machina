@@ -929,7 +929,9 @@ export function HexMachina() {
               );
             })}
 
-            <p className="canvas-hint">Drag runes to rearrange · Arrow keys nudge</p>
+            <p className="canvas-hint">
+              <span className="hint-pan">Swipe to pan the graph · </span>Drag runes to rearrange · Arrow keys nudge
+            </p>
 
           </div>
           </div>

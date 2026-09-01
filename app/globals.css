@@ -629,7 +629,7 @@ kbd {
     linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
   background-size: 24px 24px;
   overflow: hidden;
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .spell-canvas.is-rearranging {
@@ -761,6 +761,9 @@ kbd {
   text-align: left;
   cursor: grab;
   user-select: none;
+  /* A touch that starts on a rune is a drag, so it must not also scroll. A
+     touch that starts on the canvas background is a pan, so it must. */
+  touch-action: none;
   transition: border-color .14s, opacity .14s, transform .14s, background .14s;
 }
 
@@ -900,6 +903,12 @@ kbd {
   margin-right: 5px;
   color: var(--blue);
 }
+
+/* Only true where the diagram is wider than its viewport. */
+.hint-pan {
+  display: none;
+}
+
 
 .rune-glyph {
   display: grid;
@@ -1972,12 +1981,17 @@ kbd {
 
 @media (max-width: 940px) {
   .canvas-viewport {
+    /* The diagram is wider than the screen on purpose, so say so: a fade at the
+       right edge is the difference between "there is more graph" and "the graph
+       is cut off". Half the runes live past that edge. */
+    position: relative;
     display: block;
     flex: 1;
     min-height: 0;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, #000 calc(100% - 26px), rgba(0, 0, 0, .35));
   }
 
   .spell-canvas {
@@ -1985,6 +1999,10 @@ kbd {
        drawable area, still exceeds a rune's width. Below about 680px it does
        not, and runes collide. */
     min-width: 680px;
+  }
+
+  .hint-pan {
+    display: inline;
   }
 }
 

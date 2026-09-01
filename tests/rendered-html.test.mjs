@@ -163,5 +163,21 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(panCss, /\.canvas-viewport\s*\{[\s\S]*?overflow-x:\s*auto;/);
   assert.match(panCss, /\.spell-canvas\s*\{[\s\S]*?min-width:\s*680px;/);
 
+  // touch-action belongs on the things you drag, not on the surface you pan.
+  // On the canvas it cancelled the very gesture the panning viewport exists for
+  // — half the graph, including the two runes the objective names, was
+  // unreachable by finger — and turned a 570px-tall region into a vertical
+  // scroll trap in the middle of a 2600px page. Invisible on a desktop, so it
+  // has to be pinned here.
+  const canvasRule = css.match(/\.spell-canvas\s*\{([^}]*)\}/)?.[1] ?? "";
+  const runeRule = css.match(/\.rune\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(
+    canvasRule,
+    /touch-action:\s*none/,
+    "the pannable canvas must not cancel touch panning or page scroll",
+  );
+  assert.match(canvasRule, /touch-action:\s*pan-x pan-y/);
+  assert.match(runeRule, /touch-action:\s*none/, "a drag that starts on a rune must not also scroll");
+
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });
