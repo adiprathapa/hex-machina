@@ -1,8 +1,9 @@
 import type { SpellGraph } from "../domain/spell.ts";
-import { relaxLayoutOverlaps } from "../domain/layout.ts";
+import { fillLayout } from "../domain/layout.ts";
+import type { ScenarioLayoutOptions } from "./moonflower.ts";
 
 /** A third causal algebra: an action fired before its required condition damages the target. */
-export function createClockworkOrchardScenario(): SpellGraph {
+export function createClockworkOrchardScenario(options: ScenarioLayoutOptions = {}): SpellGraph {
   const graph: SpellGraph = {
     id: "spell-clockwork-orchard-01",
     version: 1,
@@ -52,8 +53,11 @@ export function createClockworkOrchardScenario(): SpellGraph {
     ],
   };
 
-  // The authored layout is relaxed the same way generated variants are, so
-  // the default lesson can never render two runes on top of each other.
-  relaxLayoutOverlaps(graph.nodes);
+  // The authored layout is spread and relaxed the same way generated variants
+  // are, so the lesson fills its canvas without an empty band through the
+  // middle and can never render two runes on top of each other. The family
+  // generator asks for the authored skeleton instead: it jitters that and
+  // fills once, so a variant never accumulates two passes of displacement.
+  if (options.layout !== "authored") fillLayout(graph.nodes);
   return graph;
 }

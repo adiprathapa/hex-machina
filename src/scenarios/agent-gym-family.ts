@@ -1,5 +1,5 @@
 import { cloneGraph, type SpellEdge, type SpellGraph } from "../domain/spell.ts";
-import { relaxLayoutOverlaps } from "../domain/layout.ts";
+import { fillLayout } from "../domain/layout.ts";
 import { createMoonflowerScenario } from "./moonflower.ts";
 import { createResonantAviaryScenario } from "./resonant-aviary.ts";
 import { createClockworkOrchardScenario } from "./clockwork-orchard.ts";
@@ -206,10 +206,10 @@ export function generateAgentGymScenarioForFamily(
   const next = createPrng(seed);
   const graph = cloneGraph(
     resonance
-      ? createResonantAviaryScenario()
+      ? createResonantAviaryScenario({ layout: "authored" })
       : temporal
-        ? createClockworkOrchardScenario()
-        : createMoonflowerScenario(),
+        ? createClockworkOrchardScenario({ layout: "authored" })
+        : createMoonflowerScenario({ layout: "authored" }),
   );
   const decoys = addBenignDecoySubgraph(graph, familyId, (next() % 7) + 1);
   const used = new Set<string>();
@@ -225,7 +225,7 @@ export function generateAgentGymScenarioForFamily(
     x: Math.min(93, Math.max(7, node.x + jitter())),
     y: Math.min(90, Math.max(7, node.y + jitter())),
   }));
-  relaxLayoutOverlaps(graph.nodes);
+  fillLayout(graph.nodes);
   graph.edges = graph.edges.map((edge) => ({
     ...edge,
     id: mapEdgeId(edge.id),

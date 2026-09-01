@@ -1,7 +1,14 @@
 import type { SpellGraph } from "../domain/spell.ts";
-import { relaxLayoutOverlaps } from "../domain/layout.ts";
+import { fillLayout } from "../domain/layout.ts";
 
-export function createMoonflowerScenario(): SpellGraph {
+/**
+ * `layout: "authored"` returns the hand-authored rune positions untouched, for
+ * callers that will jitter and fill the layout themselves; the default fills
+ * the layout so it renders evenly spaced and never overlapping.
+ */
+export type ScenarioLayoutOptions = { layout?: "authored" | "filled" };
+
+export function createMoonflowerScenario(options: ScenarioLayoutOptions = {}): SpellGraph {
   const graph: SpellGraph = {
     id: "spell-moonflower-01",
     version: 1,
@@ -148,8 +155,11 @@ export function createMoonflowerScenario(): SpellGraph {
     ],
   };
 
-  // The authored layout is relaxed the same way generated variants are, so
-  // the default lesson can never render two runes on top of each other.
-  relaxLayoutOverlaps(graph.nodes);
+  // The authored layout is spread and relaxed the same way generated variants
+  // are, so the lesson fills its canvas without an empty band through the
+  // middle and can never render two runes on top of each other. The family
+  // generator asks for the authored skeleton instead: it jitters that and
+  // fills once, so a variant never accumulates two passes of displacement.
+  if (options.layout !== "authored") fillLayout(graph.nodes);
   return graph;
 }
