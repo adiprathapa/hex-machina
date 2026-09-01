@@ -710,57 +710,66 @@ kbd {
   overflow: visible;
 }
 
+/* The edge layer draws in pixels, not in a stretched 0-100 box: a stroke
+   width, a dash and an arrowhead then mean the same thing on every screen
+   and in both directions. Under the old non-scaling hairline a rest edge
+   was a quarter-pixel line at 1.4:1 against the ground and its arrowheads
+   never rendered. */
 .edge-layer line {
   stroke: #7d8896;
-  stroke-width: .24;
+  stroke-width: 1.75px;
+  stroke-linecap: round;
   marker-end: url(#arrow-default);
-  vector-effect: non-scaling-stroke;
   transition: stroke .2s, stroke-width .2s, opacity .2s;
 }
 
 .edge-layer line.targets {
   stroke: var(--ember);
-  stroke-dasharray: 1.1 .7;
+  stroke-dasharray: 9 5;
   marker-end: url(#arrow-target);
 }
 
 .edge-layer line.modifies {
   stroke: var(--lilac);
-  stroke-dasharray: .25 .55;
+  stroke-dasharray: 2 4;
 }
 
 .edge-layer line.triggers {
   stroke: var(--blue-4);
-  stroke-dasharray: .7 .35 .15 .35;
+  stroke-dasharray: 7 3 1.5 3;
 }
 
 .edge-layer line.requires,
 .edge-layer line.excepts {
-  stroke: var(--blue-3);
-  stroke-dasharray: .22 .4;
+  /* --blue-3 sits at 2.3:1 on the canvas; --blue-4 clears 3:1. */
+  stroke: var(--blue-4);
+  stroke-dasharray: 2 4;
 }
 
 .edge-layer line.cancels {
   stroke: var(--ember);
-  stroke-dasharray: .15 .4;
+  stroke-dasharray: 1.5 4;
 }
 
+/* Active lines carry pathLength="100", so the dash values here and in the
+   trace-arrival keyframes are percentages of the line regardless of pixels. */
 .edge-layer line.active {
   stroke: var(--blue);
-  stroke-width: .58;
+  stroke-width: 3px;
+  stroke-dasharray: 100 0;
   animation: trace-arrival .65s ease-out both;
 }
 
 .edge-layer line.patch-remove {
   stroke: var(--blue-4);
-  stroke-width: .42;
-  stroke-dasharray: .55 .55;
+  stroke-width: 2px;
+  stroke-dasharray: 5 5;
   opacity: .7;
 }
 
 .edge-layer line.patch-add {
   stroke: var(--blue-8);
-  stroke-width: .72;
+  stroke-width: 3px;
   stroke-dasharray: none;
   opacity: 1;
   marker-end: url(#arrow-add);
@@ -790,7 +799,7 @@ kbd {
 }
 
 .graph-legend .legend-target i {
-  background: repeating-linear-gradient(90deg, var(--ember) 0 4px, transparent 4px 6px);
+  background: repeating-linear-gradient(90deg, var(--ember) 0 9px, transparent 9px 14px);
 }
 
 .graph-legend .legend-modifier i {
@@ -806,11 +815,11 @@ kbd {
   z-index: 2;
   transform: translate(-50%, -50%);
   width: max-content;
-  min-width: clamp(112px, 17cqw, 210px);
-  max-width: clamp(150px, 23cqw, 320px);
-  min-height: clamp(56px, 8cqw, 104px);
+  min-width: clamp(112px, 17.5cqw, 260px);
+  max-width: clamp(150px, 23cqw, 340px);
+  min-height: clamp(56px, 8.4cqw, 118px);
   display: grid;
-  grid-template-columns: clamp(30px, 4.6cqw, 56px) 1fr;
+  grid-template-columns: clamp(30px, 4.8cqw, 60px) 1fr;
   align-items: center;
   gap: clamp(8px, 1.1cqw, 14px);
   padding: clamp(8px, 1.1cqw, 14px) clamp(9px, 1.2cqw, 16px) clamp(8px, 1.1cqw, 14px) clamp(7px, .9cqw, 12px);
@@ -974,8 +983,8 @@ kbd {
 .rune-glyph {
   display: grid;
   place-items: center;
-  width: clamp(28px, 4.2cqw, 50px);
-  height: clamp(28px, 4.2cqw, 50px);
+  width: clamp(28px, 4.4cqw, 54px);
+  height: clamp(28px, 4.4cqw, 54px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
@@ -998,7 +1007,7 @@ kbd {
 }
 
 .rune-copy strong {
-  font-size: clamp(12px, 1.55cqw, 19px);
+  font-size: clamp(12px, 1.6cqw, 20px);
   font-weight: 600;
   line-height: 1.25;
 }

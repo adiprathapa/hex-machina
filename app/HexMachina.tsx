@@ -212,6 +212,10 @@ export function HexMachina() {
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
+  // The rendered size of every rune, keyed by node id. Edges end on the rune's
+  // actual border rather than on a guessed half-extent, so a long label does
+  // not swallow its arrowhead.
+  const [runeSizes, setRuneSizes] = useState<Record<string, { w: number; h: number }>>({});
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -254,9 +258,20 @@ export function HexMachina() {
   // edge value — six of twelve runes stacked on two columns. Map the authored
   // 0-100 range onto the safe area instead: nothing clips, and the spacing the
   // layout was authored with survives.
-  const horizontalInset = canvasWidth ? Math.min(22, Math.max(8, (100 / canvasWidth) * 100)) : 9;
-  // Half a rune's height against the measured canvas, for the same reason.
-  const verticalInset = canvasHeight ? Math.min(16, Math.max(5, (38 / canvasHeight) * 100)) : 6;
+  // The inset is derived from the rune size the stylesheet will actually
+  // produce at this canvas width (the same clamps as `.rune` in globals.css),
+  // widened by the widest rune measured so far: a fixed half-rune guess left
+  // the tallest label 2px past the bottom edge at 1920x1080.
+  const runeW = Math.min(260, Math.max(112, canvasWidth * 0.175));
+  const runeH = Math.min(118, Math.max(56, canvasWidth * 0.084));
+  const widestRune = Object.values(runeSizes).reduce((max, size) => Math.max(max, size.w), runeW * 1.15);
+  const tallestRune = Object.values(runeSizes).reduce((max, size) => Math.max(max, size.h), runeH);
+  const horizontalInset = canvasWidth
+    ? Math.min(22, Math.max(8, ((widestRune / 2 + 10) / canvasWidth) * 100))
+    : 9;
+  const verticalInset = canvasHeight
+    ? Math.min(16, Math.max(5, ((tallestRune / 2 + 8) / canvasHeight) * 100))
+    : 6;
   const toCanvasY = useCallback(
     (value: number) => verticalInset + ((value - AUTHORED.minY) / spanY) * (100 - verticalInset * 2),
     [verticalInset],
@@ -278,6 +293,53 @@ export function HexMachina() {
     [horizontalInset],
   );
 
+  // An edge in canvas pixels, running from the border of one rune to the
+  // border of the other with a 4px standoff so the arrowhead is not painted
+  // under the target. Endpoints are found by intersecting the centre-to-centre
+  // line with each rune's rectangle; the rectangle is the measured rune where
+  // one exists and the stylesheet's minimum otherwise.
+  const edgeSegment = useCallback((fromId: string, toId: string) => {
+    const from = graph.nodes.find((node) => node.id === fromId);
+    const to = graph.nodes.find((node) => node.id === toId);
+    if (!from || !to || !canvasWidth || !canvasHeight) return null;
+    const rawFrom = positions[from.id] ?? from;
+    const rawTo = positions[to.id] ?? to;
+    const fx = (toCanvasX(rawFrom.x) / 100) * canvasWidth;
+    const fy = (toCanvasY(rawFrom.y) / 100) * canvasHeight;
+    const tx = (toCanvasX(rawTo.x) / 100) * canvasWidth;
+    const ty = (toCanvasY(rawTo.y) / 100) * canvasHeight;
+    const dx = tx - fx;
+    const dy = ty - fy;
+    if (!dx && !dy) return null;
+    const reach = (id: string, standoff: number) => {
+      const size = runeSizes[id] ?? { w: runeW, h: runeH };
+      const hw = size.w / 2 + standoff;
+      const hh = size.h / 2 + standoff;
+      return Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+    };
+    // Neighbouring runes on a short canvas can sit within a few pixels of
+    // each other; the standoff gives way before the line does. Runes that
+    // actually overlap leave no room at all, and the segment collapses to the
+    // midpoint rather than disappearing, so the edge still exists for
+    // anything that counts or inspects it.
+    let fromT = 0.5;
+    let toT = 0.5;
+    for (const standoff of [4, 2, 0]) {
+      const a = reach(from.id, standoff);
+      const b = reach(to.id, standoff);
+      if (a + b < 1) {
+        fromT = a;
+        toT = b;
+        break;
+      }
+    }
+    return {
+      x1: +(fx + dx * fromT).toFixed(1),
+      y1: +(fy + dy * fromT).toFixed(1),
+      x2: +(tx - dx * toT).toFixed(1),
+      y2: +(ty - dy * toT).toFixed(1),
+    };
+  }, [graph.nodes, positions, canvasWidth, canvasHeight, runeSizes, runeW, runeH, toCanvasX, toCanvasY]);
 
   useEffect(() => {
     graphRef.current = graph;
@@ -295,6 +357,31 @@ export function HexMachina() {
     observer.observe(canvas);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof ResizeObserver === "undefined") return;
+    const runes = [...canvas.querySelectorAll<HTMLElement>(".rune[data-node-id]")];
+    const measure = () => {
+      setRuneSizes((previous) => {
+        let changed = false;
+        const next: Record<string, { w: number; h: number }> = {};
+        for (const rune of runes) {
+          const id = rune.dataset.nodeId!;
+          const size = { w: rune.offsetWidth, h: rune.offsetHeight };
+          next[id] = size;
+          const before = previous[id];
+          if (!before || Math.abs(before.w - size.w) > 0.5 || Math.abs(before.h - size.h) > 0.5) changed = true;
+        }
+        if (!changed && Object.keys(previous).length === runes.length) return previous;
+        return next;
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    for (const rune of runes) observer.observe(rune);
+    return () => observer.disconnect();
+  }, [graph.nodes]);
 
   const recordActivity = useCallback((tool: string, detail: string, nodeIds: string[] = []) => {
     activityId.current += 1;
@@ -858,52 +945,34 @@ export function HexMachina() {
             onPointerUp={finishDragging}
             onPointerCancel={finishDragging}
           >
-            <svg className="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <svg className="edge-layer" aria-hidden="true">
               <defs>
-                <marker id="arrow-default" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-flow)" />
+                <marker id="arrow-default" markerUnits="userSpaceOnUse" markerWidth={11} markerHeight={11} refX={10} refY={5.5} orient="auto-start-reverse">
+                  <path d="M 0 0 L 11 5.5 L 0 11 z" fill="var(--edge-flow)" />
                 </marker>
-                <marker id="arrow-target" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-target)" />
+                <marker id="arrow-target" markerUnits="userSpaceOnUse" markerWidth={11} markerHeight={11} refX={10} refY={5.5} orient="auto-start-reverse">
+                  <path d="M 0 0 L 11 5.5 L 0 11 z" fill="var(--edge-target)" />
                 </marker>
-                <marker id="arrow-add" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-add)" />
+                <marker id="arrow-add" markerUnits="userSpaceOnUse" markerWidth={11} markerHeight={11} refX={10} refY={5.5} orient="auto-start-reverse">
+                  <path d="M 0 0 L 11 5.5 L 0 11 z" fill="var(--edge-add)" />
                 </marker>
               </defs>
-              {graph.edges.map((edge) => {
+              {canvasWidth > 0 && canvasHeight > 0 && graph.edges.map((edge) => {
                 const from = graph.nodes.find((node) => node.id === edge.from)!;
                 const to = graph.nodes.find((node) => node.id === edge.to)!;
-                const rawFromPosition = positions[from.id] ?? from;
-                const rawToPosition = positions[to.id] ?? to;
-                const fromPosition = { x: toCanvasX(rawFromPosition.x), y: toCanvasY(rawFromPosition.y) };
-                const toPosition = { x: toCanvasX(rawToPosition.x), y: toCanvasY(rawToPosition.y) };
-                const dx = toPosition.x - fromPosition.x;
-                const dy = toPosition.y - fromPosition.y;
-                const distance = Math.hypot(dx, dy) || 1;
-                const endpointInset = 6;
-                const x1 = fromPosition.x + (dx / distance) * endpointInset;
-                const y1 = fromPosition.y + (dy / distance) * endpointInset;
-                const x2 = toPosition.x - (dx / distance) * endpointInset;
-                const y2 = toPosition.y - (dy / distance) * endpointInset;
+                const segment = edgeSegment(from.id, to.id);
+                if (!segment) return null;
                 const traceIndex = tracedNodeIds.findIndex((nodeId, index) => (
                   nodeId === from.id && tracedNodeIds[index + 1] === to.id
                 ));
                 const active = traceIndex >= 0;
                 const pendingRemoval = removedPatchEdgeIds.has(edge.id);
-                return <line key={edge.id} data-edge-id={edge.id} x1={x1} y1={y1} x2={x2} y2={y2} className={`${edge.type} ${active ? "active" : ""} ${pendingRemoval ? "patch-remove" : ""}`} style={active ? { animationDelay: `${traceIndex * 90}ms` } : undefined} />;
+                return <line key={edge.id} data-edge-id={edge.id} x1={segment.x1} y1={segment.y1} x2={segment.x2} y2={segment.y2} pathLength={active ? 100 : undefined} className={`${edge.type} ${active ? "active" : ""} ${pendingRemoval ? "patch-remove" : ""}`} style={active ? { animationDelay: `${traceIndex * 90}ms` } : undefined} />;
               })}
-              {addedPatchEdges.map((entry) => {
-                const from = graph.nodes.find((node) => node.id === entry.fromId)!;
-                const to = graph.nodes.find((node) => node.id === entry.toId)!;
-                const rawFromPosition = positions[from.id] ?? from;
-                const rawToPosition = positions[to.id] ?? to;
-                const fromPosition = { x: toCanvasX(rawFromPosition.x), y: toCanvasY(rawFromPosition.y) };
-                const toPosition = { x: toCanvasX(rawToPosition.x), y: toCanvasY(rawToPosition.y) };
-                const dx = toPosition.x - fromPosition.x;
-                const dy = toPosition.y - fromPosition.y;
-                const distance = Math.hypot(dx, dy) || 1;
-                const endpointInset = 6;
-                return <line key={`preview-${entry.edgeId}`} data-preview-edge-id={entry.edgeId} x1={fromPosition.x + (dx / distance) * endpointInset} y1={fromPosition.y + (dy / distance) * endpointInset} x2={toPosition.x - (dx / distance) * endpointInset} y2={toPosition.y - (dy / distance) * endpointInset} className="patch-add" />;
+              {canvasWidth > 0 && canvasHeight > 0 && addedPatchEdges.map((entry) => {
+                const segment = edgeSegment(entry.fromId, entry.toId);
+                if (!segment) return null;
+                return <line key={`preview-${entry.edgeId}`} data-preview-edge-id={entry.edgeId} x1={segment.x1} y1={segment.y1} x2={segment.x2} y2={segment.y2} className="patch-add" />;
               })}
             </svg>
 
@@ -927,6 +996,7 @@ export function HexMachina() {
                   key={node.id}
                   className={`rune rune-${node.kind} ${node.dormant ? "dormant" : ""} ${sacred ? "sacred" : ""} ${highlighted ? "highlighted" : ""} ${activatedPatchNodeIds.has(node.id) ? "patch-activate" : ""} ${selected === node.id ? "selected" : ""} ${dragging === node.id ? "dragging" : ""} ${connectionClass}`}
                   style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                  data-node-id={node.id}
                   tabIndex={connectionClass === "connect-incompatible" ? -1 : undefined}
                   onPointerDown={(event) => {
                     if (connectSource) return;
