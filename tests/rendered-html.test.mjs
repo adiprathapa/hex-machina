@@ -179,5 +179,15 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(canvasRule, /touch-action:\s*pan-x pan-y/);
   assert.match(runeRule, /touch-action:\s*none/, "a drag that starts on a rune must not also scroll");
 
+  // WCAG 1.4.11: where a border is the only thing saying "this is a control",
+  // it needs 3:1 against its ground. --line-strong measured 2.36:1, and 29
+  // controls sat on it. Structural rules between sections stay quiet on purpose.
+  const controlLine = css.match(/--line-control:\s*rgba\(255, 255, 255, \.(\d+)\)/)?.[1];
+  assert.ok(controlLine, "a dedicated control-boundary token exists");
+  assert.ok(
+    Number(`0.${controlLine}`) >= 0.34,
+    `the control boundary must clear 3:1 on --panel-raised (alpha 0.${controlLine})`,
+  );
+
   assert.equal(templateRoot.pathname.endsWith("/"), true);
 });

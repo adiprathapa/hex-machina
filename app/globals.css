@@ -19,6 +19,9 @@
   /* Structure */
   --line: rgba(255, 255, 255, .13);
   --line-strong: rgba(255, 255, 255, .26);
+  /* Boundary of an interactive control, where the border is the affordance.
+     Measured 3.75:1 against --panel-raised, the lightest ground it sits on. */
+  --line-control: rgba(255, 255, 255, .4);
 
   /* Text */
   --ink: #ededef;
@@ -436,7 +439,7 @@ summary:focus-visible,
 }
 
 .controls .quiet {
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line-control);
   background: transparent;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -1085,7 +1088,7 @@ kbd {
 .connection-editor button,
 .connection-editor select {
   min-height: var(--control-min-h);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line-control);
   border-radius: var(--radius);
   font-size: var(--t-xs);
 }
@@ -1699,6 +1702,9 @@ kbd {
   line-height: 1.45;
 }
 
+/* These two rules separate sections of the rail. The control here is the
+   <summary> — its label and chevron are the affordance — so the rule itself is
+   decorative under WCAG 1.4.11 and stays quiet rather than shouting. */
 .tool-console {
   margin-top: 16px;
   border-top: 1px solid var(--line-strong);
@@ -1840,7 +1846,7 @@ kbd {
 .lab-controls select {
   min-height: var(--control-min-h);
   padding: 0 6px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line-control);
   border-radius: var(--radius);
   background: var(--panel-raised);
   color: var(--ink);
@@ -1873,7 +1879,7 @@ kbd {
 }
 
 .lab-actions .quiet {
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line-control);
   background: transparent;
   color: var(--muted);
 }
@@ -2143,4 +2149,26 @@ a:focus-visible {
 
 .workspace:focus {
   outline: none;
+}
+
+/* Controls carry their own boundary contrast. Structural rules between blocks
+   of content are decorative under WCAG 1.4.11 and stay quiet on purpose; these
+   are the ones where the border is the only thing saying "this is a control". */
+button,
+select,
+summary,
+a.quiet,
+.rune,
+.tool-console-grid button,
+.connection-editor button,
+.connection-editor select,
+.patch-actions button,
+.gym-foot button,
+.controls button,
+.agent-brief-actions .quiet {
+  border-color: var(--line-control);
+}
+
+.rune.dormant {
+  border-color: var(--line-control);
 }

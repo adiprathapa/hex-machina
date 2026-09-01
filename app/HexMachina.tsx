@@ -335,15 +335,27 @@ export function HexMachina() {
   useEffect(() => {
     const registration = new AbortController();
     let active = true;
+    // Registration waits up to eight seconds for a host to inject
+    // document.modelContext, because a slow host is worth waiting for. The
+    // label must not wait with it: a visitor without a host spent 7.6 seconds
+    // reading "connecting to host…", which says nothing true about their
+    // situation. After a short grace the label settles on "ready for a host",
+    // which is accurate whether or not one ever arrives, and still flips to
+    // "registered" if the host turns up later.
+    const settle = setTimeout(() => {
+      if (active) setMcpState((current) => current === "checking" ? "unavailable" : current);
+    }, 1200);
     registerWebMCPTools(handlers, registration.signal, { scenario: graphRef.current })
       .then((supported) => {
-        if (active) setMcpState(supported ? "live" : "unavailable");
+        if (active && supported) setMcpState("live");
+        else if (active) setMcpState("unavailable");
       })
       .catch(() => {
         if (active) setMcpState("unavailable");
       });
     return () => {
       active = false;
+      clearTimeout(settle);
       registration.abort();
     };
   }, [handlers]);
