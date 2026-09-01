@@ -1211,7 +1211,7 @@ kbd {
 
 .familiar-message,
 .patch-card {
-  margin-top: 21px;
+  margin-top: 14px;
   padding: 14px 0 14px 14px;
   border: 0;
   border-left: 3px solid var(--blue);
@@ -1460,8 +1460,8 @@ kbd {
 }
 
 .familiar-signal {
-  margin-top: 14px;
-  padding: 12px 0;
+  margin-top: 12px;
+  padding: 10px 0;
   border: 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -1475,18 +1475,59 @@ kbd {
   min-width: 0;
 }
 
-.familiar-signal-heading {
+/* Both reference tables are <details>: their headings are the <summary>, so the
+   heading rules must fit a control — pointer-sized through the token (the
+   compact layout raises it to 44px), no marker, and the shared focus ring. */
+.familiar-signal-heading,
+.policy-baselines-heading {
+  min-height: var(--control-min-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.familiar-signal-heading::-webkit-details-marker,
+.policy-baselines-heading::-webkit-details-marker {
+  display: none;
+}
+
+.familiar-signal-heading:focus-visible,
+.policy-baselines-heading:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.rail-disclosure {
+  flex: none;
+  color: var(--subtle);
+  font-size: var(--t-sm);
+  line-height: 1;
+  transition: transform .15s ease;
+}
+
+.familiar-signal[open] > .familiar-signal-heading .rail-disclosure,
+.policy-baselines[open] > .policy-baselines-heading .rail-disclosure {
+  transform: rotate(180deg);
+}
+
+.familiar-signal-title {
+  display: block;
+  flex: 1 1 auto;
+}
+
+.familiar-signal-title .section-kicker {
+  display: block;
 }
 
 .familiar-signal-heading strong {
+  display: block;
   font-size: var(--t-sm);
 }
 
-.familiar-signal-heading > span {
+.familiar-signal-heading > span[title] {
   padding: 3px 5px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -1497,7 +1538,7 @@ kbd {
 .familiar-signal ol {
   display: grid;
   gap: 8px;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1548,14 +1589,14 @@ kbd {
 }
 
 .familiar-signal > p {
-  margin: 11px 0 0;
+  margin: 8px 0 0;
   color: var(--subtle);
   font-size: var(--t-xs);
   line-height: 1.45;
 }
 
 .agent-gym {
-  margin-top: 16px;
+  margin-top: 12px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1596,7 +1637,7 @@ kbd {
 }
 
 .agent-gym > p {
-  margin: 10px 0;
+  margin: 8px 0;
   color: var(--muted);
   font-size: var(--t-xs);
   line-height: 1.45;
@@ -1614,6 +1655,15 @@ kbd {
   font: 500 var(--t-xs)/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
+/* The provenance line wrapped to two lines on a laptop rail and cost 13px per
+   state; the full text stays in its title. */
+.gym-foot small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .gym-meter {
   height: 4px;
   margin: 9px 0 10px;
@@ -1629,7 +1679,7 @@ kbd {
 }
 
 .policy-baselines {
-  margin: 10px 0;
+  margin: 8px 0;
   border-top: 1px solid var(--blue-6);
   border-bottom: 1px solid var(--blue-6);
 }
@@ -1650,13 +1700,13 @@ kbd {
 }
 
 .policy-baselines-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 0 4px;
+  padding: 2px 0;
   color: var(--subtle);
   font: 600 var(--t-xs)/1.2 var(--font-fira-code), monospace;
+}
+
+.policy-baselines-heading > span:nth-child(2) {
+  margin-left: auto;
 }
 
 .policy-baseline {
@@ -1715,7 +1765,7 @@ kbd {
 .activity-header {
   display: flex;
   justify-content: space-between;
-  margin: 22px 0 7px;
+  margin: 12px 0 6px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--subtle);
@@ -1818,11 +1868,17 @@ kbd {
    <summary> — its label and chevron are the affordance — so the rule itself is
    decorative under WCAG 1.4.11 and stays quiet rather than shouting. */
 .tool-console {
-  margin-top: 16px;
+  margin-top: 12px;
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
   background: transparent;
   overflow: hidden;
+}
+
+/* The two consoles share one rule instead of stacking two with a gap between. */
+.tool-console + .tool-console {
+  margin-top: 0;
+  border-top: 0;
 }
 
 .tool-console summary {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   connectRunes,
   getValidEdgeTypes,
@@ -28,6 +28,20 @@ import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolManifest } from "@/src/tools/definitions";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
+
+/* The right rail's two reference tables (the held-out policy benchmark and the
+   two-hop ranking) fold shut on a short window so the tool feed is not pushed
+   300-700px below the fold; on a tall window they render open on first paint.
+   The server snapshot is "tall" so the HTML still carries every row and the
+   hydrated tree matches it before the media query is consulted. */
+const TALL_VIEWPORT_QUERY = "(min-height: 1000px)";
+const subscribeTallViewport = (onChange: () => void) => {
+  const query = window.matchMedia(TALL_VIEWPORT_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const readTallViewport = () => window.matchMedia(TALL_VIEWPORT_QUERY).matches;
+const readTallViewportOnServer = () => true;
 
 /* The feed lists every registered tool before any is called, so the roster is
    the same manifest WebMCP registers, in manifest order. A tool leaves the
@@ -161,6 +175,7 @@ const STORY: Record<string, {
 
 export function HexMachina() {
   const [graph, setGraph] = useState<SpellGraph>(() => createMoonflowerScenario());
+  const tallViewport = useSyncExternalStore(subscribeTallViewport, readTallViewport, readTallViewportOnServer);
   const graphRef = useRef(graph);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [cast, setCast] = useState<CastResult | null>(null);
@@ -346,7 +361,9 @@ export function HexMachina() {
       if (event.key !== "Enter" || event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName;
-      if (target?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "A") return;
+      // A focused <summary> toggles on Enter; stealing the key from it left
+      // every disclosure in the rail keyboard-openable only by Space.
+      if (target?.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "A" || tag === "SUMMARY") return;
       const primary = document.querySelector<HTMLButtonElement>(".controls .primary");
       if (!primary || primary.disabled) return;
       event.preventDefault();
@@ -1087,11 +1104,12 @@ export function HexMachina() {
           )}
 
           {familiarPrediction && (
-            <section className="familiar-signal" aria-label="Experimental Familiar graph prediction">
-              <div className="familiar-signal-heading">
-                <div><p className="section-kicker">Experimental graph signal</p><strong>Two-hop suspect ranking</strong></div>
+            <details className="familiar-signal" aria-label="Experimental Familiar graph prediction" open={tallViewport}>
+              <summary className="familiar-signal-heading">
+                <span className="familiar-signal-title"><span className="section-kicker">Experimental graph signal</span><strong>Two-hop suspect ranking</strong></span>
                 <span title="Advisory model; the simulator remains authoritative">Advisory</span>
-              </div>
+                <span className="rail-disclosure" aria-hidden="true">⌄</span>
+              </summary>
               <ol>
                 {familiarPrediction.ranking.map((item, index) => (
                   <li key={item.nodeId}>
@@ -1104,7 +1122,7 @@ export function HexMachina() {
                 ))}
               </ol>
               <p>Two message-passing rounds suggest where to inspect. The deterministic trace still decides what happened.</p>
-            </section>
+            </details>
           )}
 
           <section className="agent-gym" aria-label="Agent Gym evaluation">
@@ -1118,8 +1136,12 @@ export function HexMachina() {
               <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
-            <div className="policy-baselines" aria-label="Held-out policy benchmark">
-              <div className="policy-baselines-heading"><span>Held-out policy</span><span>Mean reward</span></div>
+            <details className="policy-baselines" aria-label="Held-out policy benchmark" open={tallViewport}>
+              <summary className="policy-baselines-heading">
+                <span>Held-out policy</span>
+                <span>Mean reward · {AGENT_GYM_POLICY_BASELINES.length} policies</span>
+                <span className="rail-disclosure" aria-hidden="true">⌄</span>
+              </summary>
               <p className="policy-baselines-note">
                 Scripted control policies scored on held-out tasks, not options to choose.
                 They exist to show the reward separates good repair from cheap repair.
@@ -1130,9 +1152,9 @@ export function HexMachina() {
                   <strong className={baseline.score < 0 ? "negative" : undefined}>{baseline.score > 0 ? `+${baseline.score}` : baseline.score}</strong>
                 </div>
               ))}
-            </div>
+            </details>
             <div className="gym-foot">
-              <small>96 variants · 3 causal families · vector + offline rollouts</small>
+              <small title="96 variants · 3 causal families · vector + offline rollouts">96 variants · 3 causal families · vector + offline rollouts</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>

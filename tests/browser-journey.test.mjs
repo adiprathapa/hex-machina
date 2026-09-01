@@ -258,6 +258,33 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(computedFonts.body, /Inter/i, "the production body uses the intended interface typeface");
     assert.match(computedFonts.semanticLabel, /Inter/i, "interface labels use the interface typeface");
     assert.match(computedFonts.machineData, /Fira Code/i, "machine data keeps the code typeface");
+    // The right rail is three zones: the narrative (which scrolls), the tool
+    // feed, and the two pinned consoles. Before the rail was compacted the
+    // Agent Gym card alone was 450-500px, so at 1280x720 the rail overflowed by
+    // 873px in the repair state and at 1920x1080 the pinned consoles were
+    // squeezed to 2px. Measured in the repair and repaired states, where the
+    // narrative zone is at its longest and shortest.
+    const measureRail = () => page.evaluate(() => {
+      const panel = document.querySelector(".familiar-panel");
+      const list = document.querySelector(".activity-list");
+      const feed = list.getBoundingClientRect();
+      return {
+        panelOverflow: panel.scrollHeight - panel.clientHeight,
+        details: [...panel.querySelectorAll("details.tool-console")].map((d) => d.getBoundingClientRect().height),
+        feedHeight: feed.height,
+        feedTop: feed.top,
+        rows: list.querySelectorAll("article").length,
+        innerHeight,
+      };
+    });
+    const assertRailGuard = (rail, label) => {
+      assert.equal(rail.panelOverflow, 0, `${label}: the right rail itself never scrolls (overflow ${rail.panelOverflow}px)`);
+      assert.equal(rail.details.length, 2, `${label}: the Task loader and the Local tool console are both pinned`);
+      assert.ok(rail.details.every((height) => height >= 44), `${label}: both pinned consoles keep a reachable summary (${rail.details.map(Math.round).join(", ")}px)`);
+      assert.ok(rail.feedHeight >= 140, `${label}: the tool feed keeps at least 140px (got ${Math.round(rail.feedHeight)}px)`);
+      assert.ok(rail.feedTop + rail.feedHeight <= rail.innerHeight, `${label}: the tool feed ends inside the window (bottom ${Math.round(rail.feedTop + rail.feedHeight)} of ${rail.innerHeight})`);
+      assert.ok(rail.rows >= 7, `${label}: the feed lists every registered tool (${rail.rows} rows)`);
+    };
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "failure spectacle is visible");
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "failure state is visible");
@@ -283,6 +310,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(await page.locator(".edge-layer line.patch-remove").count(), 2, "removed connections are previewed on the graph");
     assert.equal(await page.locator(".edge-layer line.patch-add").count(), 4, "new connections are previewed on the graph");
     assert.equal(await page.locator(".rune.patch-activate").count(), 2, "dormant runes to awaken are previewed on the graph");
+    assertRailGuard(await measureRail(), "1280x720 with the patch card");
     await page.getByRole("button", { name: "Simulate patch safely", exact: true }).click();
     await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "a human can safely test the repair before approval");
     await assertVisible(page.locator(".preview-verdict"), "the unapplied prediction is visibly distinguished from editor state");
@@ -296,6 +324,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
     await assertVisible(page.locator(".agent-gym-heading .complete"), "apply and recast completes the visible evaluation episode");
     assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*23\s*\/\s*23/i);
+    assertRailGuard(await measureRail(), "1280x720 after the repair");
     const [episodeDownload] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Export episode JSON" }).click(),
@@ -413,6 +442,28 @@ test("production browser completes the constraint-preserving spell journey", { t
       );
       assert.equal(type.scrollWidth, type.clientWidth, `no horizontal overflow at ${width}x${height}`);
     }
+
+    // A desktop monitor gets the same rail guard: on a tall window both
+    // reference tables (the held-out benchmark and the two-hop ranking) render
+    // open on first paint, and the pinned consoles must still keep their height.
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /Cast spell/ }).click();
+    await page.getByRole("button", { name: "Trace the glitch", exact: true }).click();
+    await page.getByRole("button", { name: "Protect the ducks", exact: true }).click();
+    await page.getByRole("button", { name: "Find a repair", exact: true }).click();
+    await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "the patch is previewed at 1920x1080");
+    const tallTables = await page.evaluate(() => ({
+      baselinesOpen: document.querySelector(".policy-baselines").open,
+      rankingOpen: document.querySelector(".familiar-signal").open,
+      baselineRows: [...document.querySelectorAll(".policy-baseline")].filter((row) => row.checkVisibility()).length,
+      rankingRows: [...document.querySelectorAll(".familiar-signal li")].filter((row) => row.checkVisibility()).length,
+    }));
+    assert.deepEqual(tallTables, { baselinesOpen: true, rankingOpen: true, baselineRows: 5, rankingRows: 3 }, "on a tall window every benchmark and ranking row is open on first paint");
+    assertRailGuard(await measureRail(), "1920x1080 with the patch card");
+    await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
+    await assertVisible(page.getByText("The moonflower blooms", { exact: true }), "the repair succeeds at 1920x1080");
+    assertRailGuard(await measureRail(), "1920x1080 after the repair");
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "networkidle" });
