@@ -45,7 +45,10 @@ const readTallViewportOnServer = () => true;
 
 /* The feed lists every registered tool before any is called, so the roster is
    the same manifest WebMCP registers, in manifest order. A tool leaves the
-   roster the moment its first call lands in the feed. */
+   roster the moment its first call lands in the feed and never returns: the
+   feed keeps only the seven newest calls, so membership is tracked separately
+   from the entries themselves (inspect_spell is called on Cast and would
+   otherwise reappear as "not yet called" after the repair evicts it). */
 const TOOL_ROSTER = createSpellToolManifest().tools.map(({ name, description }) => ({ name, description }));
 
 interface Activity {
@@ -178,6 +181,7 @@ export function HexMachina() {
   const tallViewport = useSyncExternalStore(subscribeTallViewport, readTallViewport, readTallViewportOnServer);
   const graphRef = useRef(graph);
   const [activity, setActivity] = useState<Activity[]>([]);
+  const [calledTools, setCalledTools] = useState<ReadonlySet<string>>(() => new Set());
   const [cast, setCast] = useState<CastResult | null>(null);
   const [previewCast, setPreviewCast] = useState<CastResult | null>(null);
   const [patch, setPatch] = useState<ReviewedSpellPatch | null>(null);
@@ -386,6 +390,7 @@ export function HexMachina() {
   const recordActivity = useCallback((tool: string, detail: string, nodeIds: string[] = []) => {
     activityId.current += 1;
     setActivity((items) => [{ id: activityId.current, tool, detail, nodeIds }, ...items].slice(0, 7));
+    setCalledTools((called) => (called.has(tool) ? called : new Set(called).add(tool)));
     if (nodeIds[0]) setSelected(nodeIds[0]);
   }, []);
 
@@ -563,6 +568,7 @@ export function HexMachina() {
     setPatch(null);
     setRevertToken(null);
     setActivity([]);
+    setCalledTools(new Set());
     activityId.current = 0;
     setSelected(next.semantics.roles.multiplier);
     setPositions(initialPositions(next));
@@ -1235,7 +1241,7 @@ export function HexMachina() {
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
             ))}
-            {TOOL_ROSTER.filter((tool) => !activity.some((item) => item.tool === tool.name)).map((tool) => (
+            {TOOL_ROSTER.filter((tool) => !calledTools.has(tool.name)).map((tool) => (
               <article key={tool.name} className="waiting" aria-label={`${tool.name} registered, not yet called`}>
                 <span className="activity-mark" aria-hidden="true">·</span>
                 <div><strong>{tool.name}</strong><p>{tool.description}</p></div>

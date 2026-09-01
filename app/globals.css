@@ -1811,9 +1811,15 @@ kbd {
     overflow: hidden;
   }
 
+  /* The zone's scroll clip would otherwise cut the focus ring on the full-width
+     suspect-ranking buttons and summaries flush with its left edge, so it takes
+     6px of the rail's left padding as its own and gives it back as padding:
+     the content edge stays put and the 3px ring plus 2px offset has room. */
   .familiar-scroll {
     flex: 0 1 auto;
     min-height: 0;
+    margin-left: -6px;
+    padding-left: 6px;
     overflow-y: auto;
     scrollbar-width: thin;
     overscroll-behavior: contain;
@@ -1823,8 +1829,12 @@ kbd {
     flex: none;
   }
 
+  /* The feed's basis grows with the window so a tall screen splits its slack
+     between the narrative zone and the feed instead of leaving the feed at
+     the floor. Flex shrink is proportional to basis, so on a short window the
+     zone still gives way first and the feed settles at its 140px floor. */
   .activity-list {
-    flex: 1 1 140px;
+    flex: 1 1 clamp(140px, 22vh, 260px);
     min-height: 140px;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -1845,14 +1855,29 @@ kbd {
 }
 
 /* Registered-but-uncalled tools sit in the feed as quiet placeholders so the
-   roster is visible before the first call and the feed never reads as empty. */
+   roster is visible before the first call and the feed never reads as empty.
+   A placeholder runs its name and description together as one line of text,
+   the way a manifest reads, so the seven-row roster stays compact enough to
+   show whole; once a tool is called its row takes the two-line live layout. */
 .activity-list article.waiting .activity-mark {
   border-style: dashed;
   color: var(--subtle);
 }
 
+.activity-list article.waiting > div {
+  line-height: 1.45;
+}
+
 .activity-list article.waiting strong {
+  display: inline;
+  margin-right: .45em;
   color: var(--subtle);
+  line-height: inherit;
+}
+
+.activity-list article.waiting p {
+  display: inline;
+  margin: 0;
 }
 
 .activity-mark {
