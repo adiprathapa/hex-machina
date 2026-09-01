@@ -134,6 +134,17 @@ try {
   record("same_origin_runtime_requests");
   record("automated_production_browser_journey");
 
+  // Preserve the terminal state of the canonical acceptance journey before
+  // exercising rollback and input-accessibility checks. Those checks
+  // intentionally mutate the graph away from success, but they must not make
+  // the evidence claim that the repair itself ended in a failed state.
+  const successfulState = await page.evaluate(() => ({
+    finalState: document.querySelector(".cast-state")?.textContent?.trim(),
+    version: Number(document.querySelector(".canvas-header .section-kicker")?.textContent?.match(/v(\d+)/)?.[1] ?? 0),
+    outcome: document.querySelector(".cast-vision strong")?.textContent?.trim(),
+    sacredPins: document.querySelectorAll(".sacred-pin").length,
+  }));
+
   const undo = page.getByRole("button", { name: "Undo agent patch", exact: true });
   assert.ok(await undo.count(), "the applied patch is reversible");
   await undo.click();
@@ -167,13 +178,6 @@ try {
   assert.ok(consoleOutput.trim().startsWith("{"), "the local console returns the same structured result");
   record("local_console_shared_handler_flow");
 
-  const uiState = await page.evaluate(() => ({
-    finalState: document.querySelector(".cast-state")?.textContent?.trim(),
-    version: Number(document.querySelector(".canvas-header .section-kicker")?.textContent?.match(/v(\d+)/)?.[1] ?? 0),
-    outcome: document.querySelector(".cast-vision strong")?.textContent?.trim(),
-    sacredPins: document.querySelectorAll(".sacred-pin").length,
-  }));
-
   const mobile = await context.newPage();
   await mobile.addInitScript(HOST_SHIM);
   await mobile.setViewportSize({ width: 390, height: 844 });
@@ -199,10 +203,19 @@ try {
   const discovered = (await page.evaluate(() => [...window.__hexWebMCPTools.keys()])).sort();
   assert.equal(discovered.length, 7, `expected seven registered tools, found ${discovered.length}`);
   assert.equal(responsive.horizontal_overflow, false, "the compact layout overflows horizontally");
+  record("mobile_no_horizontal_overflow");
   assert.ok(
     responsive.minimum_compact_target_height_px >= 44,
     `smallest compact target is ${responsive.minimum_compact_target_height_px}px, needs 44`,
   );
+  record("mobile_44px_compact_targets");
+  assert.equal(responsive.objective_visible, true, "the mission objective is hidden on compact screens");
+  record("mobile_objective_visible");
+  assert.ok(
+    responsive.brief_top_px < responsive.canvas_top_px,
+    `the agent brief must precede the canvas (${responsive.brief_top_px}px vs ${responsive.canvas_top_px}px)`,
+  );
+  record("mobile_brief_before_canvas");
   assert.equal(consoleErrors.length, 0, `console errors: ${consoleErrors.join("; ")}`);
   assert.equal(crossOrigin.length, 0, `cross-origin requests: ${crossOrigin.join("; ")}`);
 
@@ -222,10 +235,10 @@ try {
     browser: "Chrome (headless), live production deployment",
     deployed_document_fingerprint: deployedFingerprint,
     completed_steps: steps,
-    final_state: uiState.finalState,
-    final_graph_version: uiState.version,
-    final_outcome: uiState.outcome,
-    sacred_constraints_visible: uiState.sacredPins,
+    final_state: successfulState.finalState,
+    final_graph_version: successfulState.version,
+    final_outcome: successfulState.outcome,
+    sacred_constraints_visible: successfulState.sacredPins,
     console_errors: consoleErrors.length,
     cross_origin_requests: crossOrigin.length,
     responsive_evidence: responsive,

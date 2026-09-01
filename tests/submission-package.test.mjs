@@ -8,6 +8,32 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+const REQUIRED_BROWSER_ACCEPTANCE_STEPS = [
+  "cast_failure",
+  "trace_effect",
+  "explain_side_effect",
+  "set_sacred_constraint",
+  "propose_spell_patch",
+  "apply_spell_patch",
+  "verified_success",
+  "production_build_canonical_flow",
+  "mobile_objective_visible",
+  "mobile_brief_before_canvas",
+  "mobile_no_horizontal_overflow",
+  "mobile_44px_compact_targets",
+  "keyboard_rune_nudge",
+  "automated_production_browser_journey",
+  "reversible_patch_undo",
+  "registered_tools_drive_visible_ui",
+  "same_origin_runtime_requests",
+  "ranked_repair_evidence",
+  "nonmutating_patch_preview",
+  "bounded_causal_trace",
+  "coherent_filtered_inspection",
+  "validated_patch_preconditions",
+  "twelve_ducks_preserved",
+];
+
 async function markdownFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
@@ -53,6 +79,21 @@ test("public source package contains no root-level analysis probes", async () =>
     ))
     .sort();
   assert.deepEqual(probes, [], "throwaway localhost/browser probes do not belong in the judge-facing repository");
+});
+
+test("generated live-browser evidence satisfies the full acceptance contract", async () => {
+  const evidence = JSON.parse(await readFile(path.join(ROOT, "tests/browser-acceptance.json"), "utf8"));
+  const completed = new Set(evidence.completed_steps);
+  assert.deepEqual(
+    REQUIRED_BROWSER_ACCEPTANCE_STEPS.filter((step) => !completed.has(step)),
+    [],
+    "npm run verify:live must record every full-suite interaction receipt",
+  );
+  assert.equal(evidence.final_state, "Stable", "the recorded canonical journey must end in the repaired state");
+  assert.equal(evidence.console_errors, 0);
+  assert.equal(evidence.cross_origin_requests, 0);
+  assert.ok(evidence.sacred_constraints_visible >= 1);
+  assert.equal(evidence.site_tools_api_available, true);
 });
 
 test("Devpost copy directly answers every required explanation and judging criterion", async () => {
