@@ -95,7 +95,9 @@ function initialPositions(graph: SpellGraph): Record<string, NodePosition> {
 
 // The bounds the scenario generator authors and relaxes layouts within. Mapping
 // from this range rather than 0-100 means the authored graph fills the canvas
-// instead of leaving a dead margin on all four sides.
+// instead of leaving a dead margin on all four sides. `fillLayout` puts a rune
+// centre on every edge of exactly this box, so the outermost runes always land
+// on the inset line and the ink margin is the same on every edge.
 const AUTHORED = { minX: 7, maxX: 93, minY: 7, maxY: 90 };
 
 const spanY = AUTHORED.maxY - AUTHORED.minY;
@@ -275,18 +277,30 @@ export function HexMachina() {
   // 0-100 range onto the safe area instead: nothing clips, and the spacing the
   // layout was authored with survives.
   // The inset is derived from the rune size the stylesheet will actually
-  // produce at this canvas width (the same clamps as `.rune` in globals.css),
-  // widened by the widest rune measured so far: a fixed half-rune guess left
-  // the tallest label 2px past the bottom edge at 1920x1080.
+  // produce at this canvas width (the same clamps as `.rune` in globals.css)
+  // until the runes have been measured, then from the widest and tallest rune
+  // actually rendered: a fixed half-rune guess left the tallest label 2px past
+  // the bottom edge at 1920x1080, and keeping the guess as a floor after
+  // measuring made the left margin 20px wider than the right. The layout
+  // pass puts a rune centre on every edge of the authored box (see
+  // `fillLayout`), so the margin here is the whole gap between the outermost
+  // ink and the canvas edge: 28px on every side, the same at 1280 and 2560.
+  // Before the layout pass filled the box, the top row sat at authored y ~14
+  // and an 8px margin drew a 105px empty band across the top at 2560x1440
+  // with the lowest rune 17px from the bottom edge.
+  const EDGE_MARGIN = 28;
   const runeW = Math.min(260, Math.max(112, canvasWidth * 0.175));
   const runeH = Math.min(118, Math.max(56, canvasWidth * 0.084));
-  const widestRune = Object.values(runeSizes).reduce((max, size) => Math.max(max, size.w), runeW * 1.15);
-  const tallestRune = Object.values(runeSizes).reduce((max, size) => Math.max(max, size.h), runeH);
+  const measuredRunes = Object.values(runeSizes);
+  const allRunesMeasured = measuredRunes.length > 0
+    && graph.nodes.every((node) => runeSizes[node.id] !== undefined);
+  const widestRune = measuredRunes.reduce((max, size) => Math.max(max, size.w), allRunesMeasured ? 0 : runeW * 1.15);
+  const tallestRune = measuredRunes.reduce((max, size) => Math.max(max, size.h), allRunesMeasured ? 0 : runeH);
   const horizontalInset = canvasWidth
-    ? Math.min(22, Math.max(8, ((widestRune / 2 + 10) / canvasWidth) * 100))
+    ? Math.min(22, Math.max(8, ((widestRune / 2 + EDGE_MARGIN) / canvasWidth) * 100))
     : 9;
   const verticalInset = canvasHeight
-    ? Math.min(16, Math.max(5, ((tallestRune / 2 + 8) / canvasHeight) * 100))
+    ? Math.min(16, Math.max(5, ((tallestRune / 2 + EDGE_MARGIN) / canvasHeight) * 100))
     : 6;
   const toCanvasY = useCallback(
     (value: number) => verticalInset + ((value - AUTHORED.minY) / spanY) * (100 - verticalInset * 2),

@@ -79,22 +79,57 @@ export function relaxLayoutOverlaps(nodes: SpellGraph["nodes"]) {
  * `relaxLayoutOverlaps` runs again afterwards so no two runes collide. Fully
  * deterministic: fixed iteration count, fixed sample grid, fixed node order,
  * no randomness.
+ *
+ * The centroidal pass also pulls the outermost runes inward: a rune on the
+ * edge owns a cell that reaches the boundary, and that cell's centroid sits
+ * inside it. Left alone, every scenario's top row settled at y ~14 and its
+ * left column at x ~12 while the bottom stayed pinned at 90, so the renderer
+ * (which maps the authored 7-93 / 7-90 box onto the canvas) drew a 100px empty
+ * band across the top at 2560x1440 and pushed the lowest rune to within 12px
+ * of the bottom edge. So after the pass the layout's actual extent is mapped
+ * back onto the authored box (`stretchToBounds`), which puts a rune centre on
+ * every edge, and a second, shorter centroidal pass re-evens the interior
+ * with those four extreme runes pinned on their edge axis. Stretching alone
+ * scales every interior gap up by the same ~10% as the extent (the largest
+ * empty circle across the 96 variants went from 1.66 to 1.72 rune heights);
+ * the pinned pass brings it back down (to 1.63) because the interior runes
+ * settle into the space the stretch opened rather than sharing it evenly.
  */
 export function fillLayout(nodes: SpellGraph["nodes"]) {
-  const ITERATIONS = 24;
-  const BLEND = 0.6;
-  const X_CAP = 8;
+  relaxLayoutOverlaps(nodes);
+  centroidalPass(nodes, { iterations: 24, blend: 0.6, xCap: 8, pinExtremes: false });
+  stretchToBounds(nodes);
+  centroidalPass(nodes, { iterations: 12, blend: 0.4, xCap: 4, pinExtremes: true });
+  relaxLayoutOverlaps(nodes);
+}
+
+type CentroidalPassOptions = {
+  iterations: number;
+  /** How far toward its cell centroid a rune slides per iteration (0-1). */
+  blend: number;
+  /** Most a rune may drift on x from where the pass started it, in units. */
+  xCap: number;
+  /**
+   * Keep the runes at the layout's minimum and maximum on each axis fixed on
+   * that axis, so the extent the pass starts with is the extent it ends with.
+   */
+  pinExtremes: boolean;
+};
+
+/**
+ * One centroidal relaxation of `nodes` within the authored bounds; see
+ * `fillLayout` for the reading-order caps it applies.
+ */
+function centroidalPass(nodes: SpellGraph["nodes"], options: CentroidalPassOptions) {
   const ORDER_GAP = 1;
   const SAMPLES_X = 43;
   const SAMPLES_Y = 42;
   const clamp = (value: number, low: number, high: number) =>
     Math.min(high, Math.max(low, value));
 
-  relaxLayoutOverlaps(nodes);
-
   const anchor = nodes.map((node) => ({ x: node.x, y: node.y }));
   const xCap = anchor.map((own, k) => {
-    let cap = X_CAP;
+    let cap = options.xCap;
     anchor.forEach((other, j) => {
       const gap = Math.abs(own.x - other.x);
       if (j !== k && gap >= ORDER_GAP) cap = Math.min(cap, (gap - 1) / 2);
@@ -102,10 +137,26 @@ export function fillLayout(nodes: SpellGraph["nodes"]) {
     return Math.max(0, cap);
   });
 
+  const extent = (axis: "x" | "y") => {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const point of anchor) {
+      min = Math.min(min, point[axis]);
+      max = Math.max(max, point[axis]);
+    }
+    return { min, max };
+  };
+  const extentX = extent("x");
+  const extentY = extent("y");
+  const pinnedX = anchor.map((point) =>
+    options.pinExtremes && (point.x === extentX.min || point.x === extentX.max));
+  const pinnedY = anchor.map((point) =>
+    options.pinExtremes && (point.y === extentY.min || point.y === extentY.max));
+
   const spanX = LAYOUT_BOUNDS.maxX - LAYOUT_BOUNDS.minX;
   const spanY = LAYOUT_BOUNDS.maxY - LAYOUT_BOUNDS.minY;
 
-  for (let iteration = 0; iteration < ITERATIONS; iteration += 1) {
+  for (let iteration = 0; iteration < options.iterations; iteration += 1) {
     const cells = nodes.map(() => ({ x: 0, y: 0, count: 0 }));
     for (let i = 0; i <= SAMPLES_X; i += 1) {
       for (let j = 0; j <= SAMPLES_Y; j += 1) {
@@ -131,16 +182,41 @@ export function fillLayout(nodes: SpellGraph["nodes"]) {
       const cell = cells[k];
       if (!cell.count) continue;
       const node = nodes[k];
-      const targetX = node.x + (cell.x / cell.count - node.x) * BLEND;
-      const targetY = node.y + (cell.y / cell.count - node.y) * BLEND;
-      node.x = clamp(
-        clamp(targetX, anchor[k].x - xCap[k], anchor[k].x + xCap[k]),
-        LAYOUT_BOUNDS.minX,
-        LAYOUT_BOUNDS.maxX,
-      );
-      node.y = clamp(targetY, LAYOUT_BOUNDS.minY, LAYOUT_BOUNDS.maxY);
+      const targetX = node.x + (cell.x / cell.count - node.x) * options.blend;
+      const targetY = node.y + (cell.y / cell.count - node.y) * options.blend;
+      if (!pinnedX[k]) {
+        node.x = clamp(
+          clamp(targetX, anchor[k].x - xCap[k], anchor[k].x + xCap[k]),
+          LAYOUT_BOUNDS.minX,
+          LAYOUT_BOUNDS.maxX,
+        );
+      }
+      if (!pinnedY[k]) node.y = clamp(targetY, LAYOUT_BOUNDS.minY, LAYOUT_BOUNDS.maxY);
     }
   }
+}
 
-  relaxLayoutOverlaps(nodes);
+/**
+ * Maps the layout's bounding box onto the authored bounds, one axis at a time,
+ * so at least one rune sits on each of the four edges. The map is monotonic
+ * and only ever widens spacing, so it cannot reorder the causal columns or
+ * create an overlap. A layout whose runes all share a coordinate on an axis
+ * has no extent to stretch and is left where it is on that axis.
+ */
+function stretchToBounds(nodes: SpellGraph["nodes"]) {
+  const stretch = (axis: "x" | "y", low: number, high: number) => {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const node of nodes) {
+      min = Math.min(min, node[axis]);
+      max = Math.max(max, node[axis]);
+    }
+    const extent = max - min;
+    if (!(extent > 0)) return;
+    for (const node of nodes) {
+      node[axis] = low + ((node[axis] - min) / extent) * (high - low);
+    }
+  };
+  stretch("x", LAYOUT_BOUNDS.minX, LAYOUT_BOUNDS.maxX);
+  stretch("y", LAYOUT_BOUNDS.minY, LAYOUT_BOUNDS.maxY);
 }

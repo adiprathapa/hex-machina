@@ -81,20 +81,31 @@ test("generated layouts are deterministic", () => {
 // variants before the fill pass: circle 1.70 mean / 2.06 max rune heights,
 // rectangle 14.6% mean / 20.8% max (the base moonflower: 1.64 and 17.1%).
 // After it: 1.39 / 1.66 and 9.0% / 11.7% (base moonflower: 1.31 and 8.6%).
-// The thresholds sit just above the new maxima, so the test fails on the old
+// That pass left the top row at authored y ~14, which the renderer drew as a
+// 75px empty band across the top at this geometry with the lowest rune 14px
+// from the bottom. The layout is now stretched onto the authored box, its
+// interior re-evened with the edge runes pinned, and rendered with a 28px
+// margin on every edge: 1.38 / 1.63 and 8.9% / 11.5% (base moonflower: 1.29
+// and 8.6%). A plain stretch without the second pass measured 1.47 / 1.72.
+// The thresholds sit just above the maxima, so the test fails on the old
 // layout and on any change that drops or weakens the fill pass.
 const CANVAS = { width: 1034, height: 839 };
 const RUNE = { width: 181, height: 87 };
 const AUTHORED = { minX: 7, maxX: 93, minY: 7, maxY: 90 };
+const EDGE_MARGIN = 28;
 const MAX_EMPTY_CIRCLE_RUNE_HEIGHTS = 1.75;
 const MAX_EMPTY_RECT_FRACTION = 0.15;
 
 function runeBoxes(nodes) {
   // Mirrors HexMachina's inset: the widest rune is at least 1.15x the
-  // stylesheet width, and the canvas keeps half a rune plus a margin clear.
+  // stylesheet width, and the canvas keeps half a rune plus a 28px margin
+  // clear (EDGE_MARGIN in HexMachina; it was 8px vertical / 10px horizontal
+  // when the fill pass left the top row at authored y ~14 — the layout now
+  // reaches the authored box, so the margin is the whole ink gap on every
+  // edge).
   const widest = RUNE.width * 1.15;
-  const horizontalInset = Math.min(22, Math.max(8, ((widest / 2 + 10) / CANVAS.width) * 100));
-  const verticalInset = Math.min(16, Math.max(5, ((RUNE.height / 2 + 8) / CANVAS.height) * 100));
+  const horizontalInset = Math.min(22, Math.max(8, ((widest / 2 + EDGE_MARGIN) / CANVAS.width) * 100));
+  const verticalInset = Math.min(16, Math.max(5, ((RUNE.height / 2 + EDGE_MARGIN) / CANVAS.height) * 100));
   return nodes.map((node) => {
     const px = (horizontalInset
       + ((node.x - AUTHORED.minX) / (AUTHORED.maxX - AUTHORED.minX)) * (100 - horizontalInset * 2))
