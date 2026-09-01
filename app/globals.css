@@ -402,9 +402,10 @@ summary:focus-visible,
 }
 
 .controls {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 7px;
-  padding: 18px 0 12px;
+  padding: 10px 0 8px;
 }
 
 .controls button {
@@ -430,6 +431,7 @@ summary:focus-visible,
   color: var(--acid);
   font-size: var(--t-sm);
   font-weight: 600;
+  flex: 1 1 120px;
 }
 
 .controls .primary:hover {
@@ -439,10 +441,13 @@ summary:focus-visible,
 }
 
 .controls .quiet {
+  flex: 1 1 auto;
+  padding: 0 12px;
   border: 1px solid var(--line-control);
   background: transparent;
   color: var(--muted);
   font-size: var(--t-xs);
+  white-space: nowrap;
 }
 
 .controls .quiet:hover {
@@ -540,9 +545,8 @@ kbd {
 }
 
 .wish {
-  margin: 16px 0 0;
-  margin-top: auto;
-  padding: 11px 0 11px 12px;
+  margin: 10px 0 0;
+  padding: 9px 0 9px 12px;
   border-left: 3px solid var(--line-strong);
   color: var(--subtle);
   font-size: var(--t-sm);
@@ -1183,12 +1187,32 @@ kbd {
   background: transparent;
 }
 
-.familiar-message > p:last-child,
+.familiar-message > p:not(.section-kicker),
 .patch-card > p {
   margin: 8px 0 0;
   color: var(--muted);
   font-size: var(--t-base);
   line-height: 1.6;
+}
+
+.familiar-message-actions {
+  margin-top: 10px;
+}
+
+.familiar-message-actions .quiet {
+  min-height: var(--control-min-h);
+  padding: 0 12px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+
+.familiar-message-actions .quiet:hover {
+  border-color: var(--blue);
+  color: var(--blue-text);
 }
 
 .patch-card {

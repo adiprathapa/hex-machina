@@ -693,6 +693,11 @@ export function HexMachina() {
             </p>
           </div>
 
+          <blockquote className={isSacred ? "wish active" : "wish"}>
+            <span>Human intent</span>
+            {`“${constraintText}”`}
+          </blockquote>
+
           <div className="controls">
             {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}
             {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
@@ -727,7 +732,6 @@ export function HexMachina() {
                 Try a held-out task
               </button>
             )}
-            {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
 
@@ -778,12 +782,6 @@ export function HexMachina() {
             <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
             <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
           </ol>
-
-
-          <blockquote className={isSacred ? "wish active" : "wish"}>
-            <span>Human intent</span>
-            {`“${constraintText}”`}
-          </blockquote>
 
         </aside>
 
@@ -1052,6 +1050,13 @@ export function HexMachina() {
             <div className="familiar-message">
               <p className="section-kicker">Current read</p>
               <p>{cast?.success ? "The graph is stable. Every promise survived the repair." : cast ? story.read : "Cast first. Good magic begins with evidence."}</p>
+              {/* The patch card unmounts once the repair is applied, so the way
+                  back lives with the read that reports the repair held. */}
+              {cast?.success && revertToken && (
+                <div className="familiar-message-actions">
+                  <button type="button" className="quiet" onClick={undoRepair}>Undo agent patch</button>
+                </div>
+              )}
             </div>
           )}
 
