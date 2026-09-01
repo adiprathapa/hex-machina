@@ -640,6 +640,11 @@ kbd {
 }
 
 .spell-canvas {
+  /* Runes size from the canvas, not the window. Sized in vw they stayed at
+     168px while the canvas grew to 1400px, so ink fell from 20.4% of the canvas
+     at 1683px wide to 9.3% at 2560 — the graph became small islands in a large
+     dark field. A container makes the ratio constant instead. */
+  container-type: inline-size;
   position: relative;
   flex: 1;
   min-height: 0;
@@ -765,14 +770,14 @@ kbd {
   z-index: 2;
   transform: translate(-50%, -50%);
   width: max-content;
-  min-width: clamp(118px, 9.5vw, 168px);
-  max-width: clamp(168px, 13vw, 240px);
-  min-height: clamp(58px, 4.4vw, 76px);
+  min-width: clamp(112px, 17cqw, 210px);
+  max-width: clamp(150px, 23cqw, 320px);
+  min-height: clamp(56px, 8cqw, 104px);
   display: grid;
-  grid-template-columns: clamp(34px, 2.6vw, 44px) 1fr;
+  grid-template-columns: clamp(30px, 4.6cqw, 56px) 1fr;
   align-items: center;
-  gap: clamp(8px, .7vw, 12px);
-  padding: clamp(8px, .7vw, 12px) clamp(9px, .8vw, 14px) clamp(8px, .7vw, 12px) clamp(7px, .6vw, 11px);
+  gap: clamp(8px, 1.1cqw, 14px);
+  padding: clamp(8px, 1.1cqw, 14px) clamp(9px, 1.2cqw, 16px) clamp(8px, 1.1cqw, 14px) clamp(7px, .9cqw, 12px);
   border: 1px solid var(--line-strong);
   border-left: 2px solid var(--line-strong);
   border-radius: var(--radius);
@@ -933,8 +938,8 @@ kbd {
 .rune-glyph {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: clamp(28px, 4.2cqw, 50px);
+  height: clamp(28px, 4.2cqw, 50px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
@@ -957,7 +962,7 @@ kbd {
 }
 
 .rune-copy strong {
-  font-size: clamp(12px, .82vw, 15px);
+  font-size: clamp(12px, 1.55cqw, 19px);
   font-weight: 600;
   line-height: 1.25;
 }
@@ -965,7 +970,7 @@ kbd {
 .rune-copy small {
   margin-top: 2px;
   color: var(--subtle);
-  font: 500 clamp(var(--t-xs), .7vw, var(--t-sm))/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font: 500 clamp(var(--t-xs), 1.25cqw, 15px)/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .sacred-pin {
