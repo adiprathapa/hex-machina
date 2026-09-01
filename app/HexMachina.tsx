@@ -182,6 +182,7 @@ export function HexMachina() {
   const [labSplit, setLabSplit] = useState<AgentGymSplit>("test");
   const [labIndex, setLabIndex] = useState(0);
   const [promptCopied, setPromptCopied] = useState(false);
+  const [promptExpanded, setPromptExpanded] = useState(false);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
@@ -757,7 +758,18 @@ export function HexMachina() {
               </button>
               <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
             </div>
-            <p className="agent-brief-prompt">{story.prompt}</p>
+            <p className={`agent-brief-prompt ${promptExpanded ? "expanded" : ""}`}>{story.prompt}</p>
+            {/* A mask fade over clamped text reads as "this is cut off", not as
+                "this continues" — measured, it hid up to 69% of the prompt with
+                no scrollbar painted. An explicit control says which it is. */}
+            <button
+              type="button"
+              className="prompt-toggle"
+              aria-expanded={promptExpanded}
+              onClick={() => setPromptExpanded((open) => !open)}
+            >
+              {promptExpanded ? "Show less" : "Show the full prompt"}
+            </button>
           </section>
 
           <ol className="quest-steps" aria-label="Investigation steps">

@@ -479,22 +479,39 @@ kbd {
 
 .agent-brief-prompt {
   /* The prompt is here to be copied, not read end to end. Left unbounded it is
-     taller than the rail on a 720px screen and pushes its own Copy button out
-     of the first view; scrolling in place keeps the whole prompt available
-     without the panel that introduces the tool falling below the fold. */
+     taller than the rail on a 720px screen. The clamp is opened by an explicit
+     control rather than a fade: a fade over clipped text reads as truncation,
+     and measured it hid up to 69% of the prompt with no scrollbar ever painted.
+     The earlier justification here — that the clamp protected the Copy button —
+     stopped being true when the actions moved above the prompt. */
   max-height: 96px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  /* macOS hides the scrollbar until it is used, so without this the clamp reads
-     as text that was cut off rather than text that continues. */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  overflow: hidden;
   margin: 8px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--blue-dark);
   background: var(--panel-raised);
   color: var(--muted);
   font: 400 var(--t-sm)/1.5 var(--font-fira-code), monospace;
+}
+
+.agent-brief-prompt.expanded {
+  max-height: none;
+}
+
+.prompt-toggle {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue-text);
+  cursor: pointer;
+  font: 500 var(--t-xs)/1.4 var(--font-inter), system-ui, -apple-system, sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prompt-toggle:hover {
+  color: var(--acid);
 }
 
 .agent-brief-actions {
@@ -2023,7 +2040,16 @@ kbd {
   .canvas-panel { min-height: 560px; }
   .spell-canvas { flex: 1 0 auto; }
   .topbar { grid-template-columns: 1fr auto; }
-  .mission-chip { display: none; }
+  .mission-chip {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    display: flex;
+    justify-content: center;
+    max-width: none;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
   .workspace { grid-template-columns: 220px 1fr; }
   .familiar-panel { grid-column: 1 / -1; border: 1px solid var(--line); margin-top: 18px; padding: 18px; }
   .activity-list { grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -2040,16 +2066,6 @@ kbd {
   .canvas-panel { margin: 0; min-height: 0; }
   .spell-canvas { flex: none; min-height: 460px; }
   .topbar { grid-template-columns: 1fr auto; padding: 8px 4px; }
-  .mission-chip {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    display: flex;
-    justify-content: center;
-    max-width: none;
-    padding: 8px 0;
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
   .site-tool-state { font-size: var(--t-xs); }
   .workspace { display: flex; flex-direction: column; }
   .brief-panel { border-right: 0; padding: 18px 4px; }
