@@ -227,7 +227,9 @@ which case you are in rather than pretending:
 
 - **With a WebMCP-capable browser agent** — the header reads
   `WebMCP · 7 tools registered`. Copy the prompt from the left rail, paste it
-  into the agent, and watch the canvas.
+  into the agent, and watch the canvas. The seven tools let an agent inspect
+  the graph, prove why it fails, and repair it without breaking a constraint
+  you set — the shape of any workflow builder or data pipeline.
 - **In an ordinary browser** — the header reads
   `WebMCP · 7 tools ready for a host`, which is the honest state: the
   definitions are built and waiting, but nothing has claimed them. The whole

@@ -209,10 +209,13 @@ export function HexMachina() {
   const [promptCopied, setPromptCopied] = useState(false);
   const [promptExpanded, setPromptExpanded] = useState(false);
   // Whether the collapsed prompt is actually cutting anything off. The clamp is
-  // now sized by the rail's leftover height, so on a tall screen it can show
-  // the whole prompt and the "Show the full prompt" control would be a lie.
+  // sized by the rail's leftover height, so on a tall screen it can show the
+  // whole prompt and the "Show the full prompt" control would be a lie. The
+  // server does not know the screen, so it renders the control and the client
+  // only ever blanks it in place (see .prompt-toggle.idle) — never removes it.
   const [promptClips, setPromptClips] = useState(true);
   const promptRef = useRef<HTMLParagraphElement>(null);
+  const promptToggleRef = useRef<HTMLButtonElement>(null);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
@@ -242,17 +245,26 @@ export function HexMachina() {
     document.querySelector<HTMLElement>(selector)?.focus();
   });
 
+  const measurePromptClips = useCallback(() => {
+    const el = promptRef.current;
+    if (!el) return;
+    const clips = el.scrollHeight - el.clientHeight > 1;
+    // Blanking the control while it owns focus drops the keyboard user to
+    // <body>. Leave it until focus moves on; onBlur measures again.
+    if (!clips && document.activeElement === promptToggleRef.current) return;
+    setPromptClips(clips);
+  }, []);
+
   useEffect(() => {
     const el = promptRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    // scrollHeight still reports the content height under `contain: size`, so
-    // the comparison is honest even though the box's own size is not.
-    const check = () => setPromptClips(el.scrollHeight - el.clientHeight > 1);
-    check();
-    const observer = new ResizeObserver(check);
+    // An open prompt never clips, and measuring it would mark the control idle
+    // for the frame in which it collapses — the frame that lost focus before.
+    if (!el || promptExpanded || typeof ResizeObserver === "undefined") return;
+    measurePromptClips();
+    const observer = new ResizeObserver(measurePromptClips);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [story.prompt]);
+  }, [story.prompt, promptExpanded, measurePromptClips]);
 
   const draggingRef = useRef<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -870,7 +882,7 @@ export function HexMachina() {
 
           {/* A judge arriving in a WebMCP browser needs the prompt in front of
               them, not in a README they were not told to open. */}
-          <section className="agent-brief" aria-label="Drive this with a browser agent">
+          <section className={promptExpanded ? "agent-brief open" : "agent-brief"} aria-label="Drive this with a browser agent">
             <p className="section-kicker">Drive this with a browser agent</p>
             <p className="agent-brief-note">
               Seven tools on <code>document.modelContext</code>. Paste this into a WebMCP agent:
@@ -898,11 +910,12 @@ export function HexMachina() {
                 "this continues" — measured, it hid up to 69% of the prompt with
                 no scrollbar painted. An explicit control says which it is. */}
             <button
+              ref={promptToggleRef}
               type="button"
-              className="prompt-toggle"
-              hidden={!promptExpanded && !promptClips}
+              className={promptExpanded || promptClips ? "prompt-toggle" : "prompt-toggle idle"}
               aria-expanded={promptExpanded}
               onClick={() => setPromptExpanded((open) => !open)}
+              onBlur={measurePromptClips}
             >
               {promptExpanded ? "Show less" : "Show the full prompt"}
             </button>

@@ -74,8 +74,14 @@
      One --step drives every size so the scale keeps its ratios while it grows
      with the window: 11/12/13/15/18/20/26 at 720 vmin and below (1280x720 and
      every phone), 14/15/16/18/22/28/34 at 1440 vmin (2560x1440). Before this,
-     81% of the text at 2560 wide sat at 11-12px while the runes scaled. */
+     81% of the text at 2560 wide sat at 11-12px while the runes scaled. The one
+     literal size left is the rail title on a short landscape laptop, at the
+     end of this file. */
   --step: clamp(0px, (100vmin - 720px) / 240, 3px);
+  /* Vertical air in the left rail. Zero at 950px tall and below, where the rail
+     is over budget, growing to 5px by 1100px. A ramp rather than a breakpoint
+     so the prompt's clamp does not jump 50px between two heights a pixel apart. */
+  --rail-air: clamp(0px, (100vh - 950px) / 30, 5px);
   --t-xs: calc(11px + var(--step));
   --t-sm: calc(12px + var(--step));
   --t-base: calc(13px + var(--step));
@@ -324,6 +330,7 @@ summary:focus-visible,
   display: flex;
   flex-direction: column;
   padding-left: 0;
+  padding-bottom: calc(8px + var(--rail-air) * 1.2);
   border-right: 1px solid var(--line);
 }
 
@@ -361,7 +368,7 @@ summary:focus-visible,
   grid-template-columns: 28px 1fr;
   gap: 8px;
   align-items: center;
-  padding: 10px 8px 10px 0;
+  padding: calc(5px + var(--rail-air)) 8px calc(5px + var(--rail-air)) 0;
   border-top: 1px solid var(--line);
   color: var(--subtle);
 }
@@ -382,7 +389,7 @@ summary:focus-visible,
 }
 
 .quest-steps li small {
-  margin-top: 2px;
+  margin-top: calc(var(--rail-air) * .4);
   font-size: var(--t-xs);
 }
 
@@ -473,17 +480,27 @@ kbd {
 }
 
 .agent-brief {
-  /* The one rail item that yields and grows. On a short screen it hands its
-     height to the quest steps and the wish first; on a tall one it takes the
-     slack so nothing below it floats over a dead band. */
+  /* The one rail item that yields. On a short screen it hands its height to
+     the quest steps and the wish first — `min-height: 0` is what lets a flex
+     item shrink below its content — and on a tall one it shares the slack with
+     the steps so nothing floats over a dead band. Its basis is its content, so
+     the prompt inside is whole before any slack is handed out. */
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  min-height: 0;
   margin-top: 10px;
   padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
+}
+
+.agent-brief.open {
+  /* Opened, it is a fixed block the rail scrolls to: shrinking it here would
+     let the prompt spill over the quest steps. */
+  flex: 0 0 auto;
+  min-height: auto;
 }
 
 .agent-brief > * {
@@ -518,22 +535,18 @@ kbd {
 }
 
 .agent-brief-prompt:not(.expanded) {
-  /* Shrinks first and grows last. `contain: size` zeroes its flex basis so the
-     flex algorithm sizes it from the rail's leftover height rather than from
-     the prose: three lines on a 720px screen, the whole prompt on a 1080px one.
-     The floor is three lines of the prompt face plus its padding. scrollHeight
-     still reports the content height, which is what the toggle listens to. */
+  /* Shrinks first and grows last: the only rail content with a shrink factor
+     and a floor under its content. Two full lines of the prompt face at its
+     1.5 line-height plus padding — 54px on a 720px screen, where the third
+     line is cut mid-glyph on purpose so the clamp reads as a clamp. On a tall
+     screen it is whole, then shares the slack with the quest steps. */
   flex: 1 1 auto;
-  contain: size;
   min-height: calc(3 * var(--t-sm) + 18px);
-  max-height: none;
   overflow: hidden;
 }
 
 .agent-brief-prompt.expanded {
   flex: 0 0 auto;
-  contain: none;
-  max-height: none;
 }
 
 .prompt-toggle {
@@ -552,8 +565,11 @@ kbd {
   color: var(--acid);
 }
 
-.prompt-toggle[hidden] {
-  display: none;
+.prompt-toggle.idle {
+  /* Nothing is clipped, so the control has nothing to do. It keeps its line
+     rather than leaving the flow: the server renders it without knowing the
+     screen, and removing it after hydration moved the steps up 21px. */
+  visibility: hidden;
 }
 
 .agent-brief-actions {
@@ -2192,26 +2208,26 @@ kbd {
   }
 }
 
-@media (max-height: 949px) {
-  /* Under 950px tall the rail is over budget by up to 233px (1280x720). The
-     step rows give back 10px each and the panel its bottom padding before
-     anything else has to; the prompt takes the rest. */
-  .quest-steps li {
-    padding: 5px 8px 5px 0;
+@media (min-height: 950px) and (min-width: 761px) {
+  /* Above 950px tall the rail has slack once the prompt is whole. Rather than
+     hand all of it to the prompt box (a 554px tint holding 180px of text at
+     2560x1440), the quest steps take an equal share up to 100px a row and the
+     prompt box is capped, so the tail under the steps stays under 14px. */
+  .quest-steps {
+    flex: 1 0 auto;
+    grid-auto-rows: 1fr;
+    max-height: 400px;
   }
 
-  .quest-steps li small {
-    margin-top: 0;
-  }
-
-  .brief-panel {
-    padding-bottom: 8px;
+  .agent-brief-prompt:not(.expanded) {
+    max-height: 40vh;
   }
 }
 
-@media (max-height: 900px) and (max-width: 1500px) {
+@media (max-height: 900px) and (min-width: 761px) and (max-width: 1500px) {
   /* A literal size on purpose: the fluid --t-display wraps the title onto a
-     third line in a 225px rail at 1280x720 (87px). Two lines at 22px is 49. */
+     third line in a 225px rail at 1280x720 (87px). Two lines at 22px is 49.
+     Landscape only: a phone rail is not height-bound and keeps --t-display. */
   .brief-panel h2 {
     font-size: 22px;
   }
@@ -2292,7 +2308,7 @@ kbd {
   /* The phone rail is not height-bound, so there is no slack to fill: keep the
      fixed clamp and let the toggle open it. */
   .agent-brief { flex: 0 0 auto; }
-  .agent-brief-prompt:not(.expanded) { contain: none; max-height: 96px; }
+  .agent-brief-prompt:not(.expanded) { max-height: 96px; }
   .canvas-panel { margin: 0; }
   .spell-canvas { min-height: 570px; }
   .graph-legend { display: none; }
