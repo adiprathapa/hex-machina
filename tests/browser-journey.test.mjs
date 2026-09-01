@@ -183,7 +183,28 @@ test("production browser completes the constraint-preserving spell journey", { t
         };
       });
 
+      const primary = document.querySelector(".controls .primary");
+      const primaryRect = primary?.getBoundingClientRect();
+      const panelRectForPrimary = panel.getBoundingClientRect();
+      const primaryHit = primaryRect
+        ? document.elementFromPoint(
+            primaryRect.left + primaryRect.width / 2,
+            primaryRect.top + primaryRect.height / 2,
+          )
+        : null;
+
       return {
+        primaryAction: primaryRect
+          ? {
+              top: Math.round(primaryRect.top),
+              railBottom: Math.round(panelRectForPrimary.bottom),
+              visibleWithoutScrolling:
+                primaryRect.top >= panelRectForPrimary.top
+                && primaryRect.bottom <= panelRectForPrimary.bottom
+                && primaryRect.bottom <= innerHeight,
+              hittable: primaryHit ? primary.contains(primaryHit) || primaryHit === primary : false,
+            }
+          : null,
         panelScrollTop: panel.scrollTop,
         visibleRatio,
         actionTargets,
@@ -191,6 +212,19 @@ test("production browser completes the constraint-preserving spell journey", { t
       };
     });
     assert.ok(judgeEntry, "the browser-agent brief and human controls render");
+    // The primary action sat under about a thousand pixels of prose, so on every
+    // common laptop viewport a judge landed on the page unable to see the one
+    // button they are meant to press. Measured, not assumed.
+    assert.ok(
+      judgeEntry.primaryAction,
+      "the primary call to action is rendered",
+    );
+    assert.equal(
+      judgeEntry.primaryAction.visibleWithoutScrolling,
+      true,
+      `the primary action is visible without scrolling (top ${judgeEntry.primaryAction.top}, rail ends ${judgeEntry.primaryAction.railBottom})`,
+    );
+    assert.equal(judgeEntry.primaryAction.hittable, true, "the primary action is not covered by anything");
     assert.equal(judgeEntry.panelScrollTop, 0, "judge access does not depend on a pre-scrolled sidebar");
     assert.ok(judgeEntry.visibleRatio >= 0.9, `at least 90% of the agent brief is initially visible (got ${judgeEntry.visibleRatio})`);
     assert.equal(judgeEntry.actionTargets.every(({ top, bottom }) => top >= 0 && bottom <= 720), true, "both judge actions are inside the initial viewport");

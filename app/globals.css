@@ -58,6 +58,12 @@
   --aqua-text: #d3e4ff;
   --blue-text: #7cb2ff;
 
+  /* Edge colours, referenced from the SVG marker defs as well as from here, so
+     an arrowhead cannot drift off the ramp the way three of them did. */
+  --edge-flow: #7d8896;
+  --edge-target: #2d72d2;
+  --edge-add: #d3e4ff;
+
   /* Type scale. Seven steps, nothing below 11px. The interface had eleven
      rendered sizes with 61% of its text at 10px or under, including a 7px
      rule — dense is a layout property, not a font size, and type that small
@@ -473,7 +479,7 @@ kbd {
      taller than the rail on a 720px screen and pushes its own Copy button out
      of the first view; scrolling in place keeps the whole prompt available
      without the panel that introduces the tool falling below the fold. */
-  max-height: 128px;
+  max-height: 96px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -1913,6 +1919,57 @@ kbd {
 /* Below this the canvas is narrower than the diagram needs, so it keeps a
    workable width and the viewport pans to it. The page itself never scrolls
    sideways; only this region does. */
+/* On a laptop the rail cannot show the lesson framing, the primary action, the
+   whole browser-agent brief, four steps and the human's constraint in 620px.
+   The framing sentence is the one piece that is repeated elsewhere — the quest
+   steps carry the same sequence — so it is what gives way, rather than the
+   button a judge is meant to press. */
+/* On a phone the verdict row squeezed its own explanation into 28px — the
+   sentence saying why the spell failed, ellipsised away — and the tool console
+   ellipsised the visible words on its buttons ("Inspect" to "Insp…"). Both get
+   their own line here instead of competing for one. */
+@media (max-width: 760px) {
+  .cast-vision {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px 10px;
+  }
+
+  .cast-vision.visible {
+    max-height: 260px;
+  }
+
+  .cast-vision span {
+    flex: 1 0 100%;
+  }
+
+  .tool-console-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-console-grid button {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .tool-console-grid button span,
+  .tool-console-grid button code {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  .tool-console-grid button code {
+    flex: 1 0 100%;
+  }
+}
+
+@media (max-height: 900px) {
+  .lede {
+    display: none;
+  }
+}
+
 @media (max-width: 940px) {
   .canvas-viewport {
     display: block;

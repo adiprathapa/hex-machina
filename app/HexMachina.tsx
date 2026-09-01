@@ -680,44 +680,6 @@ export function HexMachina() {
             </p>
           </div>
 
-          {/* A judge arriving in a WebMCP browser needs the prompt in front of
-              them, not in a README they were not told to open. */}
-          <section className="agent-brief" aria-label="Drive this with a browser agent">
-            <p className="section-kicker">Drive this with a browser agent</p>
-            <p className="agent-brief-note">
-              A spell is an executable graph. The seven tools on <code>document.modelContext</code>
-              let an agent inspect it, prove why it fails, and repair it without breaking a
-              constraint you set — the same problem shape as a workflow builder or a data
-              pipeline. Paste this into a WebMCP-capable browser agent and watch the canvas.
-            </p>
-            <div className="agent-brief-actions">
-              <button
-                type="button"
-                className="quiet"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(story.prompt);
-                    setPromptCopied(true);
-                    window.setTimeout(() => setPromptCopied(false), 1800);
-                  } catch {
-                    setPromptCopied(false);
-                  }
-                }}
-              >
-                {promptCopied ? "Copied" : "Copy prompt"}
-              </button>
-              <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
-            </div>
-            <p className="agent-brief-prompt">{story.prompt}</p>
-          </section>
-
-          <ol className="quest-steps" aria-label="Investigation steps">
-            <li className={cast ? "done" : "current"}><span>01</span><div><strong>Cast the spell</strong><small>Observe before editing.</small></div></li>
-            <li className={activity.some((item) => item.tool === "explain_side_effect") ? "done" : cast ? "current" : ""}><span>02</span><div><strong>Trace the glitch</strong><small>Find the causal path.</small></div></li>
-            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
-            <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
-          </ol>
-
           <div className="controls">
             {!cast && <button className="primary" onClick={castSpell}>Cast spell <kbd>↵</kbd></button>}
             {cast && !cast.success && !activity.some((item) => item.tool === "explain_side_effect") && <button className="primary" onClick={diagnose}>Trace the glitch</button>}
@@ -755,6 +717,44 @@ export function HexMachina() {
             {cast?.success && revertToken && <button className="quiet" onClick={undoRepair}>Undo agent patch</button>}
             <button className="quiet" onClick={reset}>Reset lesson</button>
           </div>
+
+          {/* A judge arriving in a WebMCP browser needs the prompt in front of
+              them, not in a README they were not told to open. */}
+          <section className="agent-brief" aria-label="Drive this with a browser agent">
+            <p className="section-kicker">Drive this with a browser agent</p>
+            <p className="agent-brief-note">
+              Seven tools on <code>document.modelContext</code> let an agent inspect this graph,
+              prove why it fails, and repair it without breaking a constraint you set — the shape
+              of any workflow builder or data pipeline. Paste this into a WebMCP-capable agent.
+            </p>
+            <div className="agent-brief-actions">
+              <button
+                type="button"
+                className="quiet"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(story.prompt);
+                    setPromptCopied(true);
+                    window.setTimeout(() => setPromptCopied(false), 1800);
+                  } catch {
+                    setPromptCopied(false);
+                  }
+                }}
+              >
+                {promptCopied ? "Copied" : "Copy prompt"}
+              </button>
+              <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
+            </div>
+            <p className="agent-brief-prompt">{story.prompt}</p>
+          </section>
+
+          <ol className="quest-steps" aria-label="Investigation steps">
+            <li className={cast ? "done" : "current"}><span>01</span><div><strong>Cast the spell</strong><small>Observe before editing.</small></div></li>
+            <li className={activity.some((item) => item.tool === "explain_side_effect") ? "done" : cast ? "current" : ""}><span>02</span><div><strong>Trace the glitch</strong><small>Find the causal path.</small></div></li>
+            <li className={isSacred ? "done" : ""}><span>03</span><div><strong>Name what matters</strong><small>{story.nameStep}</small></div></li>
+            <li className={cast?.success ? "done" : patch ? "current" : ""}><span>04</span><div><strong>Repair & recast</strong><small>Change the graph, not the wish.</small></div></li>
+          </ol>
+
 
           <blockquote className={isSacred ? "wish active" : "wish"}>
             <span>Human intent</span>
@@ -800,13 +800,13 @@ export function HexMachina() {
             <svg className="edge-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <marker id="arrow-default" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#8299aa" />
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-flow)" />
                 </marker>
                 <marker id="arrow-target" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#c6543b" />
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-target)" />
                 </marker>
                 <marker id="arrow-add" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                  <path d="M 0 0 L 6 3 L 0 6 z" fill="#287a5b" />
+                  <path d="M 0 0 L 6 3 L 0 6 z" fill="var(--edge-add)" />
                 </marker>
               </defs>
               {graph.edges.map((edge) => {
