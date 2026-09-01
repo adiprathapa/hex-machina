@@ -209,6 +209,11 @@ test("production browser completes the constraint-preserving spell journey", { t
         visibleRatio,
         actionTargets,
         controlsPosition: getComputedStyle(controls).position,
+        wish: (() => {
+          const rect = document.querySelector(".wish")?.getBoundingClientRect();
+          return rect ? { top: Math.round(rect.top), bottom: Math.round(rect.bottom) } : null;
+        })(),
+        stepsTop: document.querySelector(".quest-steps")?.getBoundingClientRect().top ?? Infinity,
       };
     });
     assert.ok(judgeEntry, "the browser-agent brief and human controls render");
@@ -230,6 +235,17 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(judgeEntry.actionTargets.every(({ top, bottom }) => top >= 0 && bottom <= 720), true, "both judge actions are inside the initial viewport");
     assert.equal(judgeEntry.actionTargets.every(({ hittable }) => hittable), true, "both judge actions are unobscured and clickable");
     assert.notEqual(judgeEntry.controlsPosition, "sticky", "human controls cannot cover the browser-agent brief");
+    // The human intent is the constraint the whole demo turns on. It sat 276px
+    // below the rail at 1280x720 (918-974 in a 698px rail), invisible without
+    // scrolling in five of six viewport/state pairs. Now it follows the title
+    // (measured 167-218) and the steps begin inside the first screen (~508).
+    assert.ok(
+      judgeEntry.wish
+        && judgeEntry.wish.top >= 0
+        && judgeEntry.wish.bottom <= Math.min(720, judgeEntry.primaryAction.railBottom),
+      `the human intent is visible without scrolling (wish ${JSON.stringify(judgeEntry.wish)}, rail ends ${judgeEntry.primaryAction.railBottom})`,
+    );
+    assert.ok(judgeEntry.stepsTop < 720, `the quest steps begin inside the initial viewport (top ${judgeEntry.stepsTop})`);
     // Two type roles, and they must stay separated: the interface face for
     // anything a person reads, the code face only for machine data where
     // character alignment carries meaning. Setting every label in monospace

@@ -468,11 +468,21 @@ kbd {
 }
 
 .agent-brief {
-  margin-top: 16px;
+  /* The one rail item that yields and grows. On a short screen it hands its
+     height to the quest steps and the wish first; on a tall one it takes the
+     slack so nothing below it floats over a dead band. */
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin-top: 10px;
   padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
+}
+
+.agent-brief > * {
+  flex: 0 0 auto;
 }
 
 .agent-brief-note {
@@ -494,8 +504,6 @@ kbd {
      and measured it hid up to 69% of the prompt with no scrollbar ever painted.
      The earlier justification here — that the clamp protected the Copy button —
      stopped being true when the actions moved above the prompt. */
-  max-height: 96px;
-  overflow: hidden;
   margin: 8px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--blue-dark);
@@ -504,12 +512,27 @@ kbd {
   font: 400 var(--t-sm)/1.5 var(--font-fira-code), monospace;
 }
 
+.agent-brief-prompt:not(.expanded) {
+  /* Shrinks first and grows last. `contain: size` zeroes its flex basis so the
+     flex algorithm sizes it from the rail's leftover height rather than from
+     the prose: three lines on a 720px screen, the whole prompt on a 1080px one.
+     The floor is three lines of the prompt face plus its padding. scrollHeight
+     still reports the content height, which is what the toggle listens to. */
+  flex: 1 1 auto;
+  contain: size;
+  min-height: calc(3 * var(--t-sm) + 18px);
+  max-height: none;
+  overflow: hidden;
+}
+
 .agent-brief-prompt.expanded {
+  flex: 0 0 auto;
+  contain: none;
   max-height: none;
 }
 
 .prompt-toggle {
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 0;
   border: 0;
   background: none;
@@ -522,6 +545,10 @@ kbd {
 
 .prompt-toggle:hover {
   color: var(--acid);
+}
+
+.prompt-toggle[hidden] {
+  display: none;
 }
 
 .agent-brief-actions {
@@ -2070,6 +2097,31 @@ kbd {
   }
 }
 
+@media (max-height: 949px) {
+  /* Under 950px tall the rail is over budget by up to 233px (1280x720). The
+     step rows give back 10px each and the panel its bottom padding before
+     anything else has to; the prompt takes the rest. */
+  .quest-steps li {
+    padding: 5px 8px 5px 0;
+  }
+
+  .quest-steps li small {
+    margin-top: 0;
+  }
+
+  .brief-panel {
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-height: 900px) and (max-width: 1500px) {
+  /* A literal size on purpose: the fluid --t-display wraps the title onto a
+     third line in a 225px rail at 1280x720 (87px). Two lines at 22px is 49. */
+  .brief-panel h2 {
+    font-size: 22px;
+  }
+}
+
 @media (max-width: 940px) {
   .canvas-viewport {
     /* The diagram is wider than the screen on purpose, so say so: a fade at the
@@ -2142,6 +2194,10 @@ kbd {
   .brief-panel h2,
   .lede { max-width: none; }
   .controls { margin-top: 0; }
+  /* The phone rail is not height-bound, so there is no slack to fill: keep the
+     fixed clamp and let the toggle open it. */
+  .agent-brief { flex: 0 0 auto; }
+  .agent-brief-prompt:not(.expanded) { contain: none; max-height: 96px; }
   .canvas-panel { margin: 0; }
   .spell-canvas { min-height: 570px; }
   .graph-legend { display: none; }

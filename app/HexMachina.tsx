@@ -189,6 +189,11 @@ export function HexMachina() {
   const [labIndex, setLabIndex] = useState(0);
   const [promptCopied, setPromptCopied] = useState(false);
   const [promptExpanded, setPromptExpanded] = useState(false);
+  // Whether the collapsed prompt is actually cutting anything off. The clamp is
+  // now sized by the rail's leftover height, so on a tall screen it can show
+  // the whole prompt and the "Show the full prompt" control would be a lie.
+  const [promptClips, setPromptClips] = useState(true);
+  const promptRef = useRef<HTMLParagraphElement>(null);
   const [gymSnapshot, setGymSnapshot] = useState<AgentGymSnapshot>(() => gymSession.snapshot());
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
@@ -213,6 +218,18 @@ export function HexMachina() {
     pendingFocus.current = null;
     document.querySelector<HTMLElement>(selector)?.focus();
   });
+
+  useEffect(() => {
+    const el = promptRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    // scrollHeight still reports the content height under `contain: size`, so
+    // the comparison is honest even though the box's own size is not.
+    const check = () => setPromptClips(el.scrollHeight - el.clientHeight > 1);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [story.prompt]);
 
   const draggingRef = useRef<string | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -746,9 +763,7 @@ export function HexMachina() {
           <section className="agent-brief" aria-label="Drive this with a browser agent">
             <p className="section-kicker">Drive this with a browser agent</p>
             <p className="agent-brief-note">
-              Seven tools on <code>document.modelContext</code> let an agent inspect this graph,
-              prove why it fails, and repair it without breaking a constraint you set — the shape
-              of any workflow builder or data pipeline. Paste this into a WebMCP-capable agent.
+              Seven tools on <code>document.modelContext</code>. Paste this into a WebMCP agent:
             </p>
             <div className="agent-brief-actions">
               <button
@@ -768,13 +783,14 @@ export function HexMachina() {
               </button>
               <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
             </div>
-            <p className={`agent-brief-prompt ${promptExpanded ? "expanded" : ""}`}>{story.prompt}</p>
+            <p ref={promptRef} className={`agent-brief-prompt ${promptExpanded ? "expanded" : ""}`}>{story.prompt}</p>
             {/* A mask fade over clamped text reads as "this is cut off", not as
                 "this continues" — measured, it hid up to 69% of the prompt with
                 no scrollbar painted. An explicit control says which it is. */}
             <button
               type="button"
               className="prompt-toggle"
+              hidden={!promptExpanded && !promptClips}
               aria-expanded={promptExpanded}
               onClick={() => setPromptExpanded((open) => !open)}
             >
