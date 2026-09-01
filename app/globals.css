@@ -70,14 +70,19 @@
   /* Type scale. Seven steps, nothing below 11px. The interface had eleven
      rendered sizes with 61% of its text at 10px or under, including a 7px
      rule — dense is a layout property, not a font size, and type that small
-     reads as a screenshot of an app rather than an app. */
-  --t-xs: 11px;
-  --t-sm: 12px;
-  --t-base: 13px;
-  --t-md: 15px;
-  --t-lg: 18px;
-  --t-xl: clamp(20px, 1.35vw, 24px);
-  --t-display: clamp(26px, 2vw, 34px);
+     reads as a screenshot of an app rather than an app.
+     One --step drives every size so the scale keeps its ratios while it grows
+     with the window: 11/12/13/15/18/20/26 at 720 vmin and below (1280x720 and
+     every phone), 14/15/16/18/22/28/34 at 1440 vmin (2560x1440). Before this,
+     81% of the text at 2560 wide sat at 11-12px while the runes scaled. */
+  --step: clamp(0px, (100vmin - 720px) / 240, 3px);
+  --t-xs: calc(11px + var(--step));
+  --t-sm: calc(12px + var(--step));
+  --t-base: calc(13px + var(--step));
+  --t-md: calc(15px + var(--step));
+  --t-lg: calc(18px + var(--step) * 1.33);
+  --t-xl: calc(20px + var(--step) * 2.67);
+  --t-display: calc(26px + var(--step) * 2.67);
 
   /* Geometry. Blueprint moved to 2px because at operator density a large
      radius reads as a consumer card rather than a panel. */
@@ -107,7 +112,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  font-size: clamp(13px, .78vw, 15px);
+  font-size: var(--t-base);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
@@ -1572,7 +1577,7 @@ kbd {
 
 .gym-score strong {
   color: var(--blue-text);
-  font: 600 clamp(20px, 1.4vw, 26px)/1 var(--font-fira-code), monospace;
+  font: 600 var(--t-xl)/1 var(--font-fira-code), monospace;
 }
 
 .gym-score strong small,
@@ -2117,6 +2122,12 @@ kbd {
   .node-inspector { grid-template-columns: 34px 92px 1fr; }
   .connection-editor { grid-column: 1 / -1; justify-content: flex-start; min-width: 0; }
   .connection-editor > small { text-align: left; }
+}
+
+@media (min-width: 761px) {
+  /* Secondary controls track the type scale; the root token stays the 32px
+     floor and the compact block below still raises it to 44px. */
+  .machina { --control-min-h: calc(32px + var(--step) * 2); }
 }
 
 @media (max-width: 760px) {

@@ -334,6 +334,70 @@ test("production browser completes the constraint-preserving spell journey", { t
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Seven thunderbirds. One shattered dome.", { exact: true }), "the loaded family drives its own visible failure");
 
+    // At 2560 wide 81% of the interface rendered at 11-12px because the tokens
+    // were fixed px; the floor is now 12.5px at 1080 vmin and 14px at 1440 vmin.
+    // The scale resolves to today's values at 720 vmin and below, so the
+    // 1280x720 pins above and the phone layout below are unchanged by it.
+    const smallestVisibleFontSize = () => page.evaluate(() => {
+      const hidden = (element) => {
+        for (let ancestor = element; ancestor; ancestor = ancestor.parentElement) {
+          const style = getComputedStyle(ancestor);
+          if (ancestor.hidden || style.display === "none" || style.visibility === "hidden") return true;
+        }
+        return false;
+      };
+      const clipped = (rect, element) => {
+        for (let ancestor = element; ancestor && ancestor !== document.body; ancestor = ancestor.parentElement) {
+          const style = getComputedStyle(ancestor);
+          if (!/(auto|scroll|hidden|clip)/.test(`${style.overflowX} ${style.overflowY}`)) continue;
+          const box = ancestor.getBoundingClientRect();
+          if (rect.top >= box.bottom - 1 || rect.bottom <= box.top + 1 || rect.left >= box.right - 1 || rect.right <= box.left + 1) return true;
+        }
+        return false;
+      };
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let min = Number.POSITIVE_INFINITY;
+      let characters = 0;
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent.trim()) continue;
+        const parent = node.parentElement;
+        if (!parent || parent.closest("script, style, noscript") || hidden(parent)) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const rect = range.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) continue;
+        if (rect.bottom <= 0 || rect.top >= innerHeight || rect.right <= 0 || rect.left >= innerWidth) continue;
+        if (clipped(rect, parent)) continue;
+        min = Math.min(min, Number.parseFloat(getComputedStyle(parent).fontSize));
+        characters += node.textContent.trim().length;
+      }
+      return {
+        min,
+        characters,
+        kicker: getComputedStyle(document.querySelector(".section-kicker")).fontSize,
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      };
+    });
+    const settleLayout = () => page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const typeAt1280 = await smallestVisibleFontSize();
+    assert.equal(typeAt1280.kicker, "11px", "the type scale still bottoms out at 11px on a 1280x720 laptop");
+    assert.equal(typeAt1280.scrollWidth, typeAt1280.clientWidth, "no horizontal overflow at 1280x720");
+    for (const { width, height, floor } of [
+      { width: 1920, height: 1080, floor: 12.45 },
+      { width: 2560, height: 1440, floor: 13.95 },
+    ]) {
+      await page.setViewportSize({ width, height });
+      await settleLayout();
+      const type = await smallestVisibleFontSize();
+      assert.ok(type.characters > 500, `the walker saw the interface at ${width}x${height} (${type.characters} characters)`);
+      assert.ok(
+        type.min >= floor,
+        `the smallest visible text at ${width}x${height} is at least ${floor}px (got ${type.min}px)`,
+      );
+      assert.equal(type.scrollWidth, type.clientWidth, `no horizontal overflow at ${width}x${height}`);
+    }
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "networkidle" });
     await assertVisible(page.locator(".mission-chip"), "the compact objective remains visible");
