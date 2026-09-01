@@ -1572,6 +1572,10 @@ kbd {
 }
 
 .policy-baselines-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
   padding: 6px 0 4px;
   color: var(--subtle);
   font: 600 var(--t-xs)/1.2 var(--font-fira-code), monospace;
@@ -2141,6 +2145,7 @@ a:focus-visible {
   transition: top 120ms ease;
 }
 
+.skip-link:focus,
 .skip-link:focus-visible {
   top: 12px;
   outline: 2px solid var(--blue);
