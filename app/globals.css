@@ -335,7 +335,12 @@ summary:focus-visible,
 }
 
 .lede {
-  max-width: 34ch;
+  /* A 42-character measure, not 34: on a wide rail (2560x1440, 479px) the
+     34ch box held the three-sentence lede to 343px and three lines, which
+     pushed the human-intent wish to y368; at 42ch it sets in two lines and
+     the wish ends at y341. Narrower rails clip the measure to their width
+     before either limit applies, so 1728 and below do not change. */
+  max-width: 42ch;
   margin: 14px 0 18px;
   color: var(--muted);
   font-size: var(--t-base);
