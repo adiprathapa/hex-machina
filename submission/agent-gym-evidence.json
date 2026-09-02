@@ -35,19 +35,20 @@
       "distinctStructures": 20,
       "structuresInTrain": 18,
       "structuresInTest": 12,
-      "testStructuresUnseenInTraining": 1
+      "testStructuresUnseenInTraining": 1,
+      "causalStructuresUnseenInTraining": 0
     },
     "promptDiversity": {
       "distinctObjectives": 12,
       "objectivesSharedAcrossSplits": 11
     },
-    "heldOutScope": "structural",
-    "supportedClaim": "Held-out scores are evidence of generalization to graph structures the training split never contained."
+    "heldOutScope": "identifier-and-layout",
+    "supportedClaim": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out."
   },
-  "datasetBytes": 7393339,
-  "datasetDigest": "sha256:3f5602e3f8ba0470",
-  "preferenceDatasetBytes": 16869028,
-  "preferenceDatasetDigest": "sha256:3075be06cb7a5936",
+  "datasetBytes": 7966806,
+  "datasetDigest": "sha256:a0f80163a6c743e4",
+  "preferenceDatasetBytes": 18277291,
+  "preferenceDatasetDigest": "sha256:dff8c8a2b739216d",
   "claims": {
     "determinism": {
       "claim": "Every exported episode replays action-for-action against a fresh environment.",
@@ -84,8 +85,8 @@
     },
     "grounding": {
       "claim": "A grounded policy solves held-out opaque-ID variants at full reward.",
-      "heldOutScope": "structural",
-      "supports": "Held-out scores are evidence of generalization to graph structures the training split never contained.",
+      "heldOutScope": "identifier-and-layout",
+      "supports": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out.",
       "distinctStructures": 20,
       "episodes": 96,
       "completed": 96,
@@ -212,5 +213,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:7f83c81f18f16ff8"
+  "evidenceDigest": "sha256:b3f00c18f4cde797"
 }
