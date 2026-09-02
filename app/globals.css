@@ -253,13 +253,15 @@ summary:focus-visible,
   margin: 0 0 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
-  color: var(--ink);
+  color: var(--muted);
   font: 600 var(--t-sm)/1.4 var(--font-inter), system-ui, -apple-system, sans-serif;
   letter-spacing: -0.005em;
 }
 
+/* The emphasis is ink on a muted sentence rather than blue: blue is what
+   links and the objective label wear, and a judge read the phrase as one. */
 .thesis em {
-  color: var(--blue-text);
+  color: var(--ink);
   font-style: normal;
 }
 
@@ -471,13 +473,19 @@ summary:focus-visible,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 13px;
+  padding: 0 8px;
   border: 1px solid var(--blue-dark);
   background: var(--blue-wash);
   color: var(--acid);
   font-size: var(--t-sm);
   font-weight: 600;
-  flex: 1 1 120px;
+  /* The row's slack goes to the hero action, not to Reset: with both
+     growing equally "Try a held-out task" wrapped to two lines in 123px at
+     1280x720 while Reset sat in 95px with room to spare. */
+  /* A zero basis, not auto: with the label's full width as its basis the row
+     broke before it shrank and Reset dropped to a second row. */
+  flex: 1 1 0;
+  white-space: nowrap;
 }
 
 .controls .primary:hover {
@@ -487,7 +495,7 @@ summary:focus-visible,
 }
 
 .controls .quiet {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   padding: 0 12px;
   border: 1px solid var(--line-control);
   background: transparent;
@@ -583,6 +591,13 @@ kbd {
   flex: 1 1 var(--prompt-clamp);
   min-height: var(--prompt-clamp);
   overflow: hidden;
+  /* The box's height comes from the rail's slack, so it is rarely a whole
+     number of lines (63px held 2.3 lines at 1440x815 and cut the third
+     through its x-height). The component measures how many whole lines fit
+     and sets the clamp, so the cut always lands between lines and the last
+     visible line ends in an ellipsis. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
 }
 
 .agent-brief-prompt.expanded {
@@ -2291,7 +2306,9 @@ kbd {
   }
 }
 
-@media (max-height: 900px) {
+/* The thesis above carries the framing; the per-lesson lede is flavour, and
+   between 900 and 950px tall it was the 10px that made the rail scroll. */
+@media (max-height: 950px) {
   .lede {
     display: none;
   }
@@ -2305,6 +2322,16 @@ kbd {
    old layout was quietly taking from under the control at its foot (209px of
    content in a 203px box at 1280x720); giving it back here keeps the lesson
    at two full lines of prompt and a rail that does not scroll. */
+/* In a 243px rail "Try a held-out task" cannot share a row with Reset on one
+   line (144px available, 148 needed), and pushing Reset to a second row
+   costs 51px the rail does not have. Let the label wrap there; from 1440
+   wide up it is one line. */
+@media (max-width: 1400px) {
+  .controls .primary {
+    white-space: normal;
+  }
+}
+
 @media (max-height: 780px) and (min-width: 761px) {
   .thesis { margin-bottom: 8px; padding-bottom: 8px; }
   .controls { padding: 6px 0 6px; }

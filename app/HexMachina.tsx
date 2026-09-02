@@ -270,6 +270,26 @@ export function HexMachina() {
   const measurePromptClips = useCallback(() => {
     const el = promptRef.current;
     if (!el) return;
+    // Show only whole lines: the box's height is whatever slack the rail has,
+    // so the clamp is recomputed from it (see .agent-brief-prompt).
+    const style = getComputedStyle(el);
+    const lineHeight = parseFloat(style.lineHeight) || 18;
+    const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    if (el.classList.contains("expanded")) {
+      el.style.removeProperty("max-height");
+      el.style.removeProperty("-webkit-line-clamp");
+    } else {
+      // Release the cap and the clamp first so the box can take whatever
+      // slack the rail has now (a clamped box reports only its clamped lines
+      // as content, which made the last measurement sticky), then cap it to
+      // the whole lines that fit: the clamp alone leaves the next line
+      // showing under the ellipsis in the leftover height.
+      el.style.removeProperty("max-height");
+      el.style.removeProperty("-webkit-line-clamp");
+      const lines = Math.max(1, Math.floor((el.clientHeight - padding) / lineHeight + 0.01));
+      el.style.setProperty("-webkit-line-clamp", String(lines));
+      el.style.maxHeight = `${lines * lineHeight + padding}px`;
+    }
     const clips = el.scrollHeight - el.clientHeight > 1;
     // Blanking the control while it owns focus drops the keyboard user to
     // <body>. Leave it until focus moves on; onBlur measures again.
@@ -281,11 +301,19 @@ export function HexMachina() {
     const el = promptRef.current;
     // An open prompt never clips, and measuring it would mark the control idle
     // for the frame in which it collapses — the frame that lost focus before.
+    if (el && promptExpanded) {
+      // The open prompt shows everything: drop the collapsed cap and clamp.
+      el.style.removeProperty("max-height");
+      el.style.removeProperty("-webkit-line-clamp");
+    }
     if (!el || promptExpanded || typeof ResizeObserver === "undefined") return;
     measurePromptClips();
     const observer = new ResizeObserver(measurePromptClips);
     observer.observe(el);
-    return () => observer.disconnect();
+    // A capped box does not resize when the rail gains room, so a window
+    // resize measures again on its own.
+    window.addEventListener("resize", measurePromptClips);
+    return () => { observer.disconnect(); window.removeEventListener("resize", measurePromptClips); };
   }, [story.prompt, promptExpanded, measurePromptClips]);
 
   const draggingRef = useRef<string | null>(null);
