@@ -35,7 +35,7 @@ One gate remains:
 | --- | --- | --- |
 | ~~Live URL~~ | **Done 2026-08-30:** deployed to Cloudflare Workers at <https://hexmend.hex-machina.workers.dev> | `site.live_url` |
 | ~~Public demo~~ | **Done 2026-09-02:** public on YouTube at <https://youtu.be/ZMxs1HrpS1s> | `video.public_youtube_url` |
-| ~~Live discovery~~ | **Done 2026-08-30:** seven tools discovered live; canonical prompt executed end to end through them | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
+| ~~Live discovery~~ | **Done 2026-08-30, and 2026-09-02 through Chrome 152's native `ModelContext` with `--enable-features=WebMCP`, no shim:** seven tools discovered live; canonical journey executed end to end through them | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
 
 The build is already deploy-shaped: `npm run test:deployment` validates the
 Worker entry, hashed client assets, social metadata, and a

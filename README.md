@@ -240,6 +240,14 @@ The screenshots, the demo video, and the browser tests all install a stand-in
 `document.modelContext` to stand in for a host. That shim only delivers the
 tool calls; every result in them comes from the production handlers.
 
+Chrome 152 ships the API behind a flag. Start it with
+`--enable-features=WebMCP` (on macOS: `open -na "Google Chrome" --args
+--enable-features=WebMCP https://hexmend.hex-machina.workers.dev`) and the
+page registers all seven tools against the browser's own `ModelContext`; the
+live verification (`npm run verify:live`) runs the whole judge journey through
+that native `getTools()` and `executeTool()` surface with no shim, and records
+the result in `tests/browser-acceptance.json` under `native_host`.
+
 ## Judge journey
 
 ![Hexmend failure diagnosis with the graph-native Familiar ranking](submission/screenshots/01-failure-diagnosis.jpg)

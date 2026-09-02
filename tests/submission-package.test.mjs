@@ -94,6 +94,17 @@ test("generated live-browser evidence satisfies the full acceptance contract", a
   assert.equal(evidence.cross_origin_requests, 0);
   assert.ok(evidence.sacred_constraints_visible >= 1);
   assert.equal(evidence.site_tools_api_available, true);
+  // A real host, not the shim: Chrome with WebMCP enabled exposes its own
+  // ModelContext, and the recorded run must have completed the journey through
+  // it with nothing installed by the test.
+  assert.equal(evidence.native_host?.shim_installed, false, "the native-host pass installs no shim");
+  assert.equal(evidence.native_host?.canonical_journey_completed, true, "the canonical journey completes through the native host");
+  assert.equal(evidence.native_host?.final_state, "Stable");
+  assert.equal(evidence.native_host?.console_errors, 0);
+  assert.deepEqual([...evidence.native_host.tool_names].sort(), [
+    "apply_spell_patch", "explain_side_effect", "inspect_spell", "propose_spell_patch",
+    "set_sacred_constraint", "simulate_cast", "trace_effect",
+  ]);
 });
 
 test("Devpost copy directly answers every required explanation and judging criterion", async () => {

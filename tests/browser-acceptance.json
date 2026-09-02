@@ -1,10 +1,10 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "generated_by": "npm run verify:live",
-  "verified_at": "2026-09-02T20:47:22.580Z",
+  "verified_at": "2026-09-02T22:09:14.620Z",
   "url": "https://hexmend.hex-machina.workers.dev",
   "browser": "Chrome (headless), live production deployment",
-  "deployed_document_fingerprint": "1ba138d6f98fe2e4",
+  "deployed_document_fingerprint": "88332337f3040fd6",
   "completed_steps": [
     "coherent_filtered_inspection",
     "registered_tools_drive_visible_ui",
@@ -50,7 +50,7 @@
   },
   "site_tools_api_available": true,
   "live_discovery": {
-    "verified_at": "2026-09-02T20:47:22.580Z",
+    "verified_at": "2026-09-02T22:09:14.620Z",
     "url": "https://hexmend.hex-machina.workers.dev",
     "discovered_tool_names": [
       "apply_spell_patch",
@@ -68,5 +68,30 @@
       "referrer-policy",
       "x-content-type-options"
     ]
+  },
+  "native_host": {
+    "verified_at": "2026-09-02T22:09:14.546Z",
+    "browser": "Google Chrome 152.0.7977.65",
+    "enabled_with": "--enable-features=WebMCP",
+    "api": "document.modelContext (ModelContext, native)",
+    "shim_installed": false,
+    "tool_names": [
+      "apply_spell_patch",
+      "explain_side_effect",
+      "inspect_spell",
+      "propose_spell_patch",
+      "set_sacred_constraint",
+      "simulate_cast",
+      "trace_effect"
+    ],
+    "canonical_journey_completed": true,
+    "first_cast_failed": true,
+    "explanation_present": true,
+    "preview_stable": true,
+    "final_state": "Stable",
+    "final_graph_version": 3,
+    "sacred_constraints_visible": 1,
+    "score": "23 / 23",
+    "console_errors": 0
   }
 }

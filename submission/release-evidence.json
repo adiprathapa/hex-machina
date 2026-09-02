@@ -18,7 +18,8 @@
     "live_url": "https://hexmend.hex-machina.workers.dev",
     "webmcp_discovered_live": true,
     "host": "Cloudflare Workers (account: aprathapa01@gmail.com)",
-    "deployed_at": "2026-08-30T20:51:24-04:00"
+    "deployed_at": "2026-08-30T20:51:24-04:00",
+    "webmcp_native_host": "Google Chrome 152 with --enable-features=WebMCP, canonical journey completed through document.modelContext.executeTool with no shim (tests/browser-acceptance.json native_host)"
   },
   "repository": {
     "url": "https://github.com/adiprathapa/hexmend",

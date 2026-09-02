@@ -1,5 +1,7 @@
 # WebMCP conformance snapshot
 
+Verified 2026-09-02 against the native implementation: Google Chrome 152 with `--enable-features=WebMCP` exposes `document.modelContext` as a `ModelContext` object, accepts all seven registrations, lists them through `getTools()`, and runs the canonical journey through `executeTool()` to a Stable graph v3 with zero console errors (`tests/browser-acceptance.json`, `native_host`).
+
 Audited 2026-08-27 against the [WebMCP Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) published 2026-08-26 and its [primary specification source](https://github.com/webmachinelearning/webmcp/blob/main/index.bs). WebMCP is experimental, so this record identifies the exact contract the submission targets.
 
 | Current draft contract | Hexmend evidence |

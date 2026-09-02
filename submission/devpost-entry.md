@@ -24,6 +24,14 @@ would. The screenshots, the demo video, and the browser tests install a stand-in
 `document.modelContext` to play the host; that shim only delivers the calls,
 and every result in them comes from the production handlers.
 
+Chrome 152 ships the API behind a flag. Start it with
+`--enable-features=WebMCP` (on macOS: `open -na "Google Chrome" --args
+--enable-features=WebMCP https://hexmend.hex-machina.workers.dev`) and the
+page registers all seven tools against the browser's own `ModelContext`; the
+live verification runs the whole judge journey through
+that native `getTools()` and `executeTool()` surface with no shim, and records
+the result in `tests/browser-acceptance.json` under `native_host`.
+
 ## Why this is a strong fit for WebMCP
 
 Most agents have to infer application state from pixels and imitate clicks. That is especially brittle in a graph editor, where direction, type, version, and causality matter more than position. Hexmend exposes the spell as a semantic, versioned artifact instead.

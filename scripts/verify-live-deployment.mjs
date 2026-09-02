@@ -232,8 +232,14 @@ try {
   ].filter((name) => name in headers);
   assert.equal(securityHeaders.length, 4, `missing security headers: ${securityHeaders.join(", ")}`);
 
+  // Second pass, no shim: Chrome with WebMCP enabled exposes a native
+  // document.modelContext, and its getTools()/executeTool() let a client run
+  // the registered tools exactly as a browser agent would. Nothing here is
+  // installed by the test; the only argument is the feature flag.
+  const nativeHost = await verifyNativeHost(URL_UNDER_TEST);
+
   const acceptance = {
-    schema_version: 3,
+    schema_version: 4,
     generated_by: "npm run verify:live",
     verified_at: new Date().toISOString(),
     url: URL_UNDER_TEST,
@@ -255,14 +261,94 @@ try {
       canonical_journey_via_registered_tools: steps.includes("verified_success"),
       security_headers: securityHeaders,
     },
+    native_host: nativeHost,
   };
 
   await writeFile(OUTPUT, `${JSON.stringify(acceptance, null, 2)}\n`);
   process.stdout.write(
     `Verified ${URL_UNDER_TEST}: ${discovered.length} tools, ${steps.length} steps, `
     + `${responsive.minimum_compact_target_height_px}px smallest compact target, `
-    + `fingerprint ${deployedFingerprint}\n`,
+    + `fingerprint ${deployedFingerprint}; native host ${nativeHost.browser}: `
+    + `${nativeHost.tool_names.length} tools, ${nativeHost.final_state} at v${nativeHost.final_graph_version}\n`,
   );
 } finally {
   await browser.close();
+}
+
+async function verifyNativeHost(url) {
+  const native = await chromium.launch({
+    executablePath: process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    headless: true,
+    args: ["--enable-features=WebMCP"],
+  });
+  try {
+    const page = await native.newPage({ viewport: { width: 1280, height: 720 } });
+    const errors = [];
+    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+    page.on("pageerror", (error) => errors.push(String(error)));
+    await page.goto(url, { waitUntil: "networkidle" });
+    await page.waitForFunction(
+      () => document.querySelector(".site-tool-state")?.textContent?.includes("registered"),
+      null,
+      { timeout: 15_000 },
+    );
+    const result = await page.evaluate(async () => {
+      const context = document.modelContext;
+      const isNative = /\[native code\]/.test(String(context?.registerTool));
+      const tools = await context.getTools();
+      const byName = Object.fromEntries(tools.map((tool) => [tool.name, tool]));
+      const call = async (name, input = {}) => JSON.parse(await context.executeTool(byName[name], JSON.stringify(input)));
+      await call("inspect_spell");
+      const failure = await call("simulate_cast");
+      const effectId = failure.sideEffects[0].id;
+      await call("trace_effect", { effectId });
+      const explanation = await call("explain_side_effect", { sideEffectId: effectId });
+      await call("set_sacred_constraint", { targetId: "summon-ducks", reason: "The ducks are funny. They stay." });
+      const proposal = await call("propose_spell_patch");
+      const patchId = proposal.patches[0].id;
+      const preview = await call("simulate_cast", { patchId });
+      await call("apply_spell_patch", { patchId });
+      const recast = await call("simulate_cast");
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return {
+        api_is_native: isNative,
+        constructor_name: Object.getPrototypeOf(context).constructor.name,
+        tool_names: tools.map((tool) => tool.name).sort(),
+        first_cast_failed: failure.success === false,
+        explanation_present: explanation.present === true,
+        preview_stable: preview.success === true,
+        recast_stable: recast.success === true,
+        final_state: document.querySelector(".cast-state")?.textContent?.trim() ?? null,
+        final_graph_version: Number(document.querySelector(".canvas-header .section-kicker")?.textContent?.match(/v(\d+)/)?.[1] ?? 0),
+        sacred_constraints_visible: document.querySelectorAll(".rune.sacred").length,
+        score: document.querySelector(".gym-score strong")?.textContent?.replace(/\s+/g, " ").trim() ?? null,
+      };
+    });
+    const version = await native.version();
+    assert.equal(result.api_is_native, true, "document.modelContext is the browser's own object, not a shim");
+    assert.equal(result.tool_names.length, 7, "the native host lists all seven tools");
+    assert.equal(result.recast_stable, true, "the canonical journey completes through the native host");
+    assert.equal(result.final_state, "Stable");
+    assert.equal(result.final_graph_version, 3);
+    assert.equal(errors.length, 0, `console errors under the native host: ${errors.join("; ")}`);
+    return {
+      verified_at: new Date().toISOString(),
+      browser: `Google Chrome ${version}`,
+      enabled_with: "--enable-features=WebMCP",
+      api: `document.modelContext (${result.constructor_name}, native)`,
+      shim_installed: false,
+      tool_names: result.tool_names,
+      canonical_journey_completed: true,
+      first_cast_failed: result.first_cast_failed,
+      explanation_present: result.explanation_present,
+      preview_stable: result.preview_stable,
+      final_state: result.final_state,
+      final_graph_version: result.final_graph_version,
+      sacred_constraints_visible: result.sacred_constraints_visible,
+      score: result.score,
+      console_errors: errors.length,
+    };
+  } finally {
+    await native.close();
+  }
 }
