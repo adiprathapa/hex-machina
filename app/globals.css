@@ -74,10 +74,15 @@
      One --step drives every size so the scale keeps its ratios while it grows
      with the window: 11/12/13/15/18/20/26 at 720 vmin and below (1280x720 and
      every phone), 14/15/16/18/22/28/34 at 1440 vmin (2560x1440). Before this,
-     81% of the text at 2560 wide sat at 11-12px while the runes scaled. The one
-     literal size left is the rail title on a short landscape laptop, at the
-     end of this file. */
-  --step: clamp(0px, (100vmin - 720px) / 240, 3px);
+     81% of the text at 2560 wide sat at 11-12px while the runes scaled. The
+     step keys off the shorter side so a short window's rails stay in budget,
+     with one exception: a 1440x815 laptop, the commonest judge screen, is
+     815 vmin and was typeset like a phone (11.4px), so width adds up to 1px
+     on its own — 12/13/14 at 1440 wide — and no more, because the 1920x1080
+     rails are exactly at budget at their 1.5px step. The one literal size
+     left is the rail title on a short landscape laptop, at the end of this
+     file. */
+  --step: clamp(0px, max((100vmin - 720px) / 240, min((100vw - 1280px) / 160, 1px)), 3px);
   /* Vertical air in the left rail. Zero at 950px tall and below, where the rail
      is over budget, growing to 5px by 1100px. A ramp rather than a breakpoint
      so the prompt's clamp does not jump 50px between two heights a pixel apart. */
@@ -98,6 +103,13 @@
   /* Control height. Pointer-sized by default, touch-sized in the compact
      layout, so no rule has to restate the touch target. */
   --control-min-h: 32px;
+
+  /* Right rail scroll zones: the bottom fade on a zone that overflows (the
+     narrative zone ends in a control, so its band is deeper than the feed's),
+     and the room the feed's floor keeps under its second row. */
+  --rail-fade: 24px;
+  --rail-feed-fade: 16px;
+  --rail-row-pad: 8px;
 }
 
 
@@ -735,10 +747,12 @@ kbd {
    width, a dash and an arrowhead then mean the same thing on every screen
    and in both directions. Under the old non-scaling hairline a rest edge
    was a quarter-pixel line at 1.4:1 against the ground and its arrowheads
-   never rendered. */
+   never rendered. The widths scale with the canvas the way the runes do
+   (.2cqw is 2.1px on a 1034px canvas and 2.8px on a 1400px one), because a
+   fixed 1.75px line next to a 245px rune read as a hairline again. */
 .edge-layer line {
   stroke: #7d8896;
-  stroke-width: 1.75px;
+  stroke-width: clamp(1.75px, .2cqw, 3px);
   stroke-linecap: round;
   marker-end: url(#arrow-default);
   transition: stroke .2s, stroke-width .2s, opacity .2s;
@@ -776,21 +790,21 @@ kbd {
    trace-arrival keyframes are percentages of the line regardless of pixels. */
 .edge-layer line.active {
   stroke: var(--blue);
-  stroke-width: 3px;
+  stroke-width: clamp(3px, .3cqw, 4.5px);
   stroke-dasharray: 100 0;
   animation: trace-arrival .65s ease-out both;
 }
 
 .edge-layer line.patch-remove {
   stroke: var(--blue-4);
-  stroke-width: 2px;
+  stroke-width: clamp(2px, .2cqw, 3px);
   stroke-dasharray: 5 5;
   opacity: .7;
 }
 
 .edge-layer line.patch-add {
   stroke: var(--blue-8);
-  stroke-width: 3px;
+  stroke-width: clamp(3px, .3cqw, 4.5px);
   stroke-dasharray: none;
   opacity: 1;
   marker-end: url(#arrow-add);
@@ -990,7 +1004,7 @@ kbd {
   pointer-events: none;
 }
 
-.canvas-hint span {
+.canvas-hint .hint-pan {
   margin-right: 5px;
   color: var(--blue);
 }
@@ -1821,40 +1835,78 @@ kbd {
    structure; below 1100px the rail returns to block flow (see the
    max-width: 1100px block further down). */
 @media (min-width: 1101px) {
+  /* `clip` with a margin instead of `hidden`: the rail still never scrolls,
+     but the 3px ring plus 2px offset on a control flush with its right edge
+     (the ranking buttons, the pinned summaries) paints instead of being cut. */
   .familiar-panel {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: 6px;
   }
 
   /* The zone's scroll clip would otherwise cut the focus ring on the full-width
      suspect-ranking buttons and summaries flush with its left edge, so it takes
      6px of the rail's left padding as its own and gives it back as padding:
-     the content edge stays put and the 3px ring plus 2px offset has room. */
+     the content edge stays put and the 3px ring plus 2px offset has room. The
+     right edge does the same into the rail's clip margin. The zone sizes to
+     its content and never grows, so a tall window's slack goes to the feed
+     rather than to blank space under the Agent Gym card. */
   .familiar-scroll {
     flex: 0 1 auto;
     min-height: 0;
-    margin-left: -6px;
-    padding-left: 6px;
+    margin: 0 -6px;
+    padding: 0 6px;
     overflow-y: auto;
     scrollbar-width: thin;
     overscroll-behavior: contain;
+    scroll-padding: 6px 0 calc(var(--rail-fade) + 4px);
+  }
+
+  /* When a zone overflows (settleRail marks it after every layout) a sticky
+     band at its foot fades the content into the rail's ground, so a cut reads
+     as "scrolls" rather than as a broken card. The band is a real last child,
+     not a mask, so the focus ring on the zone or its last control is never
+     masked away, and at the end of the scroll range it sits under the last
+     control instead of over it. A zone that fits carries no band, so the
+     Agent Gym card keeps the 28px it would otherwise lose. */
+  .familiar-scroll[data-overflow="true"] {
+    padding-bottom: 4px;
+  }
+
+  .familiar-scroll[data-overflow="true"]::after,
+  .activity-list[data-overflow="true"]::after {
+    content: "";
+    position: sticky;
+    bottom: 0;
+    display: block;
+    height: var(--rail-fade);
+    background: linear-gradient(transparent, var(--paper));
+    pointer-events: none;
+  }
+
+  .activity-list[data-overflow="true"]::after {
+    height: var(--rail-feed-fade);
   }
 
   .activity-header {
     flex: none;
   }
 
-  /* The feed's basis grows with the window so a tall screen splits its slack
-     between the narrative zone and the feed instead of leaving the feed at
-     the floor. Flex shrink is proportional to basis, so on a short window the
-     zone still gives way first and the feed settles at its 140px floor. */
+  /* The feed takes every pixel the narrative zone leaves, so on a big screen
+     the whole roster shows; on a short window the zone gives way first and
+     the feed settles at its floor. The floor is 140px here (what the journey
+     test's guard reads) and settleRail raises it to the feed's first two rows
+     plus --rail-row-pad when they need more (two placeholder rows measure
+     148px on a 1280x720 rail, 118-137px on wider rails; two live rows up to
+     176px), so the roster never shows as a single row. */
   .activity-list {
-    flex: 1 1 clamp(140px, 22vh, 260px);
+    flex: 1 1 140px;
     min-height: 140px;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
+    scroll-padding: 6px 0 var(--rail-feed-fade);
   }
 
   .tool-console {
@@ -1927,7 +1979,9 @@ kbd {
   border-top: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
   background: transparent;
-  overflow: hidden;
+  overflow: clip;
+  /* Room for the summary's focus ring, which `hidden` cut on every side. */
+  overflow-clip-margin: 6px;
 }
 
 /* The two consoles share one rule instead of stacking two with a gap between. */
@@ -2209,18 +2263,21 @@ kbd {
 }
 
 @media (min-height: 950px) and (min-width: 761px) {
-  /* Above 950px tall the rail has slack once the prompt is whole. Rather than
-     hand all of it to the prompt box (a 554px tint holding 180px of text at
-     2560x1440), the quest steps take an equal share up to 100px a row and the
-     prompt box is capped, so the tail under the steps stays under 14px. */
+  /* Above 950px tall the rail has slack once the prompt is whole. The prompt
+     box and its section stop growing here — a 40vh cap still left a 423px
+     tint holding 165px of text at 2560x1440 — and the quest steps take the
+     slack instead, up to 140px a row. Shrink stays on, so between 950 and
+     1000px tall, where the rail is still over budget, the prompt yields
+     exactly as it does on a laptop. */
+  .agent-brief,
+  .agent-brief-prompt:not(.expanded) {
+    flex: 0 1 auto;
+  }
+
   .quest-steps {
     flex: 1 0 auto;
     grid-auto-rows: 1fr;
-    max-height: 400px;
-  }
-
-  .agent-brief-prompt:not(.expanded) {
-    max-height: 40vh;
+    max-height: 560px;
   }
 }
 
@@ -2257,6 +2314,13 @@ kbd {
 
   .hint-pan {
     display: inline;
+  }
+
+  /* The hint is positioned inside the 680px canvas, which pans, so on a
+     phone its right half sat past the screen edge ("Arrow keys nud"). A phone
+     has no arrow keys; the swipe and drag halves fit in 370px on their own. */
+  .hint-keys {
+    display: none;
   }
 }
 

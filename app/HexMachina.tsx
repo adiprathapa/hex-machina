@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type SyntheticEvent } from "react";
 import {
   connectRunes,
   getValidEdgeTypes,
@@ -33,7 +33,12 @@ import { registerWebMCPTools } from "@/src/tools/webmcp";
    two-hop ranking) fold shut on a short window so the tool feed is not pushed
    300-700px below the fold; on a tall window they render open on first paint.
    The server snapshot is "tall" so the HTML still carries every row and the
-   hydrated tree matches it before the media query is consulted. */
+   hydrated tree matches it before the media query is consulted. The window
+   height is only the coarse gate for the benchmark: settleRail below measures
+   whether the open Agent Gym card actually fits its zone, because on a tall
+   window the same table that fit in the idle state pushed the card's Export
+   button under the zone's clip once the ranking appeared (1728x1000: the
+   button was 0% visible; 1920x1080: a 6px sliver). */
 const TALL_VIEWPORT_QUERY = "(min-height: 1000px)";
 const subscribeTallViewport = (onChange: () => void) => {
   const query = window.matchMedia(TALL_VIEWPORT_QUERY);
@@ -42,6 +47,8 @@ const subscribeTallViewport = (onChange: () => void) => {
 };
 const readTallViewport = () => window.matchMedia(TALL_VIEWPORT_QUERY).matches;
 const readTallViewportOnServer = () => true;
+/* The tool feed's CSS floor; settleRail raises it to two rows when they need more. */
+const RAIL_FEED_FLOOR = 140;
 
 /* The feed lists every registered tool before any is called, so the roster is
    the same manifest WebMCP registers, in manifest order. A tool leaves the
@@ -227,6 +234,17 @@ export function HexMachina() {
   const [runeSizes, setRuneSizes] = useState<Record<string, { w: number; h: number }>>({});
   const activityId = useRef(0);
   const canvasRef = useRef<HTMLDivElement>(null);
+  // The rail's two scroll zones and the pieces settleRail measures.
+  const railZoneRef = useRef<HTMLDivElement>(null);
+  const railFeedRef = useRef<HTMLDivElement>(null);
+  const gymCardRef = useRef<HTMLElement>(null);
+  const policyDetailsRef = useRef<HTMLDetailsElement>(null);
+  // `true` until the client measures, matching the server snapshot; a person
+  // who toggles the benchmark themselves takes over from the measurement.
+  const [policyOpen, setPolicyOpen] = useState(true);
+  const policyOpenRef = useRef(true);
+  const policyChoice = useRef<boolean | null>(null);
+  const railSignature = useRef("");
 
   // Every scenario-specific identifier is read from the graph's own semantics,
   // so any of the generated task variants drives the same interface. Naming one
@@ -562,6 +580,10 @@ export function HexMachina() {
     if (!patch) return;
     await handlers.apply_spell_patch({ patchId: patch.id });
     await handlers.simulate_cast();
+    // Applying unmounts the patch card and with it the button that had focus,
+    // so the climax of the demo dropped keyboard users to <body>. The next
+    // decision is the primary control again ("Try a held-out task").
+    keepFocusOnPrimary();
   };
 
   const previewRepair = async () => {
@@ -573,6 +595,8 @@ export function HexMachina() {
     if (!revertToken) return;
     const result = await handlers.apply_spell_patch({ revertToken });
     setConsoleOutput(JSON.stringify(result, null, 2));
+    // The Undo button unmounts with the success read it lives in.
+    keepFocusOnPrimary();
   };
 
   /**
@@ -767,6 +791,94 @@ export function HexMachina() {
     } finally {
       setConsoleBusy(null);
     }
+  };
+
+  /* The right rail's narrative zone and tool feed each scroll on their own at
+     desktop widths, and CSS alone cannot tell whether either overflows. After
+     every render this pass measures them before paint and (a) decides whether
+     the held-out benchmark may stay open: only when the whole Agent Gym card,
+     Export button included, clears the zone's fade band, or sits entirely
+     below the fold while still shorter than the zone so it shows whole once
+     scrolled to; (b) marks each zone that overflows, which is what turns on
+     its bottom fade and the padding that keeps the last control out of it;
+     and (c) raises the feed's floor to its first two rows, so the roster
+     never shows as a one-row sliver. The DOM is set first and React state
+     follows, so the toggle event this raises reads as our own rather than the
+     person's. A signature of the geometry that feeds the decision skips the
+     work on the many renders (rune drags) that cannot have changed it. */
+  const settleRail = useCallback(() => {
+    const zone = railZoneRef.current;
+    const feed = railFeedRef.current;
+    const details = policyDetailsRef.current;
+    const card = gymCardRef.current;
+    if (!zone || !feed) return;
+    const scrolls = getComputedStyle(zone).overflowY === "auto";
+    const signature = [
+      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight, zone.scrollTop,
+      card?.offsetHeight, details?.open, feed.clientHeight, feed.scrollHeight, feed.firstElementChild?.clientHeight,
+    ].join("|");
+    if (signature === railSignature.current) return;
+    if (!scrolls) {
+      delete zone.dataset.overflow;
+      delete feed.dataset.overflow;
+      feed.style.removeProperty("min-height");
+    } else {
+      const rows = [...feed.querySelectorAll("article")].slice(0, 2);
+      const rowPad = parseFloat(getComputedStyle(feed).getPropertyValue("--rail-row-pad")) || 0;
+      const twoRows = rows.reduce((sum, row) => sum + row.getBoundingClientRect().height, 0) + rowPad;
+      feed.style.minHeight = twoRows > RAIL_FEED_FLOOR ? `${Math.ceil(twoRows)}px` : "";
+    }
+    const fade = parseFloat(getComputedStyle(zone).getPropertyValue("--rail-fade")) || 0;
+    const overflowing = (element: HTMLElement) => {
+      element.dataset.overflow = "false";
+      const clipped = element.scrollHeight > element.clientHeight + 0.5;
+      element.dataset.overflow = String(clipped);
+      return clipped;
+    };
+    if (details && card) {
+      let open: boolean;
+      if (policyChoice.current !== null) {
+        open = policyChoice.current;
+      } else if (!tallViewport) {
+        open = false;
+      } else if (!scrolls) {
+        open = true;
+      } else {
+        details.open = true;
+        const reserved = overflowing(zone) ? fade : 0;
+        const zoneBox = zone.getBoundingClientRect();
+        const cardBox = card.getBoundingClientRect();
+        const fitsAbove = cardBox.bottom <= zoneBox.bottom - reserved + 0.5;
+        const fitsBelow = cardBox.top >= zoneBox.bottom && cardBox.height <= zoneBox.height - reserved;
+        open = fitsAbove || fitsBelow;
+      }
+      details.open = open;
+      policyOpenRef.current = open;
+      setPolicyOpen(open);
+    }
+    if (scrolls) {
+      overflowing(zone);
+      overflowing(feed);
+    }
+    railSignature.current = [
+      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight, zone.scrollTop,
+      card?.offsetHeight, details?.open, feed.clientHeight, feed.scrollHeight, feed.firstElementChild?.clientHeight,
+    ].join("|");
+  }, [tallViewport]);
+  useLayoutEffect(settleRail);
+  useEffect(() => {
+    // The resize steps run before paint, so a window resize settles in the
+    // same frame; late web fonts can move the rows by a pixel or two.
+    window.addEventListener("resize", settleRail);
+    document.fonts?.ready.then(settleRail, () => undefined);
+    return () => window.removeEventListener("resize", settleRail);
+  }, [settleRail]);
+  const onPolicyToggle = (event: SyntheticEvent<HTMLDetailsElement>) => {
+    const next = event.currentTarget.open;
+    if (next === policyOpenRef.current) return;
+    policyChoice.current = next;
+    policyOpenRef.current = next;
+    setPolicyOpen(next);
   };
 
   const selectedNode = graph.nodes.find((node) => node.id === selected);
@@ -1094,7 +1206,7 @@ export function HexMachina() {
             })}
 
             <p className="canvas-hint">
-              <span className="hint-pan">Swipe to pan the graph · </span>Drag runes to rearrange · Arrow keys nudge
+              <span className="hint-pan">Swipe to pan the graph · </span>Drag runes to rearrange<span className="hint-keys"> · Arrow keys nudge</span>
             </p>
 
           </div>
@@ -1143,7 +1255,7 @@ export function HexMachina() {
           {/* The rail itself never scrolls at desktop widths. This narrative
               zone and the feed below each scroll on their own, so the Task
               loader and Local tool console stay pinned and reachable. */}
-          <div className="familiar-scroll">
+          <div className="familiar-scroll" ref={railZoneRef}>
           <div className="familiar-title"><span className="familiar-orb">M</span><div><p className="section-kicker">Field note</p><h2>Moth</h2></div></div>
 
           {patch ? (
@@ -1228,7 +1340,7 @@ export function HexMachina() {
             </details>
           )}
 
-          <section className="agent-gym" aria-label="Agent Gym evaluation">
+          <section className="agent-gym" aria-label="Agent Gym evaluation" ref={gymCardRef}>
             <div className="agent-gym-heading">
               <div><p className="section-kicker">Agent Gym · evaluation mode</p><h3>Scored, replayable episode</h3></div>
               <span className={gymSnapshot.status}>{gymSnapshot.status}</span>
@@ -1239,7 +1351,7 @@ export function HexMachina() {
               <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
-            <details className="policy-baselines" aria-label="Held-out policy benchmark" open={tallViewport}>
+            <details className="policy-baselines" aria-label="Held-out policy benchmark" open={policyOpen} onToggle={onPolicyToggle} ref={policyDetailsRef}>
               <summary className="policy-baselines-heading">
                 <span>Held-out policy</span>
                 <span>Mean reward · {AGENT_GYM_POLICY_BASELINES.length} policies</span>
@@ -1264,7 +1376,7 @@ export function HexMachina() {
           </div>
 
           <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting · 7 tools registered"}</small></div>
-          <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity">
+          <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity" ref={railFeedRef}>
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
             ))}
