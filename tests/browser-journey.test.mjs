@@ -428,8 +428,30 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.deepEqual(swapped.inspection.nodes.map((node) => node.id).sort(), [...swapped.runeIds].sort());
     assert.equal(swapped.inspection.graphVersion, 1);
     assert.equal(swapped.inspection.scenarioState.status, "unstable");
+    // A loader left open rode through the whole next lesson: the zone stayed
+    // 49-65px here, every read was cut, and at "Review the patch" the card
+    // showed 58 of 623px with the Apply button outside the zone. A lesson
+    // step taken with the loader open now folds it, as a load does.
+    await page.locator(".scenario-lab > summary").click();
+    assert.equal(await page.evaluate(() => document.querySelector(".scenario-lab").open), true, "the Task loader reopens by hand");
     await page.getByRole("button", { name: /Cast spell/ }).click();
     await assertVisible(page.getByText("Seven thunderbirds. One shattered dome.", { exact: true }), "the loaded family drives its own visible failure");
+    // The step's primary is refocused on the frame after it mounts, so the
+    // focus check waits for that frame rather than sampling the one before.
+    await page.waitForFunction(() => document.activeElement?.matches(".controls .primary"), null, { timeout: 2_000 })
+      .catch(() => assert.fail("focus rests on the next primary after a step folds the loader"));
+    const stepped = await page.evaluate(() => {
+      const zone = document.querySelector(".familiar-scroll").getBoundingClientRect();
+      const read = document.querySelector(".familiar-message").getBoundingClientRect();
+      return {
+        open: document.querySelector(".scenario-lab").open,
+        zoneHeight: zone.height,
+        readWhole: read.top >= zone.top && read.bottom <= zone.bottom,
+      };
+    });
+    assert.equal(stepped.open, false, "a lesson step folds an open Task loader");
+    assert.ok(stepped.zoneHeight >= 240, `the narrative zone keeps its height after a step with the loader open (got ${Math.round(stepped.zoneHeight)}px)`);
+    assert.equal(stepped.readWhole, true, "the step's read is whole in the narrative zone");
 
     // At 2560 wide 81% of the interface rendered at 11-12px because the tokens
     // were fixed px; the floor is now 12.5px at 1080 vmin and 14px at 1440 vmin.

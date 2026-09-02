@@ -554,7 +554,20 @@ export function HexMachina() {
     });
   };
 
+  // The open Task loader is pinned below the right rail's narrative zone and
+  // leaves it 33-65px of a 620px rail at 1280x720 (95-130px at 1440x815), so a
+  // loader opened and not used (the "Try a held-out task" primary opens it,
+  // and so does curiosity) hid every read of the next lesson and, at "Review
+  // the patch", the card itself: 58 of 623px with the Apply button out of the
+  // zone. Loading a task folds it (loadTask below); a lesson step taken with
+  // it still open folds it too, so the zone always holds what the step wrote.
+  const foldLab = () => {
+    const lab = labRef.current;
+    if (lab?.open) lab.open = false;
+  };
+
   const castSpell = async () => {
+    foldLab();
     setRevertToken(null);
     await handlers.inspect_spell();
     await handlers.simulate_cast();
@@ -562,18 +575,21 @@ export function HexMachina() {
   };
 
   const diagnose = async () => {
+    foldLab();
     await handlers.trace_effect({ effectId });
     await handlers.explain_side_effect({ sideEffectId: effectId });
     keepFocusOnPrimary();
   };
 
   const protectSubject = async () => {
+    foldLab();
     await handlers.set_sacred_constraint({ targetId: subjectId, reason: constraintText });
     setPatch(null);
     keepFocusOnPrimary();
   };
 
   const proposeRepair = async () => {
+    foldLab();
     await handlers.propose_spell_patch();
     keepFocusOnPrimary();
   };
@@ -994,6 +1010,7 @@ export function HexMachina() {
               <button
                 className="primary"
                 onClick={() => {
+                  foldLab();
                   const card = document.querySelector<HTMLElement>(".patch-card");
                   const zone = card?.closest<HTMLElement>(".familiar-scroll");
                   // The rail's narrative zone is shorter than the card on a
