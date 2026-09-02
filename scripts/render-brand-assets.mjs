@@ -6,20 +6,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 
+import { brandMarkSvg } from "../src/brand/mark.ts";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BLACK = "#0c0c0d";
 const INK = "#ededef";
 const MUTED = "#a1a1aa";
 const BLUE = "#4c90f0";
 
-const MARK = (size, stroke) => `
-<svg viewBox="0 0 32 32" width="${size}" height="${size}" fill="none">
-  <path d="M16 2.6 27.2 9v14L16 29.4 4.8 23V9z" stroke="${BLUE}" stroke-width="${stroke}" stroke-linejoin="round"/>
-  <path d="M11 20.5 16 12.4l5 4.7" stroke="${BLUE}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="11" cy="20.5" r="2.1" fill="${BLUE}"/>
-  <circle cx="16" cy="12.4" r="2.1" fill="${BLUE}"/>
-  <circle cx="21" cy="17.1" r="2.1" fill="${BLUE}"/>
-</svg>`;
+// One definition for the header, the tab icon and this card. Run through tsx
+// (`npm run brand:render`) so the TypeScript module resolves.
+const MARK = (size) => brandMarkSvg(size, BLUE, BLACK);
 
 const FONT = `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
 
@@ -49,7 +46,7 @@ const OG = `<!doctype html><meta charset="utf-8">
           padding: 7px 13px; font-size: 17px; color: ${MUTED}; white-space: nowrap; }
 </style>
 <div class="grid"></div>
-<div class="top">${MARK(52, 1.6)}<span class="name">Hex Machina</span></div>
+<div class="top">${MARK(52)}<span class="name">Hex Machina</span></div>
 <h1>Humans decide what matters.<br>Agents prove the <em>smallest repair</em>.</h1>
 <div class="foot">
   <div><b>An agent gym on one executable graph.</b><br>Seven WebMCP tools · 96 deterministic tasks</div>
@@ -59,7 +56,7 @@ const OG = `<!doctype html><meta charset="utf-8">
 const ICON = `<!doctype html><meta charset="utf-8">
 <style>* { margin: 0; } body { width: 256px; height: 256px; background: ${BLACK};
   display: flex; align-items: center; justify-content: center; }</style>
-${MARK(184, 1.9)}`;
+${MARK(176)}`;
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",

@@ -247,17 +247,24 @@ test("production browser completes the constraint-preserving spell journey", { t
     );
     assert.ok(judgeEntry.stepsTop < 720, `the quest steps begin inside the initial viewport (top ${judgeEntry.stepsTop})`);
     // Two type roles, and they must stay separated: the interface face for
-    // anything a person reads, the code face only for machine data where
-    // character alignment carries meaning. Setting every label in monospace
-    // made the whole interface read as a terminal.
+    // anything a person reads, the code face only for literal code — tool
+    // identifiers, the pasted prompt's `document.modelContext`, task ids and
+    // the console's JSON. Setting every label in monospace made the whole
+    // interface read as a terminal; the reverse drift had thirteen labels (the
+    // policy table, the ledger, the console summaries) in the code face while
+    // their neighbours were not, so the table row measured here moved to the
+    // interface face with tabular figures and the tool identifier took its
+    // place as the code sample.
     const computedFonts = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontFamily,
       semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
-      machineData: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
+      tableLabel: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
+      machineData: getComputedStyle(document.querySelector(".tool-console-grid button code")).fontFamily,
     }));
     assert.match(computedFonts.body, /Inter/i, "the production body uses the intended interface typeface");
     assert.match(computedFonts.semanticLabel, /Inter/i, "interface labels use the interface typeface");
-    assert.match(computedFonts.machineData, /Fira Code/i, "machine data keeps the code typeface");
+    assert.match(computedFonts.tableLabel, /Inter/i, "table labels use the interface typeface too");
+    assert.match(computedFonts.machineData, /Fira Code/i, "tool identifiers keep the code typeface");
     // The right rail is three zones: the narrative (which scrolls), the tool
     // feed, and the two pinned consoles. Before the rail was compacted the
     // Agent Gym card alone was 450-500px, so at 1280x720 the rail overflowed by

@@ -207,10 +207,6 @@ summary:focus-visible,
   display: block;
 }
 
-/* Weight to match the wordmark rather than sit beside it as wire. */
-.brand-mark svg path {
-  stroke-width: 2.1;
-}
 
 /* The Familiar is a persona, not the product, so it stays a lettermark — but a
    quiet one rather than a second bordered box competing with the brand. */
@@ -218,7 +214,7 @@ summary:focus-visible,
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--subtle);
-  font: 600 var(--t-base)/1 var(--font-fira-code), monospace;
+  font: 600 var(--t-base)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .topbar h1,
@@ -484,6 +480,11 @@ summary:focus-visible,
   color: var(--blue-text);
 }
 
+/* Two faces only. Inter for everything a person reads, including the
+   prompt to paste, the reward table and the ledger, which had drifted into
+   the code face while their neighbours had not. Fira Code is kept for
+   literal code alone: key caps, identifiers such as document.modelContext
+   and the tool names, task ids, and the console's JSON. */
 kbd {
   padding: 3px 5px;
   border: 1px solid var(--line-strong);
@@ -543,7 +544,7 @@ kbd {
   border-left: 2px solid var(--blue-dark);
   background: var(--panel-raised);
   color: var(--muted);
-  font: 400 var(--t-sm)/1.5 var(--font-fira-code), monospace;
+  font: 400 var(--t-sm)/1.5 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .agent-brief-prompt:not(.expanded) {
@@ -982,7 +983,7 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel-raised);
   color: var(--lilac);
-  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1373,12 +1374,12 @@ kbd {
 
 .patch-preflight span {
   color: var(--lilac);
-  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .patch-preflight strong {
   color: var(--muted);
-  font: 500 var(--t-xs)/1.35 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .preserves {
@@ -1462,7 +1463,7 @@ kbd {
   padding: 9px 10px;
   color: var(--ink);
   cursor: pointer;
-  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .patch-ledger ol {
@@ -1486,7 +1487,7 @@ kbd {
 
 .patch-ledger li > span {
   color: var(--aqua);
-  font: 600 var(--t-sm)/1 var(--font-fira-code), monospace;
+  font: 600 var(--t-sm)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .patch-ledger li[data-patch-kind="disconnect"] > span {
@@ -1500,7 +1501,7 @@ kbd {
 .patch-ledger li p {
   margin: 0;
   color: var(--muted);
-  font: 500 var(--t-xs)/1.35 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1.35 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .familiar-signal {
@@ -1750,7 +1751,7 @@ kbd {
 .policy-baselines-heading {
   padding: 2px 0;
   color: var(--subtle);
-  font: 600 var(--t-xs)/1.2 var(--font-fira-code), monospace;
+  font: 600 var(--t-xs)/1.2 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .policy-baselines-heading > span:nth-child(2) {
@@ -1761,7 +1762,8 @@ kbd {
   min-height: 27px;
   border-top: 1px solid rgb(191 210 221 / 55%);
   color: var(--ink);
-  font: 600 var(--t-xs)/1.1 var(--font-fira-code), monospace;
+  font: 600 var(--t-xs)/1.1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .policy-baseline > span {
@@ -2030,7 +2032,7 @@ kbd {
 
 .tool-console summary strong {
   color: var(--ink);
-  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .tool-console summary small {
@@ -2103,7 +2105,7 @@ kbd {
 
 .tool-console-grid button small {
   color: var(--subtle);
-  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
+  font: 500 var(--t-xs)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 .console-result-header {
