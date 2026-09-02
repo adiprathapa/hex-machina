@@ -246,6 +246,17 @@ The screenshots, the demo video, and the browser tests all install a stand-in
 `document.modelContext` to stand in for a host. That shim only delivers the
 tool calls; every result in them comes from the production handlers.
 
+ChatGPT uses a different, server-side integration boundary. Connect
+`https://hexmend.hex-machina.workers.dev/mcp` as a public MCP server in
+ChatGPT developer mode, then attach **Hexmend** from the conversation's tools
+menu. The endpoint exposes the same seven manifest definitions and production
+handlers as WebMCP; every connection gets an isolated, expiring graph session.
+No OpenAI API key or Hexmend account is required. The header still reports only
+the browser's WebMCP status, because a page cannot detect whether a separate
+ChatGPT conversation has attached its remote MCP connection. Exact setup,
+release proof, and state boundaries are recorded in
+[`submission/chatgpt-mcp.md`](submission/chatgpt-mcp.md).
+
 Chrome 152 ships the API behind a flag. Start it with
 `--enable-features=WebMCP` (on macOS: `open -na "Google Chrome" --args
 --enable-features=WebMCP https://hexmend.hex-machina.workers.dev`) and the
@@ -269,7 +280,7 @@ The [narrated 147.9-second demo](submission/video/hexmend-demo.mp4) records a re
 - `src/scenarios/agent-gym-family.ts`: seeded opaque-ID variants and disjoint evaluation splits
 - `src/simulator/`: cast execution and ordered event traces
 - `src/solver/`: causal diagnosis and constraint-aware repair search
-- `src/tools/`: shared semantic handlers, versioned tool manifest, and guarded WebMCP registration
+- `src/tools/`: shared semantic handlers, versioned tool manifest, guarded WebMCP registration, and a Streamable HTTP MCP transport for ChatGPT
 - `src/familiar/`: optional deterministic message-passing suspect ranking
 - `src/eval/`: deterministic Agent Gym reset/step protocol, rewards, trajectory capture, and JSONL rollout bridge
 - `adapters/`: dependency-free Python client with Gymnasium-shaped signatures

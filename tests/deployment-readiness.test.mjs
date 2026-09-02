@@ -111,3 +111,48 @@ test("built worker emits canonical host-derived sharing metadata and release hea
   assert.ok(ogAlt.length > 20, "the alt text describes the card rather than labelling it");
   assert.doesNotMatch(html, /localhost:3000|codex-preview|react-loading-skeleton/);
 });
+
+test("built worker serves the seven shared tools over Streamable HTTP MCP", async () => {
+  const workerUrl = pathToFileURL(path.join(DIST, "server/index.js"));
+  workerUrl.searchParams.set("mcp-readiness", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const env = { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
+  const ctx = { waitUntil() {}, passThroughOnException() {} };
+  const initialize = await worker.fetch(new Request("https://hexmend.example/mcp", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "readiness", version: "1" } },
+    }),
+  }), env, ctx);
+  assert.equal(initialize.status, 200);
+  assert.equal(initialize.headers.get("cache-control"), "no-store");
+  assert.equal(initialize.headers.get("x-content-type-options"), "nosniff");
+  const sessionId = initialize.headers.get("mcp-session-id");
+  assert.ok(sessionId);
+  assert.equal((await initialize.json()).result.serverInfo.name, "hexmend");
+
+  const listed = await worker.fetch(new Request("https://hexmend.example/mcp", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      "mcp-session-id": sessionId,
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }),
+  }), env, ctx);
+  const tools = (await listed.json()).result.tools;
+  assert.equal(tools.length, 7);
+  assert.deepEqual(tools.map((tool) => tool.name), [
+    "inspect_spell",
+    "trace_effect",
+    "simulate_cast",
+    "explain_side_effect",
+    "set_sacred_constraint",
+    "propose_spell_patch",
+    "apply_spell_patch",
+  ]);
+});

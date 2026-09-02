@@ -1108,7 +1108,12 @@ export function Hexmend() {
 
           {/* A judge arriving in a WebMCP browser needs the prompt in front of
               them, not in a README they were not told to open. */}
-          <section className={promptExpanded ? "agent-brief open" : "agent-brief"} aria-label="Drive this with a browser agent">
+          <section
+            className={promptExpanded ? "agent-brief open" : "agent-brief"}
+            aria-label="Drive this with a browser agent"
+            data-chatgpt-mcp="/mcp"
+            title="ChatGPT uses remote MCP instead: connect this site's /mcp endpoint in developer mode."
+          >
             <p className="section-kicker">Drive this with a browser agent</p>
             <p className="agent-brief-note">
               Seven tools on <code>document.modelContext</code>. Paste this into a WebMCP agent:
