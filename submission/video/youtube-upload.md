@@ -33,7 +33,7 @@ Hex Machina is an agent-evaluation environment disguised as a graph-native spell
 The key moment: the human says “the ducks are funny, they stay.” That subjective preference becomes an executable constraint, making the cheapest destructive repair ineligible. The agent instead proves and applies an umbrella route that preserves all twelve ducks, keeps the room dry, and waters the moonflower.
 
 Live app: https://hex-machina.hex-machina.workers.dev
-Source (MIT): https://github.com/adiprathapa/hex-machina
+Source (MIT): https://github.com/adiprathapa/hexmend
 
 00:00 WebMCP premise and registered tools
 00:23 Initial graph inspection and failed cast

@@ -127,7 +127,7 @@ const kindLabel: Record<RuneNode["kind"], string> = {
 const DEFAULT_CONSTRAINT = "The ducks are funny. They stay.";
 
 
-const REPO_URL = "https://github.com/adiprathapa/hex-machina";
+const REPO_URL = "https://github.com/adiprathapa/hexmend";
 
 const familyIds = Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[];
 

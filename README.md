@@ -298,7 +298,7 @@ The seven-day build specification is in `program.md`. Use `python3 train.py stat
 
 ## Repository
 
-The source repository is [adiprathapa/hex-machina](https://github.com/adiprathapa/hex-machina). Its `main` branch is verified by the clean-install acceptance, dependency-audit, deployment-readiness, submission-package, and production-browser journey workflow on every push and pull request.
+The source repository is [adiprathapa/hexmend](https://github.com/adiprathapa/hexmend). Its `main` branch is verified by the clean-install acceptance, dependency-audit, deployment-readiness, submission-package, and production-browser journey workflow on every push and pull request.
 
 Public, under the [MIT License](LICENSE). Release state is tracked in [`submission/release-evidence.json`](submission/release-evidence.json).
 

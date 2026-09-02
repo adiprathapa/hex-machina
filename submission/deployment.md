@@ -13,7 +13,7 @@ Hex Machina builds to a Cloudflare Worker `dist/` bundle and is deployed with `n
 
 ## Release sequence
 
-1. ~~Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.~~ **Done 2026-08-29:** MIT, public at <https://github.com/adiprathapa/hex-machina>, license detected by GitHub.
+1. ~~Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.~~ **Done 2026-08-29:** MIT, public at <https://github.com/adiprathapa/hexmend>, license detected by GitHub.
 2. Follow [`video/youtube-upload.md`](video/youtube-upload.md) to upload the existing 154.8-second narrated WebMCP screencast to YouTube with public visibility, then record its URL with the validated `train.py` command.
 3. Run `python3 prepare.py --quick` and `npm run test:e2e`.
 4. ~~Package the build and deploy it.~~ **Done 2026-08-30 and re-released after every change since:** `npm run build`, then `npx wrangler deploy -c dist/server/wrangler.json` to Cloudflare Workers.
@@ -29,7 +29,7 @@ No deployment or version publication is performed by this readiness check.
 The production Worker is public at <https://hex-machina.hex-machina.workers.dev>. Live `document.modelContext` discovery and the registered-tool canonical journey are recorded in `tests/browser-acceptance.json`; no further deployment is needed unless source changes are intentionally released.
 
 The repository gate is closed: `main` is public under MIT at
-<https://github.com/adiprathapa/hex-machina>, and it is the source of truth.
+<https://github.com/adiprathapa/hexmend>, and it is the source of truth.
 
 One gate remains:
 
