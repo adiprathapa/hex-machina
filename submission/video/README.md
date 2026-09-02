@@ -1,6 +1,6 @@
 # Reproducible demo video
 
-`hex-machina-demo.mp4` is the judge-facing 154.6-second failure → constrained repair → verified success story. It is a real browser screencast in which a standing-in WebMCP host drives the registered tools, followed by a held-out task swap that demonstrates fresh opaque identifiers. A local text-to-speech reading of `narration.txt` supplies the audio; rendering does not depend on external media services.
+`hex-machina-demo.mp4` is the judge-facing 160.4-second failure → constrained repair → verified success story. It is a real browser screencast in which a standing-in WebMCP host drives the registered tools, followed by a held-out task swap that demonstrates fresh opaque identifiers. A local text-to-speech reading of `narration.txt` supplies the audio; rendering does not depend on external media services.
 
 ## Render
 

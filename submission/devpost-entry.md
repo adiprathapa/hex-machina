@@ -119,7 +119,7 @@ WebMCP is the collaboration layer, not a decorative integration. The canonical j
 
 ### Execution
 
-The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 154.6-second screencast driven through the registered WebMCP tools by a scripted client standing in for a host.
+The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 160.4-second screencast driven through the registered WebMCP tools by a scripted client standing in for a host.
 
 ### Potential impact
 

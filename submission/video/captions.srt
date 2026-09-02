@@ -103,5 +103,5 @@ The same seven tools inspect it, cast it, trace it, and explain it.
 That is the claim.
 
 27
-00:02:19,261 --> 00:02:34,567
+00:02:19,261 --> 00:02:40,367
 Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.
