@@ -240,6 +240,7 @@ export function HexMachina() {
   const railFeedRef = useRef<HTMLDivElement>(null);
   const gymCardRef = useRef<HTMLElement>(null);
   const policyDetailsRef = useRef<HTMLDetailsElement>(null);
+  const labRef = useRef<HTMLDetailsElement>(null);
   // `true` until the client measures, matching the server snapshot; a person
   // who toggles the benchmark themselves takes over from the measurement.
   const [policyOpen, setPolicyOpen] = useState(true);
@@ -662,6 +663,19 @@ export function HexMachina() {
   const loadTask = (family: AgentGymFamilyId, split: AgentGymSplit, index: number) => {
     const generated = generateAgentGymScenarioForFamily(family, split, index);
     loadScenario(generated.graph, generated, `Loaded ${generated.scenarioId}. Every rune, edge and effect ID is freshly remapped.`);
+    // The open loader is pinned below the narrative zone and takes 276px of a
+    // 620px rail at 1280x720, so while it stayed open the zone fell to 12px
+    // with a task loaded (75px at 1440x815) and the read that carries the
+    // lesson was gone. Once the task is in the workspace the loader has done
+    // its job: it folds shut, its summary carries what loaded, and the zone
+    // returns to the read at its head. The Load task button hides with the
+    // body, so focus moves to the summary rather than falling to <body>.
+    const lab = labRef.current;
+    if (lab) {
+      lab.open = false;
+      lab.querySelector<HTMLElement>("summary")?.focus();
+    }
+    document.querySelector<HTMLElement>(".familiar-scroll")?.scrollTo({ top: 0 });
   };
 
   const loadRandomTask = () => {
@@ -1401,11 +1415,15 @@ export function HexMachina() {
           {/* Loading a held-out task is the fastest way to show this is not a
               scripted demo: every rune, edge and effect ID is remapped, and the
               same seven tools still solve it. */}
-          <details className="tool-console scenario-lab">
+          <details className="tool-console scenario-lab" ref={labRef}>
             <summary>
               <span>
                 <strong>Task loader</strong>
-                <small>Swap in any of 96 generated tasks across 3 causal rules</small>
+                {variant ? (
+                  <small className="lab-loaded"><code>{variant.scenarioId}</code> seed {variant.seed}, protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
+                ) : (
+                  <small>Swap in any of 96 generated tasks across 3 causal rules</small>
+                )}
               </span>
               <span aria-hidden="true">⌄</span>
             </summary>
@@ -1451,12 +1469,6 @@ export function HexMachina() {
               <button type="button" className="quiet" onClick={loadRandomTask}>Surprise me</button>
               <button type="button" className="primary" onClick={() => loadTask(labFamily, labSplit, labIndex)}>Load task</button>
             </div>
-            {variant && (
-              <div className="lab-loaded">
-                <code>{variant.scenarioId}</code>
-                <small>seed {variant.seed}, protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
-              </div>
-            )}
           </details>
 
           <details className="tool-console">

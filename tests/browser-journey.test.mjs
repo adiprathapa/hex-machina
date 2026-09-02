@@ -370,6 +370,26 @@ test("production browser completes the constraint-preserving spell journey", { t
     await page.getByRole("combobox", { name: "Rule" }).selectOption("family-03-v1");
     await page.getByRole("button", { name: "Load task", exact: true }).click();
     await assertVisible(page.getByText("task-03-test-00", { exact: true }), "the longest-wish held-out task is loaded");
+    // Open, the loader is pinned at 276px of a 620px rail here and left the
+    // narrative zone 12px with a task loaded, so the read that carries the
+    // lesson was gone. Once the task is in the workspace the loader folds
+    // shut, its summary names what loaded (the assertion above finds it
+    // there), the zone rests on the read whole, and focus lands on the
+    // summary rather than <body> when the Load task button hides.
+    const folded = await page.evaluate(() => {
+      const zone = document.querySelector(".familiar-scroll").getBoundingClientRect();
+      const read = document.querySelector(".familiar-message").getBoundingClientRect();
+      return {
+        open: document.querySelector(".scenario-lab").open,
+        zoneHeight: zone.height,
+        readWhole: read.top >= zone.top && read.bottom <= zone.bottom,
+        focus: document.activeElement?.tagName,
+      };
+    });
+    assert.equal(folded.open, false, "the Task loader folds shut once its task is loaded");
+    assert.ok(folded.zoneHeight >= 240, `the narrative zone keeps its height with a task loaded (got ${Math.round(folded.zoneHeight)}px)`);
+    assert.equal(folded.readWhole, true, "the current read is whole in the narrative zone after a load");
+    assert.equal(folded.focus, "SUMMARY", `focus rests on the loader's summary after a load (got ${folded.focus})`);
     const promptFoot = await page.evaluate(() => {
       const toggle = document.querySelector(".prompt-toggle");
       const box = toggle.getBoundingClientRect();
@@ -384,6 +404,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.ok(promptFoot.toggleBottom <= promptFoot.stepsTop, `the prompt control ends above the quest steps (toggle ${promptFoot.toggleBottom}, steps ${promptFoot.stepsTop})`);
     assert.equal(promptFoot.hitsToggle, true, "the prompt control is what a click on it reaches");
     assert.ok(promptFoot.railOverflow <= 20, `the rail scrolls by no more than the wish's extra line past its floor (${promptFoot.railOverflow}px)`);
+    await page.locator(".scenario-lab > summary").click();
     await page.getByRole("combobox", { name: "Rule" }).selectOption("family-02-v1");
     await page.getByRole("button", { name: "Load task", exact: true }).click();
     await assertVisible(page.getByText("task-02-test-00", { exact: true }), "the selected held-out task is loaded");

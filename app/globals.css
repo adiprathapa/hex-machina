@@ -2213,23 +2213,11 @@ kbd {
   color: var(--ink);
 }
 
-.lab-loaded {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
+/* The loaded task's identifier sits in the loader's summary, so it reads
+   whether the loader is open or folded shut after a load. */
 .lab-loaded code {
   color: var(--acid);
-  font: 500 var(--t-sm)/1 var(--font-fira-code), monospace;
-}
-
-.lab-loaded small {
-  color: var(--subtle);
-  font-size: var(--t-xs);
+  font: 500 var(--t-xs)/1 var(--font-fira-code), monospace;
 }
 
 .tool-console pre {
