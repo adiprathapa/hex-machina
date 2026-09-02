@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "generated_by": "npm run verify:live",
-  "verified_at": "2026-09-02T02:16:09.448Z",
+  "verified_at": "2026-09-02T11:38:11.771Z",
   "url": "https://hex-machina.hex-machina.workers.dev",
   "browser": "Chrome (headless), live production deployment",
   "deployed_document_fingerprint": "ee4545ddcda05fdf",
@@ -50,7 +50,7 @@
   },
   "site_tools_api_available": true,
   "live_discovery": {
-    "verified_at": "2026-09-02T02:16:09.448Z",
+    "verified_at": "2026-09-02T11:38:11.771Z",
     "url": "https://hex-machina.hex-machina.workers.dev",
     "discovered_tool_names": [
       "apply_spell_patch",
