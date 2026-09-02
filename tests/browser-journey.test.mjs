@@ -599,6 +599,32 @@ test("production browser completes the constraint-preserving spell journey", { t
       "simulate_cast",
       "trace_effect",
     ]);
+
+    // A host that installs its model context long after the page settled, and
+    // on navigator rather than document (where the earlier explainer put it),
+    // still gets the tools. ChatGPT's in-app browser showed "ready for a host"
+    // at load, which is exactly the case the bounded eight-second wait missed.
+    const late = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await late.goto(server.url, { waitUntil: "networkidle" });
+    await assertVisible(late.getByText("7 WebMCP tools ready for a host", { exact: true }), "without a host the page says so");
+    await late.waitForTimeout(9_500);
+    await late.evaluate(() => {
+      const tools = new Map();
+      Object.defineProperty(window, "__lateTools", { value: tools, configurable: true });
+      Object.defineProperty(navigator, "modelContext", {
+        configurable: true,
+        value: {
+          registerTool(definition, options = {}) {
+            tools.set(definition.name, definition);
+            options.signal?.addEventListener("abort", () => tools.delete(definition.name), { once: true });
+            return Promise.resolve();
+          },
+        },
+      });
+    });
+    await assertVisible(late.getByText("7 WebMCP tools registered", { exact: true }), "a late host on navigator.modelContext still gets the tools");
+    assert.equal(await late.evaluate(() => window.__lateTools.size), 7, "all seven tools reach the late host");
+    await late.close();
     const invokeTool = (name, input = {}) => page.evaluate(
       async ({ toolName, toolInput }) => {
         const definition = window.__hexWebMCPTools.get(toolName);

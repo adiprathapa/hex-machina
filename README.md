@@ -236,6 +236,12 @@ which case you are in rather than pretending:
   lesson is still playable, because the local tool console in the right rail
   calls the same production handlers a visiting agent would.
 
+The page registers on `document.modelContext`, where the current draft puts
+the API, or on `navigator.modelContext`, where the earlier explainer put it,
+and it keeps watching for a host that arrives after the page has loaded, so an
+agent runtime that only installs its model context once it starts a task still
+gets the tools.
+
 The screenshots, the demo video, and the browser tests all install a stand-in
 `document.modelContext` to stand in for a host. That shim only delivers the
 tool calls; every result in them comes from the production handlers.

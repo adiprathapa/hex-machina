@@ -1,7 +1,7 @@
 {
   "schema_version": 4,
   "generated_by": "npm run verify:live",
-  "verified_at": "2026-09-02T22:09:14.620Z",
+  "verified_at": "2026-09-02T23:23:47.937Z",
   "url": "https://hexmend.hex-machina.workers.dev",
   "browser": "Chrome (headless), live production deployment",
   "deployed_document_fingerprint": "88332337f3040fd6",
@@ -50,7 +50,7 @@
   },
   "site_tools_api_available": true,
   "live_discovery": {
-    "verified_at": "2026-09-02T22:09:14.620Z",
+    "verified_at": "2026-09-02T23:23:47.937Z",
     "url": "https://hexmend.hex-machina.workers.dev",
     "discovered_tool_names": [
       "apply_spell_patch",
@@ -70,7 +70,7 @@
     ]
   },
   "native_host": {
-    "verified_at": "2026-09-02T22:09:14.546Z",
+    "verified_at": "2026-09-02T23:23:47.862Z",
     "browser": "Google Chrome 152.0.7977.65",
     "enabled_with": "--enable-features=WebMCP",
     "api": "document.modelContext (ModelContext, native)",

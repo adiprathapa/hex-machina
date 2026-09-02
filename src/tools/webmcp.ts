@@ -15,7 +15,25 @@ interface WebMCPRegistrationOptions {
   exposedTo?: string[];
 }
 
+type ModelContextHost = {
+  registerTool(definition: {
+    name: string;
+    title?: string;
+    description: string;
+    inputSchema: Record<string, unknown>;
+    annotations?: {
+      readOnlyHint?: boolean;
+      untrustedContentHint?: boolean;
+    };
+    execute(input: unknown, options?: WebMCPExecutionOptions): Promise<unknown>;
+  }, options?: WebMCPRegistrationOptions): Promise<void> | void;
+};
+
 declare global {
+  interface Navigator {
+    /** Where the earlier WebMCP explainer put the API; some hosts still do. */
+    modelContext?: ModelContextHost;
+  }
   interface Document {
     modelContext?: {
       registerTool(definition: {
@@ -59,13 +77,23 @@ function withExecutionSignal<T>(handler: (input: unknown) => Promise<T>) {
 export const MODEL_CONTEXT_READINESS_TIMEOUT_MS = 8000;
 const MODEL_CONTEXT_POLL_INTERVAL_MS = 100;
 
-function currentModelContext() {
+function currentModelContext(): ModelContextHost | null {
   // `document` itself may be absent in SSR, a worker, or a test runner, so it
-  // cannot be dereferenced before it is checked.
-  if (typeof document === "undefined") return null;
-  return typeof document.modelContext?.registerTool === "function"
-    ? document.modelContext
-    : null;
+  // cannot be dereferenced before it is checked. The current draft puts the
+  // API on `document`; the earlier explainer put it on `navigator`, and a host
+  // built against that still deserves the tools, so both are accepted.
+  if (typeof document !== "undefined" && typeof document.modelContext?.registerTool === "function") {
+    return document.modelContext;
+  }
+  if (typeof navigator !== "undefined" && typeof navigator.modelContext?.registerTool === "function") {
+    return navigator.modelContext;
+  }
+  return null;
+}
+
+/** Whether a host has installed a model context on this page right now. */
+export function hasModelContext() {
+  return currentModelContext() !== null;
 }
 
 /**
@@ -86,10 +114,10 @@ function waitForModelContext(lifecycleSignal: AbortSignal | undefined, timeoutMs
   const immediate = currentModelContext();
   if (immediate || timeoutMs <= 0) return Promise.resolve(immediate);
 
-  return new Promise<typeof document.modelContext | null>((resolve) => {
+  return new Promise<ModelContextHost | null>((resolve) => {
     const deadline = Date.now() + timeoutMs;
     let timer: ReturnType<typeof setTimeout>;
-    const settle = (value: typeof document.modelContext | null) => {
+    const settle = (value: ModelContextHost | null) => {
       clearTimeout(timer);
       lifecycleSignal?.removeEventListener("abort", onAbort);
       resolve(value);

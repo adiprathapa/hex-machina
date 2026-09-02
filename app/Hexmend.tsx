@@ -27,7 +27,7 @@ import {
 import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolManifest } from "@/src/tools/definitions";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
-import { registerWebMCPTools } from "@/src/tools/webmcp";
+import { hasModelContext, registerWebMCPTools } from "@/src/tools/webmcp";
 import { BRAND_MARK_CORNER, BRAND_MARK_HEX, BRAND_MARK_VIEWBOX } from "@/src/brand/mark";
 
 /* The right rail's two reference tables (the held-out policy benchmark and the
@@ -560,10 +560,25 @@ export function Hexmend() {
     const settle = setTimeout(() => {
       if (active) setMcpState((current) => current === "checking" ? "unavailable" : current);
     }, 1200);
+    // A host that arrives after the bounded wait (an agent runtime that only
+    // installs its model context once it starts acting on a task) still gets
+    // the tools: a slow watch keeps looking for as long as the page is mounted
+    // and registers the moment one appears.
+    let watch: ReturnType<typeof setInterval> | undefined;
+    const registerLate = () => {
+      if (!active || !hasModelContext()) return;
+      clearInterval(watch);
+      registerWebMCPTools(handlers, registration.signal, { scenario: graphRef.current, readinessTimeoutMs: 0 })
+        .then((supported) => { if (active && supported) setMcpState("live"); })
+        .catch(() => undefined);
+    };
     registerWebMCPTools(handlers, registration.signal, { scenario: graphRef.current })
       .then((supported) => {
         if (active && supported) setMcpState("live");
-        else if (active) setMcpState("unavailable");
+        else if (active) {
+          setMcpState("unavailable");
+          watch = setInterval(registerLate, 1000);
+        }
       })
       .catch(() => {
         if (active) setMcpState("unavailable");
@@ -571,6 +586,7 @@ export function Hexmend() {
     return () => {
       active = false;
       clearTimeout(settle);
+      clearInterval(watch);
       registration.abort();
     };
   }, [handlers]);
@@ -1015,7 +1031,7 @@ export function Hexmend() {
             no-host state in every screenshot and in the demo recording. It says
             what is true — the seven tools are defined and offered — instead of
             labelling the protocol this entry is judged on as unavailable. */}
-        <div className={`site-tool-state ${mcpState}`} title="This page defines seven semantic tools and registers them on document.modelContext whenever a browser agent provides one.">
+        <div className={`site-tool-state ${mcpState}`} title="This page defines seven semantic tools and registers them on document.modelContext (or navigator.modelContext) whenever a WebMCP host provides one, including a host that arrives after the page loaded.">
           <span className="status-dot" />
           {mcpState === "live"
             ? "7 WebMCP tools registered"

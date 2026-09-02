@@ -155,6 +155,34 @@ test("a missing document is detected instead of thrown on", async () => {
   }
 });
 
+test("a host that puts the API on navigator, as the earlier explainer did, gets the tools too", async () => {
+  const previousDocument = globalThis.document;
+  const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  const registered = new Map();
+  globalThis.document = {};
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: {
+      modelContext: {
+        registerTool(definition, options) {
+          registered.set(definition.name, definition);
+          options?.signal?.addEventListener?.("abort", () => registered.delete(definition.name));
+          return Promise.resolve();
+        },
+      },
+    },
+  });
+  try {
+    const result = await registerWebMCPTools(handlersFor(createMoonflowerScenario()), undefined, { scenario: createMoonflowerScenario(), readinessTimeoutMs: 0 });
+    assert.equal(result, true, "navigator.modelContext is a valid host");
+    assert.equal(registered.size, 7);
+  } finally {
+    globalThis.document = previousDocument;
+    if (navigatorDescriptor) Object.defineProperty(globalThis, "navigator", navigatorDescriptor);
+    else delete globalThis.navigator;
+  }
+});
+
 test("the default readiness timeout is long enough to be useful and short enough to settle", () => {
   assert.ok(MODEL_CONTEXT_READINESS_TIMEOUT_MS >= 2000);
   assert.ok(MODEL_CONTEXT_READINESS_TIMEOUT_MS <= 15000);
