@@ -160,12 +160,17 @@ try {
   assert.ok(afterNudge > beforeNudge, "arrow keys nudge a focused rune");
   record("keyboard_rune_nudge");
 
+  // Mirrors the journey test: the interface face for every label, including
+  // the reward table that used to be the code-face sample here, and the code
+  // face only for literal code such as the tool identifiers.
   const fonts = await page.evaluate(() => ({
     body: getComputedStyle(document.body).fontFamily,
-    machine: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
+    table: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
+    machine: getComputedStyle(document.querySelector(".tool-console-grid button code")).fontFamily,
   }));
   assert.match(fonts.body, /Inter/i, "the interface typeface is wired in production");
-  assert.match(fonts.machine, /Fira Code/i, "machine data keeps the code typeface");
+  assert.match(fonts.table, /Inter/i, "table labels use the interface typeface");
+  assert.match(fonts.machine, /Fira Code/i, "tool identifiers keep the code typeface");
   record("production_typography_wired");
 
   const consoleOutput = await page.evaluate(async () => {
