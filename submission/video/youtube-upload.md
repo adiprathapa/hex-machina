@@ -9,7 +9,7 @@ project and explains its WebMCP use; the video must be less than three minutes.
 
 - File: `submission/video/hex-machina-demo.mp4`
 - Visibility: **Public (not Unlisted)**
-- Duration: 154.6 seconds (under the three-minute limit)
+- Duration: 154.8 seconds (under the three-minute limit)
 - Resolution: 1920×1080
 - Audio: AAC narration is present
 - Captions: upload `submission/video/captions.srt` as English subtitles

@@ -246,7 +246,7 @@ tool calls; every result in them comes from the production handlers.
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
-The [narrated 154.6-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+The [narrated 154.8-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
 
 ## Architecture
 

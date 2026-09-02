@@ -15,93 +15,93 @@ The page registers those tools on document.modelContext. A test harness stands i
 Every repair you are about to see is a tool call, not a click.
 
 5
-00:00:25,613 --> 00:00:29,397
+00:00:25,613 --> 00:00:29,428
 First it inspects the live graph, then it casts the spell.
 
 6
-00:00:29,397 --> 00:00:35,791
+00:00:29,428 --> 00:00:35,873
 The spell is supposed to water a moonflower. Instead, twelve summoned ducks flood the observatory.
 
 7
-00:00:35,791 --> 00:00:37,457
+00:00:35,873 --> 00:00:37,539
 Now it traces the effect.
 
 8
-00:00:37,457 --> 00:00:45,255
+00:00:37,539 --> 00:00:45,337
 This is a bounded graph traversal, not a guess: it returns the ordered causal path and every edge responsible for it.
 
 9
-00:00:45,255 --> 00:00:47,220
+00:00:45,337 --> 00:00:47,302
 Then it proves the diagnosis.
 
 10
-00:00:47,220 --> 00:00:55,825
+00:00:47,302 --> 00:00:55,907
 The explanation returns the smallest responsible subgraph, and a counterfactual check showing each of those edges is necessary.
 
 11
-00:00:55,825 --> 00:01:02,981
+00:00:55,907 --> 00:01:03,062
 Here is the part that matters. A human says something the graph cannot infer: the ducks are funny, they stay.
 
 12
-00:01:02,981 --> 00:01:05,475
+00:01:03,062 --> 00:01:05,556
 That becomes an executable constraint.
 
 13
-00:01:05,475 --> 00:01:10,541
+00:01:05,556 --> 00:01:10,618
 Watch what it changes. The cheapest repair deletes the duck branch entirely.
 
 14
-00:01:10,541 --> 00:01:17,407
+00:01:10,618 --> 00:01:17,477
 With the constraint locked, that repair is no longer eligible, so the agent ranks a longer one instead.
 
 15
-00:01:17,407 --> 00:01:23,394
+00:01:17,477 --> 00:01:23,424
 Before anything is applied, the human sees the exact operation ledger the agent received.
 
 16
-00:01:23,394 --> 00:01:27,901
+00:01:23,424 --> 00:01:27,901
 Eight graph edits, what is preserved, and what the repair gives up.
 
 17
-00:01:27,901 --> 00:01:31,874
+00:01:27,901 --> 00:01:31,869
 The patch is simulated first, without touching editor state.
 
 18
-00:01:31,874 --> 00:01:37,369
+00:01:31,869 --> 00:01:37,358
 Then applied atomically, with preconditions revalidated at the moment of the write.
 
 19
-00:01:37,369 --> 00:01:45,376
+00:01:37,358 --> 00:01:45,365
 The recast succeeds. All twelve ducks survive, they carry umbrellas, the room stays dry, and the moonflower blooms.
 
 20
-00:01:45,376 --> 00:01:49,833
+00:01:45,365 --> 00:01:49,821
 The human's preference changed the solution, not just the score.
 
 21
-00:01:49,833 --> 00:01:55,588
+00:01:49,821 --> 00:01:55,577
 One more thing, because a polished demo invites one question: is this on rails.
 
 22
-00:01:55,588 --> 00:02:00,808
+00:01:55,577 --> 00:02:00,797
 The evaluation layer generates 96 tasks across three different causal rules.
 
 23
-00:02:00,808 --> 00:02:06,646
+00:02:00,797 --> 00:02:06,635
 I will use the interface to load a held-out one, from a rule this run has never seen.
 
 24
-00:02:06,646 --> 00:02:13,069
+00:02:06,635 --> 00:02:13,058
 Every rune, edge and effect identifier is freshly remapped. Nothing here was memorized.
 
 25
-00:02:13,069 --> 00:02:18,016
+00:02:13,058 --> 00:02:18,004
 The same seven tools inspect it, cast it, trace it, and explain it.
 
 26
-00:02:18,016 --> 00:02:19,272
+00:02:18,004 --> 00:02:19,261
 That is the claim.
 
 27
-00:02:19,272 --> 00:02:34,600
+00:02:19,261 --> 00:02:34,767
 Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.
