@@ -12,7 +12,7 @@ Hexmend builds to a Cloudflare Worker `dist/` bundle and is deployed with `npx w
 ## Release sequence
 
 1. ~~Select an open-source license, add its standard `LICENSE` file, make the GitHub repository public, and confirm GitHub detects the license.~~ **Done 2026-08-29:** MIT, public at <https://github.com/adiprathapa/hexmend>, license detected by GitHub.
-2. Follow [`video/youtube-upload.md`](video/youtube-upload.md) to upload the existing 147.9-second narrated WebMCP screencast to YouTube with public visibility, then record its URL with `python3 release.py record-youtube <url>`.
+2. ~~Upload the narrated screencast to YouTube and record its URL.~~ **Done 2026-09-02:** public at <https://youtu.be/ZMxs1HrpS1s>, recorded with `python3 release.py record-youtube`.
 3. Run `python3 prepare.py --quick` and `npm run test:e2e`.
 4. ~~Package the build and deploy it.~~ **Done 2026-08-30 and re-released after every change since:** `npm run build`, then `npx wrangler deploy -c dist/server/wrangler.json` to Cloudflare Workers.
 5. ~~Make the live app judge-accessible.~~ **Done:** the Worker is public at <https://hexmend.hex-machina.workers.dev>.
@@ -34,7 +34,7 @@ One gate remains:
 | Gate | Blocked on | Records into |
 | --- | --- | --- |
 | ~~Live URL~~ | **Done 2026-08-30:** deployed to Cloudflare Workers at <https://hexmend.hex-machina.workers.dev> | `site.live_url` |
-| Public demo | Uploading the existing 147.9-second MP4 to YouTube as public | `video.public_youtube_url` |
+| ~~Public demo~~ | **Done 2026-09-02:** public on YouTube at <https://youtu.be/ZMxs1HrpS1s> | `video.public_youtube_url` |
 | ~~Live discovery~~ | **Done 2026-08-30:** seven tools discovered live; canonical prompt executed end to end through them | `tests/browser-acceptance.json`, `site.webmcp_discovered_live` |
 
 The build is already deploy-shaped: `npm run test:deployment` validates the

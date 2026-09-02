@@ -30,7 +30,7 @@
     "local_path": "submission/video/hexmend-demo.mp4",
     "duration_seconds": 147.9,
     "has_audio": true,
-    "public_youtube_url": null,
+    "public_youtube_url": "https://youtu.be/ZMxs1HrpS1s",
     "kind": "screencast with narration",
     "captions_path": "submission/video/captions.srt"
   },

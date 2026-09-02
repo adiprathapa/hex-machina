@@ -158,10 +158,10 @@ Hexmend is a new project created during the challenge period. Its first commit i
 
 The release operator must copy the three authorized public URLs from `release-evidence.json` into the Devpost form:
 
-- Working live URL
-- Public GitHub repository with a visible open-source license
-- Public YouTube demo with audio
+- Working live URL: <https://hexmend.hex-machina.workers.dev>
+- Public GitHub repository with a visible open-source license: <https://github.com/adiprathapa/hexmend>
+- Public YouTube demo with audio: <https://youtu.be/ZMxs1HrpS1s>
 
-Do not submit until all three external gates pass and full `python3 prepare.py` is green.
+All three external gates pass and full `python3 prepare.py` is green.
 
 After the September 3 deadline, freeze the submitted Devpost entry, repository, and live site for the full judging period. Continue any later development only in an unsubmitted fork.
