@@ -41,7 +41,7 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /WebMCP/);
   assert.match(html, /document\.modelContext/);
   assert.match(html, /Copy prompt/);
-  assert.match(html, /github\.com\/adiprathapa\/hex-machina/);
+  assert.match(html, /github\.com\/adiprathapa\/hexmend/);
   assert.match(html, /Agent Gym evaluation mode/);
   assert.match(html, /Scored, replayable episode/);
   assert.match(html, /reward plus before\/after graph observations/);
