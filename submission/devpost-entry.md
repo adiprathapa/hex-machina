@@ -153,3 +153,9 @@ Expected result: seven tools are discoverable; the initial cast floods the room 
 ## Build provenance
 
 Hexmend is a new project created during the challenge period. Its first commit is `c661551` at 2026-08-26 22:55 EDT, and the complete timestamped history is preserved in the repository.
+
+## Links
+
+- Working live URL: <https://hexmend.hex-machina.workers.dev>
+- Public GitHub repository with a visible open-source license: <https://github.com/adiprathapa/hexmend>
+- Public YouTube demo with audio: <https://youtu.be/ZMxs1HrpS1s>
