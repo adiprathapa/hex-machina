@@ -542,17 +542,18 @@ export function HexMachina() {
   // Each step of the journey replaces the primary button with the next one, so
   // activating it unmounts the element that had focus. Without this, keyboard
   // and screen-reader users are dropped to <body> four times in five steps.
-  const keepFocusOnPrimary = () => {
-    pendingFocus.current = ".controls .primary";
+  const handFocusTo = (selector: string) => {
+    pendingFocus.current = selector;
     // A handler whose last state update has already been flushed produces no
     // further render, so the effect that consumes pendingFocus never runs. Try
     // again on the next frame; whichever path gets there first clears the ref.
     requestAnimationFrame(() => {
-      if (pendingFocus.current !== ".controls .primary") return;
+      if (pendingFocus.current !== selector) return;
       pendingFocus.current = null;
-      document.querySelector<HTMLElement>(".controls .primary")?.focus();
+      document.querySelector<HTMLElement>(selector)?.focus();
     });
   };
+  const keepFocusOnPrimary = () => handFocusTo(".controls .primary");
 
   // The open Task loader is pinned below the right rail's narrative zone and
   // leaves it 33-65px of a 620px rail at 1280x720 (95-130px at 1440x815), so a
@@ -610,6 +611,9 @@ export function HexMachina() {
   const previewRepair = async () => {
     if (!patch) return;
     await handlers.simulate_cast({ patchId: patch.id });
+    // The simulate button unmounts once its verdict is in; the next decision
+    // is Apply, so keyboard focus goes there instead of to <body>.
+    handFocusTo(".patch-apply");
   };
 
   const undoRepair = async () => {
@@ -825,6 +829,8 @@ export function HexMachina() {
       }, null, 2));
     } finally {
       setConsoleBusy(null);
+      // The button is disabled while its call runs, which drops focus to <body>.
+      handFocusTo(`.tool-console-grid button[title="${tool}"]`);
     }
   };
 
@@ -849,7 +855,7 @@ export function HexMachina() {
     if (!zone || !feed) return;
     const scrolls = getComputedStyle(zone).overflowY === "auto";
     const signature = [
-      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight, zone.scrollTop,
+      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight,
       card?.offsetHeight, details?.open, feed.clientHeight, feed.scrollHeight, feed.firstElementChild?.clientHeight,
     ].join("|");
     if (signature === railSignature.current) return;
@@ -883,8 +889,13 @@ export function HexMachina() {
         const reserved = overflowing(zone) ? fade : 0;
         const zoneBox = zone.getBoundingClientRect();
         const cardBox = card.getBoundingClientRect();
-        const fitsAbove = cardBox.bottom <= zoneBox.bottom - reserved + 0.5;
-        const fitsBelow = cardBox.top >= zoneBox.bottom && cardBox.height <= zoneBox.height - reserved;
+        // In the zone's content coordinates, not the viewport's: judged
+        // against the visible box, the same card fit or did not fit depending
+        // on how far the zone happened to be scrolled, so the table folded
+        // and unfolded as the reader scrolled.
+        const cardTop = cardBox.top - zoneBox.top + zone.scrollTop;
+        const fitsAbove = cardTop + cardBox.height <= zone.clientHeight - reserved + 0.5;
+        const fitsBelow = cardTop >= zone.clientHeight && cardBox.height <= zone.clientHeight - reserved;
         open = fitsAbove || fitsBelow;
       }
       details.open = open;
@@ -896,7 +907,7 @@ export function HexMachina() {
       overflowing(feed);
     }
     railSignature.current = [
-      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight, zone.scrollTop,
+      scrolls, tallViewport, policyChoice.current, zone.clientHeight, zone.scrollHeight,
       card?.offsetHeight, details?.open, feed.clientHeight, feed.scrollHeight, feed.firstElementChild?.clientHeight,
     ].join("|");
   }, [tallViewport]);
@@ -1416,7 +1427,7 @@ export function HexMachina() {
           </section>
           </div>
 
-          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting, 7 tools registered"}</small></div>
+          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting for the first call"}</small></div>
           <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity" ref={railFeedRef}>
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>

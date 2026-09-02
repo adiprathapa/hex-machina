@@ -22,7 +22,7 @@ the link.
 ## Title
 
 ```text
-Hex Machina — A WebMCP Agent Gym for Constraint-Preserving Repairs
+Hex Machina: A WebMCP Agent Gym for Constraint-Preserving Repairs
 ```
 
 ## Description

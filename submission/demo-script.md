@@ -34,7 +34,7 @@
 
 **Action:** The agent calls `set_sacred_constraint`.
 
-**Visual:** A chartreuse sacred pin appears on **Summon ducks** and the graph version advances.
+**Visual:** A blue Lock badge appears on **Summon ducks** and the graph version advances.
 
 **Voiceover:** “The human contributes something the graph cannot know: taste. Deleting the ducks is no longer a valid solution.”
 
