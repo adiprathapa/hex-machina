@@ -28,15 +28,7 @@ import type { CastResult } from "@/src/simulator/cast";
 import { createSpellToolManifest } from "@/src/tools/definitions";
 import { createSpellToolHandlers, type ReviewedSpellPatch, type SpellToolPresentation } from "@/src/tools/handlers";
 import { registerWebMCPTools } from "@/src/tools/webmcp";
-import {
-  BRAND_MARK_CORNER,
-  BRAND_MARK_EDGES,
-  BRAND_MARK_EDGE_WIDTH,
-  BRAND_MARK_HEX,
-  BRAND_MARK_NODES,
-  BRAND_MARK_NODE_RADIUS,
-  BRAND_MARK_VIEWBOX,
-} from "@/src/brand/mark";
+import { BRAND_MARK_CORNER, BRAND_MARK_HEX, BRAND_MARK_VIEWBOX } from "@/src/brand/mark";
 
 /* The right rail's two reference tables (the held-out policy benchmark and the
    two-hop ranking) fold shut on a short window so the tool feed is not pushed
@@ -926,17 +918,14 @@ export function HexMachina() {
       <a className="skip-link" href="#workspace">Skip to the spell workspace</a>
       <header className="topbar">
         <div className="brand-lockup">
-          {/* The product's subject, a three-node causal path, knocked out of a
-              solid hexagon. Solid because the same drawing is the tab icon,
-              where an outline vanished at 16px; one shared definition
+          {/* A plain solid hexagon. Solid because the same drawing is the tab
+              icon, where an outline vanished at 16px; one shared definition
               (src/brand/mark.ts) draws the header, the favicon and the social
-              card so they cannot drift apart again. Inline SVG keeps it under
-              the CSP with no request. */}
+              card so they cannot drift apart. Inline SVG keeps it under the
+              CSP with no request. */}
           <span className="brand-mark" aria-hidden="true">
             <svg viewBox={BRAND_MARK_VIEWBOX} role="presentation" focusable="false">
               <path d={BRAND_MARK_HEX} fill="currentColor" stroke="currentColor" strokeWidth={BRAND_MARK_CORNER} strokeLinejoin="round" />
-              <path d={BRAND_MARK_EDGES} fill="none" stroke="var(--paper)" strokeWidth={BRAND_MARK_EDGE_WIDTH} strokeLinecap="round" strokeLinejoin="round" />
-              {BRAND_MARK_NODES.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={BRAND_MARK_NODE_RADIUS} fill="var(--paper)" />)}
             </svg>
           </span>
           <div>

@@ -16,7 +16,7 @@ const BLUE = "#4c90f0";
 
 // One definition for the header, the tab icon and this card. Run through tsx
 // (`npm run brand:render`) so the TypeScript module resolves.
-const MARK = (size) => brandMarkSvg(size, BLUE, BLACK);
+const MARK = (size) => brandMarkSvg(size, BLUE);
 
 const FONT = `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
 
@@ -53,26 +53,28 @@ const OG = `<!doctype html><meta charset="utf-8">
   <div class="pills"><span class="pill">WebMCP</span><span class="pill">Deterministic</span><span class="pill">Open source</span></div>
 </div>`;
 
+// The tab icon is the mark alone on a transparent ground, so it sits cleanly
+// on a light tab strip and a dark one alike.
 const ICON = `<!doctype html><meta charset="utf-8">
-<style>* { margin: 0; } body { width: 256px; height: 256px; background: ${BLACK};
+<style>* { margin: 0; } body { width: 256px; height: 256px; background: transparent;
   display: flex; align-items: center; justify-content: center; }</style>
-${MARK(176)}`;
+${MARK(208)}`;
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   headless: true,
 });
 
-async function shoot(html, width, height, out) {
+async function shoot(html, width, height, out, { transparent = false } = {}) {
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
   await page.setContent(html, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
   await mkdir(path.dirname(out), { recursive: true });
-  await writeFile(out, await page.screenshot({ type: "png" }));
+  await writeFile(out, await page.screenshot({ type: "png", omitBackground: transparent }));
   await page.close();
   console.log(`wrote ${path.relative(ROOT, out)} (${width}x${height})`);
 }
 
 await shoot(OG, 1200, 630, path.join(ROOT, "public/og.png"));
-await shoot(ICON, 256, 256, path.join(ROOT, "public/favicon.png"));
+await shoot(ICON, 256, 256, path.join(ROOT, "public/favicon.png"), { transparent: true });
 await browser.close();
