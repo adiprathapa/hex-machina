@@ -360,6 +360,30 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.match(await page.locator(".canvas-header").textContent(), /Live spell v1/);
 
     await page.locator(".scenario-lab > summary").click();
+    // The longest wish first. The rail section that holds the prompt could
+    // shrink past the control at its foot: with a three-line wish at 1280x720
+    // it was 168px holding 200px of content, and "Show the full prompt" was
+    // drawn over step 01 (551-566 against a step box from 534) where a click
+    // reached the step instead. The section's floor is now its content with a
+    // one-line prompt (toggle 528-543, steps from 551) and the rest scrolls the
+    // rail, measured at 17px here.
+    await page.getByRole("combobox", { name: "Rule" }).selectOption("family-03-v1");
+    await page.getByRole("button", { name: "Load task", exact: true }).click();
+    await assertVisible(page.getByText("task-03-test-00", { exact: true }), "the longest-wish held-out task is loaded");
+    const promptFoot = await page.evaluate(() => {
+      const toggle = document.querySelector(".prompt-toggle");
+      const box = toggle.getBoundingClientRect();
+      const rail = document.querySelector(".brief-panel");
+      return {
+        toggleBottom: box.bottom,
+        stepsTop: document.querySelector(".quest-steps").getBoundingClientRect().top,
+        hitsToggle: document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2) === toggle,
+        railOverflow: rail.scrollHeight - rail.clientHeight,
+      };
+    });
+    assert.ok(promptFoot.toggleBottom <= promptFoot.stepsTop, `the prompt control ends above the quest steps (toggle ${promptFoot.toggleBottom}, steps ${promptFoot.stepsTop})`);
+    assert.equal(promptFoot.hitsToggle, true, "the prompt control is what a click on it reaches");
+    assert.ok(promptFoot.railOverflow <= 20, `the rail scrolls by no more than the wish's extra line past its floor (${promptFoot.railOverflow}px)`);
     await page.getByRole("combobox", { name: "Rule" }).selectOption("family-02-v1");
     await page.getByRole("button", { name: "Load task", exact: true }).click();
     await assertVisible(page.getByText("task-02-test-00", { exact: true }), "the selected held-out task is loaded");

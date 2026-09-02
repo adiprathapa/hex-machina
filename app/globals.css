@@ -515,14 +515,16 @@ kbd {
 
 .agent-brief {
   /* The one rail item that yields. On a short screen it hands its height to
-     the quest steps and the wish first — `min-height: 0` is what lets a flex
-     item shrink below its content — and on a tall one it shares the slack with
-     the steps so nothing floats over a dead band. Its basis is its content, so
-     the prompt inside is whole before any slack is handed out. */
+     the quest steps and the wish first, and on a tall one it shares the slack
+     with the steps so nothing floats over a dead band. Its floor is its own
+     content with the prompt at its clamp (the prompt's flex-basis below), so
+     it can never be shorter than the control at its foot: with `min-height:
+     0` here it shrank past that on a longer task (168px holding 200px at
+     1280x720 with a three-line wish) and painted "Show the full prompt" over
+     the first quest step. Past the floor the rail scrolls, which is honest. */
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  min-height: 0;
   margin-top: 10px;
   padding: 11px 12px;
   border: 1px solid var(--line);
@@ -534,7 +536,6 @@ kbd {
   /* Opened, it is a fixed block the rail scrolls to: shrinking it here would
      let the prompt spill over the quest steps. */
   flex: 0 0 auto;
-  min-height: auto;
 }
 
 .agent-brief > * {
@@ -570,12 +571,17 @@ kbd {
 
 .agent-brief-prompt:not(.expanded) {
   /* Shrinks first and grows last: the only rail content with a shrink factor
-     and a floor under its content. Two full lines of the prompt face at its
-     1.5 line-height plus padding — 54px on a 720px screen, where the third
-     line is cut mid-glyph on purpose so the clamp reads as a clamp. On a tall
-     screen it is whole, then shares the slack with the quest steps. */
-  flex: 1 1 auto;
-  min-height: calc(3 * var(--t-sm) + 18px);
+     and a floor under its content. The floor is one full line of the prompt
+     face at its 1.5 line-height plus padding, 36px on a 720px screen, and it
+     is the flex-basis as well as the minimum on purpose: a column flexbox
+     measures its own content from its items' bases, so this is what gives
+     the section above a floor it cannot shrink through. The rail's slack
+     lands here first, so at 1280x720 the lesson still shows two full lines
+     (54px) and a longer task's three-line wish takes it back down to one. On
+     a tall screen it is whole, then shares the slack with the quest steps. */
+  --prompt-clamp: calc(1.5 * var(--t-sm) + 18px);
+  flex: 1 1 var(--prompt-clamp);
+  min-height: var(--prompt-clamp);
   overflow: hidden;
 }
 
@@ -2304,35 +2310,57 @@ kbd {
 }
 
 /* On the shortest laptop rails (1280x720, 1366x768) the thesis line costs
-   36px the rail did not have, and the agent-brief section, which is allowed
-   to shrink below its content so the prompt can yield, ran into the steps
-   under it. Take the air out of the rows instead: nothing is hidden. */
+   36px the rail did not have, and the agent-brief section, which used to be
+   allowed to shrink below its content so the prompt could yield, ran into the
+   steps under it. Take the air out of the rows instead: nothing is hidden.
+   The section's own air is 6px tighter than the rest because that is what the
+   old layout was quietly taking from under the control at its foot (209px of
+   content in a 203px box at 1280x720); giving it back here keeps the lesson
+   at two full lines of prompt and a rail that does not scroll. */
 @media (max-height: 780px) and (min-width: 761px) {
   .thesis { margin-bottom: 8px; padding-bottom: 8px; }
   .controls { padding: 6px 0 6px; }
-  .agent-brief { margin-top: 6px; padding: 8px 10px; }
+  .agent-brief { margin-top: 4px; padding: 7px 10px; }
+  .agent-brief-note { margin-bottom: 6px; }
   .prompt-toggle { margin-top: 2px; }
   .quest-steps li { padding-top: 2px; padding-bottom: 2px; }
   .brief-panel { padding-bottom: 6px; }
 }
 
 @media (min-height: 950px) and (min-width: 761px) {
-  /* Above 950px tall the rail has slack once the prompt is whole. The prompt
-     box and its section stop growing here — a 40vh cap still left a 423px
-     tint holding 165px of text at 2560x1440 — and the quest steps take the
-     slack instead, up to 120px a row (140 read as stretched, with 90px of
-     blank between the lines of a step). Shrink stays on, so between 950 and
-     1000px tall, where the rail is still over budget, the prompt yields
-     exactly as it does on a laptop. */
+  /* Above 950px tall the rail has slack once the prompt is whole, and the
+     quest steps take it, up to 120px a row (140 read as stretched, with 90px
+     of blank between the lines of a step). */
+  .quest-steps {
+    flex: 1 0 auto;
+    grid-auto-rows: 1fr;
+    max-height: 480px;
+  }
+}
+
+@media (min-height: 1000px) and (min-width: 1500px) {
+  /* The prompt box and its section stop growing here — a 40vh cap still left
+     a 423px tint holding 165px of text at 2560x1440. The prompt's basis is its
+     content, so the box stops at its text; that also makes the section's floor
+     its whole content, so it needs `min-height: 0` again to shrink through
+     the prompt when the rail is over budget. Both limits are literal because
+     that shrink has no floor of its own, and it only stays clear of the
+     control at the section's foot where the prompt has plenty to give: 88px
+     above its one-line floor at 1536x1000 with the longest wish, 10px at
+     1366x1000, and at 1280x1000 the same rule collapsed the section to 96px
+     and drew the control 104px into step 01. Between 950 and 1000px tall the
+     rail is over budget at every width (by 5px at 1920x1000 with the lesson
+     itself, 41px at 2560x1000), and on a rail under 1500px wide it is over
+     budget at every height a screen has (158px at 1440x1080), so the laptop
+     rules hold there: the prompt's basis is its floor, the section cannot
+     shrink past it, and the rail scrolls the rest. */
   .agent-brief,
   .agent-brief-prompt:not(.expanded) {
     flex: 0 1 auto;
   }
 
-  .quest-steps {
-    flex: 1 0 auto;
-    grid-auto-rows: 1fr;
-    max-height: 480px;
+  .agent-brief {
+    min-height: 0;
   }
 }
 
@@ -2427,7 +2455,7 @@ kbd {
   /* The phone rail is not height-bound, so there is no slack to fill: keep the
      fixed clamp and let the toggle open it. */
   .agent-brief { flex: 0 0 auto; }
-  .agent-brief-prompt:not(.expanded) { max-height: 96px; }
+  .agent-brief-prompt:not(.expanded) { flex-basis: auto; max-height: 96px; }
   .canvas-panel { margin: 0; }
   .spell-canvas { min-height: 570px; }
   .graph-legend { display: none; }
