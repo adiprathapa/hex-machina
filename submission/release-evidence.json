@@ -28,7 +28,7 @@
   },
   "video": {
     "local_path": "submission/video/hex-machina-demo.mp4",
-    "duration_seconds": 160.4,
+    "duration_seconds": 154.6,
     "has_audio": true,
     "public_youtube_url": null,
     "kind": "screencast with narration",
