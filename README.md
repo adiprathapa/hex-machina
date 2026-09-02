@@ -246,7 +246,7 @@ tool calls; every result in them comes from the production handlers.
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
-The [narrated 154.5-second demo](submission/video/hexmend-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+The [narrated 147.9-second demo](submission/video/hexmend-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
 
 ## Architecture
 
@@ -291,10 +291,6 @@ Hexmend has no accounts, analytics, cookies, browser persistence, external APIs,
 ## Experimental Familiar
 
 After a failed cast, Moth runs two rounds of frozen-weight message passing over active runes and ranks three likely inspection targets. It is an advisory visualization, not a source of causal truth, and it never mutates the graph. Disable it at build time with `NEXT_PUBLIC_FAMILIAR_GNN=off`.
-
-## Durable build loop
-
-The seven-day build specification is in `program.md`. Use `python3 train.py status` for milestone state and `python3 train.py context` for a complete continuation handoff.
 
 ## Repository
 

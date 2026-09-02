@@ -243,7 +243,7 @@ test("release operator can safely record an already-public YouTube URL", async (
 
   const invalid = spawnSync(
     "python3",
-    [path.join(ROOT, "train.py"), "record-youtube", "https://example.com/not-youtube", "--evidence", evidencePath],
+    [path.join(ROOT, "release.py"), "record-youtube", "https://example.com/not-youtube", "--evidence", evidencePath],
     { cwd: ROOT, encoding: "utf8" },
   );
   assert.equal(invalid.status, 2);
@@ -253,7 +253,7 @@ test("release operator can safely record an already-public YouTube URL", async (
   const publicUrl = "https://youtu.be/AbC_123-xyZ";
   const valid = spawnSync(
     "python3",
-    [path.join(ROOT, "train.py"), "record-youtube", publicUrl, "--evidence", evidencePath],
+    [path.join(ROOT, "release.py"), "record-youtube", publicUrl, "--evidence", evidencePath],
     { cwd: ROOT, encoding: "utf8" },
   );
   assert.equal(valid.status, 0, valid.stderr);
@@ -270,7 +270,7 @@ test("YouTube handoff covers every official media requirement", async () => {
   assert.match(handoff, /audio/i);
   assert.match(handoff, /no third-party music/i);
   assert.match(handoff, /captions\.srt/);
-  assert.match(handoff, /python3 train\.py record-youtube/);
+  assert.match(handoff, /python3 release\.py record-youtube/);
   assert.match(handoff, /https:\/\/hexmend\.hex-machina\.workers\.dev/);
   assert.match(handoff, /https:\/\/github\.com\/adiprathapa\/hexmend/);
 });

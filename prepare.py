@@ -619,7 +619,7 @@ def main() -> int:
     args = parser.parse_args()
 
     checks: list[Check] = []
-    for required in ("program.md", "train.py", "prepare.py"):
+    for required in ("prepare.py", "release.py"):
         checks.append(
             Check(
                 f"control file {required}",

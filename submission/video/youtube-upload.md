@@ -9,7 +9,7 @@ project and explains its WebMCP use; the video must be less than three minutes.
 
 - File: `submission/video/hexmend-demo.mp4`
 - Visibility: **Public (not Unlisted)**
-- Duration: 154.5 seconds (under the three-minute limit)
+- Duration: 147.9 seconds (under the three-minute limit)
 - Resolution: 1920×1080
 - Audio: AAC narration is present
 - Captions: upload `submission/video/captions.srt` as English subtitles
@@ -54,7 +54,7 @@ Built for The WebMCP Challenge.
 After the signed-out playback check succeeds, run:
 
 ```bash
-python3 train.py record-youtube "https://www.youtube.com/watch?v=REPLACE_WITH_VIDEO_ID"
+python3 release.py record-youtube "https://www.youtube.com/watch?v=REPLACE_WITH_VIDEO_ID"
 python3 prepare.py
 ```
 

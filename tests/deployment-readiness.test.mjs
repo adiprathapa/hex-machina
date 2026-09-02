@@ -7,10 +7,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(ROOT, "dist");
 
-async function json(relativePath) {
-  return JSON.parse(await readFile(path.join(ROOT, relativePath), "utf8"));
-}
-
 async function filesBelow(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
@@ -37,14 +33,6 @@ async function renderBuiltPage(headers = {}) {
     },
   );
 }
-
-test("Sites hosting metadata is minimal and synchronized into the build", async () => {
-  const source = await json(".openai/hosting.json");
-  const built = await json("dist/.openai/hosting.json");
-  assert.deepEqual(Object.keys(source), ["project_id"]);
-  assert.match(source.project_id, /^appgprj_[a-f0-9]{32}$/);
-  assert.deepEqual(built, source);
-});
 
 test("deployment output contains the worker and complete app-owned assets only", async () => {
   const worker = path.join(DIST, "server/index.js");

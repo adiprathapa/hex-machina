@@ -1,107 +1,107 @@
 1
-00:00:01,500 --> 00:00:02,581
+00:00:02,500 --> 00:00:03,521
 This is Hexmend.
 
 2
-00:00:02,581 --> 00:00:10,689
+00:00:03,521 --> 00:00:11,180
 It is an agent gym for constraint-aware repair, and a WebMCP client is about to drive it through seven registered tools.
 
 3
-00:00:10,689 --> 00:00:20,913
+00:00:11,920 --> 00:00:20,040
 The page registers those tools on document.modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet.
 
 4
-00:00:20,913 --> 00:00:25,346
+00:00:20,040 --> 00:00:23,560
 Every repair you are about to see is a tool call, not a click.
 
 5
-00:00:25,346 --> 00:00:29,161
+00:00:24,380 --> 00:00:27,555
 First it inspects the live graph, then it casts the spell.
 
 6
-00:00:29,161 --> 00:00:35,606
+00:00:27,555 --> 00:00:32,920
 The spell is supposed to water a moonflower. Instead, twelve summoned ducks flood the observatory.
 
 7
-00:00:35,606 --> 00:00:37,272
+00:00:33,420 --> 00:00:34,902
 Now it traces the effect.
 
 8
-00:00:37,272 --> 00:00:45,070
+00:00:34,902 --> 00:00:41,840
 This is a bounded graph traversal, not a guess: it returns the ordered causal path and every edge responsible for it.
 
 9
-00:00:45,070 --> 00:00:47,034
+00:00:42,140 --> 00:00:43,832
 Then it proves the diagnosis.
 
 10
-00:00:47,034 --> 00:00:55,640
+00:00:43,832 --> 00:00:51,240
 The explanation returns the smallest responsible subgraph, and a counterfactual check showing each of those edges is necessary.
 
 11
-00:00:55,640 --> 00:01:02,795
+00:00:52,920 --> 00:00:59,430
 Here is the part that matters. A human says something the graph cannot infer: the ducks are funny, they stay.
 
 12
-00:01:02,795 --> 00:01:05,289
+00:00:59,430 --> 00:01:01,700
 That becomes an executable constraint.
 
 13
-00:01:05,289 --> 00:01:10,351
+00:01:02,720 --> 00:01:06,983
 Watch what it changes. The cheapest repair deletes the duck branch entirely.
 
 14
-00:01:10,351 --> 00:01:17,210
+00:01:06,983 --> 00:01:12,760
 With the constraint locked, that repair is no longer eligible, so the agent ranks a longer one instead.
 
 15
-00:01:17,210 --> 00:01:23,157
+00:01:13,220 --> 00:01:18,914
 Before anything is applied, the human sees the exact operation ledger the agent received.
 
 16
-00:01:23,157 --> 00:01:27,634
+00:01:18,914 --> 00:01:23,200
 Eight graph edits, what is preserved, and what the repair gives up.
 
 17
-00:01:27,634 --> 00:01:31,602
+00:01:23,780 --> 00:01:27,229
 The patch is simulated first, without touching editor state.
 
 18
-00:01:31,602 --> 00:01:37,091
+00:01:27,229 --> 00:01:32,000
 Then applied atomically, with preconditions revalidated at the moment of the write.
 
 19
-00:01:37,091 --> 00:01:45,098
+00:01:33,240 --> 00:01:41,091
 The recast succeeds. All twelve ducks survive, they carry umbrellas, the room stays dry, and the moonflower blooms.
 
 20
-00:01:45,098 --> 00:01:49,554
+00:01:41,091 --> 00:01:45,460
 The human's preference changed the solution, not just the score.
 
 21
-00:01:49,554 --> 00:01:55,310
+00:01:46,220 --> 00:01:50,740
 One more thing, because a polished demo invites one question: is this on rails.
 
 22
-00:01:55,310 --> 00:02:00,529
+00:01:51,640 --> 00:01:57,361
 The evaluation layer generates 96 tasks across three different causal rules.
 
 23
-00:02:00,529 --> 00:02:06,367
+00:01:57,361 --> 00:02:03,760
 I will use the interface to load a held-out one, from a rule this run has never seen.
 
 24
-00:02:06,367 --> 00:02:12,791
+00:02:04,600 --> 00:02:09,831
 Every rune, edge and effect identifier is freshly remapped. Nothing here was memorized.
 
 25
-00:02:12,791 --> 00:02:17,737
+00:02:09,831 --> 00:02:13,860
 The same seven tools inspect it, cast it, trace it, and explain it.
 
 26
-00:02:17,737 --> 00:02:18,993
+00:02:14,720 --> 00:02:15,789
 That is the claim.
 
 27
-00:02:18,993 --> 00:02:34,467
+00:02:15,789 --> 00:02:27,867
 Graph interfaces let people and agents negotiate executable intent, and the application proves every mutation.

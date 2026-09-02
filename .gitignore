@@ -46,17 +46,3 @@ next-env.d.ts
 /outputs/
 /work/
 .gstack/
-
-# local design/measurement probes
-/.shot
-
-# transient agent scratch
-/_skep_*
-/.audit-*
-
-# transient agent scratch
-_skep*
-.audit-*
-/skep-*.tmp.ts
-/vis-check.ts
-/vis[0-9]*.ts

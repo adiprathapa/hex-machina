@@ -1,6 +1,6 @@
-// Emits captions.srt from narration.txt using the real per-paragraph synthesis
-// durations, so the captions cannot drift from the audio the way hand-kept ones
-// did. Reads a JSON manifest of {text, seconds} produced by render-demo.sh.
+// Emits captions.srt from the narration's measured paragraph timings, so the
+// captions cannot drift from the audio the way hand-kept ones did. Reads a JSON
+// array of {text, start, end} (a recording) or {text, seconds} (synthesis).
 import { readFile, writeFile } from "node:fs/promises";
 
 const [manifestPath, outputPath, leadInArg, videoSecondsArg] = process.argv.slice(2);
@@ -48,8 +48,12 @@ function stamp(seconds) {
 
 const cues = [];
 let clock = leadIn;
-for (const { text, seconds } of parts) {
-  const chunks = split(written(text));
+for (const part of parts) {
+  // A recorded narration gives each paragraph its own start and end (the
+  // pauses between them are the reader's); a synthesized one only a length.
+  if (typeof part.start === "number") clock = leadIn + part.start;
+  const seconds = typeof part.end === "number" ? part.end - part.start : part.seconds;
+  const chunks = split(written(part.text));
   const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0) || 1;
   for (const chunk of chunks) {
     const span = seconds * (chunk.length / total);
