@@ -1,10 +1,10 @@
 {
   "schema_version": 3,
   "generated_by": "npm run verify:live",
-  "verified_at": "2026-09-01T19:04:01.021Z",
+  "verified_at": "2026-09-02T02:16:09.448Z",
   "url": "https://hex-machina.hex-machina.workers.dev",
   "browser": "Chrome (headless), live production deployment",
-  "deployed_document_fingerprint": "b05cb87411c8087e",
+  "deployed_document_fingerprint": "ee4545ddcda05fdf",
   "completed_steps": [
     "coherent_filtered_inspection",
     "registered_tools_drive_visible_ui",
@@ -43,14 +43,14 @@
   "responsive_evidence": {
     "viewport": "390x844",
     "objective_visible": true,
-    "brief_top_px": 397,
-    "canvas_top_px": 1105,
+    "brief_top_px": 389,
+    "canvas_top_px": 938,
     "horizontal_overflow": false,
     "minimum_compact_target_height_px": 44
   },
   "site_tools_api_available": true,
   "live_discovery": {
-    "verified_at": "2026-09-01T19:04:01.021Z",
+    "verified_at": "2026-09-02T02:16:09.448Z",
     "url": "https://hex-machina.hex-machina.workers.dev",
     "discovered_tool_names": [
       "apply_spell_patch",
