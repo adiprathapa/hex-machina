@@ -250,7 +250,7 @@ ChatGPT uses a different, server-side integration boundary. Connect
 `https://hexmend.hex-machina.workers.dev/mcp` as a public MCP server in
 ChatGPT developer mode, then attach **Hexmend** from the conversation's tools
 menu. The endpoint exposes the same seven manifest definitions and production
-handlers as WebMCP; every connection gets an isolated, expiring graph session.
+handlers as WebMCP; every connection gets an isolated Durable Object graph session.
 No OpenAI API key or Hexmend account is required. The header still reports only
 the browser's WebMCP status, because a page cannot detect whether a separate
 ChatGPT conversation has attached its remote MCP connection. Exact setup,

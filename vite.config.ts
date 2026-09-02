@@ -25,6 +25,10 @@ export default defineConfig(async () => {
         config: {
           main: "./worker/index.ts",
           compatibility_flags: ["nodejs_compat"],
+          durable_objects: {
+            bindings: [{ name: "MCP_SESSIONS", class_name: "HexmendMcpSession" }],
+          },
+          migrations: [{ tag: "v1-mcp-sessions", new_sqlite_classes: ["HexmendMcpSession"] }],
         },
       }),
     ],

@@ -17,10 +17,10 @@ The full fallback experience works when the browser does not expose `document.mo
 ChatGPT does not currently expose the page-level WebMCP API in its ordinary
 in-app browser. Hexmend therefore also serves the same seven definitions and
 handlers over Streamable HTTP at `/mcp`, which can be attached in ChatGPT
-developer mode. Remote MCP conversations use bounded 30-minute in-memory
-sessions; they do not mirror a separately opened browser tab, and a Worker
-isolate restart can require reconnecting. Durable shared state and an MCP Apps
-widget are future production extensions, not claims of this submission.
+developer mode. Remote MCP conversations use isolated Durable Objects with a
+persistent deterministic call journal; they do not mirror a separately opened
+browser tab. A shared browser/ChatGPT canvas and an MCP Apps widget are future
+product extensions, not claims of this submission.
 
 ## Familiar graph network
 

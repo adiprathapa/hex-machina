@@ -50,6 +50,22 @@ test("remote MCP initializes and exposes the same seven bounded tools", async ()
   assert.equal(listed.body.result.tools.at(-1).annotations.readOnlyHint, false);
 });
 
+test("remote MCP negotiates supported versions and declines the optional SSE stream", async () => {
+  const unsupported = await rpc("initialize", {
+    protocolVersion: "2099-12-31",
+    capabilities: {},
+    clientInfo: { name: "future-client", version: "1" },
+  });
+  assert.equal(unsupported.body.result.protocolVersion, "2025-06-18");
+
+  const stream = await handleMcpRequest(new Request(endpoint, {
+    method: "GET",
+    headers: { accept: "text/event-stream" },
+  }));
+  assert.equal(stream.status, 405);
+  assert.equal(stream.headers.get("allow"), "POST, DELETE");
+});
+
 test("a ChatGPT-style MCP session completes the constraint-preserving repair", async () => {
   const { sessionId } = await initialize();
   const inspection = (await call(sessionId, "inspect_spell")).structuredContent;

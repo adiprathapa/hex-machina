@@ -36,9 +36,17 @@ async function renderBuiltPage(headers = {}) {
 
 test("deployment output contains the worker and complete app-owned assets only", async () => {
   const worker = path.join(DIST, "server/index.js");
+  const wranglerConfig = path.join(DIST, "server/wrangler.json");
   const ogImage = path.join(DIST, "client/og.png");
   const favicon = path.join(DIST, "client/favicon.png");
   assert.ok((await stat(worker)).size > 100_000);
+  const config = JSON.parse(await readFile(wranglerConfig, "utf8"));
+  assert.deepEqual(config.durable_objects.bindings, [
+    { name: "MCP_SESSIONS", class_name: "HexmendMcpSession" },
+  ]);
+  assert.deepEqual(config.migrations, [
+    { tag: "v1-mcp-sessions", new_sqlite_classes: ["HexmendMcpSession"] },
+  ]);
 
   // File size was standing in for "a real image, not a placeholder", which
   // stopped meaning anything once the assets were generated from the shipped

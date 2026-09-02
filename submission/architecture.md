@@ -32,12 +32,12 @@ Hexmend does not ask an agent to own or infer application state. The client appl
 - `tests/webmcp-multi-scenario.test.mjs`: swaps through all 96 generated tasks, re-registers scenario-narrowed WebMCP schemas, completes the full nine-call repair through the registered definitions, and proves every retired seven-tool set is removed before the next task.
 - The same production-browser test supplies the `document.modelContext` registration contract, invokes all seven registered definitions as an agent would, and verifies that those calls drive the visible interface. This adapter harness complements, but does not replace, the live deployment discovery run recorded in `tests/browser-acceptance.json`.
 - `src/tools/webmcp.ts`: guarded, abort-scoped WebMCP registration with narrow schemas, human-readable titles, and honest annotations.
-- `src/tools/mcp-server.ts`: dependency-free Streamable HTTP MCP adapter for ChatGPT, with the same definition factory and handlers behind isolated, bounded, expiring connection sessions.
+- `src/tools/mcp-server.ts`: dependency-free Streamable HTTP MCP adapter for ChatGPT, with the same definition factory and handlers behind isolated connection sessions.
 - `src/familiar/gnn.ts`: optional two-round frozen-weight message passing that ranks inspection targets without influencing simulation or mutation.
 - `app/Hexmend.tsx`: visual canvas, local fallback controls, visible constraints, per-operation patch review, and activity evidence.
 - `worker/index.ts`: Cloudflare-compatible request boundary routing `/mcp` before the application router and adding content, capability, referrer, framing, and MIME security policies to built responses.
 
-The application has no database, object-storage binding, account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin. Remote MCP state is intentionally per-connection and in-memory: it lets ChatGPT run the same repair independently, but does not claim to mirror a separate browser tab.
+The application has no account surface, analytics, or runtime third-party request. The production-browser suite asserts that the complete human and registered-agent journeys remain same-origin. Remote MCP state is intentionally per-connection in a Cloudflare Durable Object: a compact successful-call journal replays deterministic handlers after eviction, so ChatGPT can run the same repair independently without claiming to mirror a separate browser tab.
 
 The visible Task loader reconstructs the graph, Agent Gym session, issued-patch capability closure, and WebMCP registration as one scenario-scoped unit. The UI returns its WebMCP indicator to a checking state during that handoff. This prevents a loaded opaque-ID task from inheriting the previous episode ledger, write authority, or schema enums.
 
@@ -103,7 +103,7 @@ The scenario contains a fixed seed, stable IDs, sorted serialization, and pure s
 
 Registration is feature-detected through `document.modelContext?.registerTool`. Each page mount owns an `AbortController`, so React development remounts and real navigation unregister all seven names before another registration attempt. When WebMCP is unavailable, the complete guided local console invokes the identical handlers. No OpenAI API key or embedded model call is needed.
 
-ChatGPT's in-app browser need not expose `document.modelContext`: developer-mode ChatGPT connections discover the same seven definitions at `/mcp` and execute them through the same handler factory. This is a genuine remote MCP transport, not a page-owned WebMCP shim. Its state belongs to the ChatGPT connection and expires after 30 minutes.
+ChatGPT's in-app browser need not expose `document.modelContext`: developer-mode ChatGPT connections discover the same seven definitions at `/mcp` and execute them through the same handler factory. This is a genuine remote MCP transport, not a page-owned WebMCP shim. Its state belongs to the ChatGPT connection and is strongly routed through a Durable Object.
 
 ## Familiar experiment
 

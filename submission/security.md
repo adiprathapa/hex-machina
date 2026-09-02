@@ -29,8 +29,8 @@ HTML responses additionally receive a Content Security Policy restricted to same
 ## Remote MCP boundary
 
 - ChatGPT receives the same seven definitions and invokes the same runtime-validated handlers over Streamable HTTP; there is no second repair implementation.
-- Every initialized connection receives an opaque random session ID and an isolated graph. Sessions expire after 30 minutes, are capped at 128 per Worker isolate, and are discarded on explicit disconnect or isolate restart.
-- Remote writes affect only that ephemeral session. They cannot alter another connection, the public site, a user's browser tab, or an external system; MCP annotations therefore mark every tool `openWorldHint: false` and every operation `destructiveHint: false`.
+- Every initialized connection receives an opaque Durable Object ID and an isolated graph. Successful calls are persisted as a deterministic replay journal, so routing and object eviction cannot silently lose the conversation between tool calls.
+- Remote writes affect only that isolated session. They cannot alter another connection, the public site, a user's browser tab, or an external system; MCP annotations therefore mark every tool `openWorldHint: false` and every operation `destructiveHint: false`.
 - Missing and expired sessions fail closed. Handler failures return model-readable MCP tool errors without leaking stack traces.
 - Responses are non-cacheable and inherit the worker's MIME, referrer, permissions, and cross-origin resource protections.
 
@@ -40,4 +40,4 @@ Dependencies are exactly locked. GitHub Actions performs `npm ci`, fails on high
 
 ## Secrets and persistence
 
-The application needs no OpenAI key or other runtime secret. `.env*`, generated output, local build state, and credentials are excluded from source control. Browser game state ends on reset or reload; remote MCP state ends on disconnect, expiry, eviction, or Worker restart.
+The application needs no OpenAI key or other runtime secret. `.env*`, generated output, local build state, and credentials are excluded from source control. Browser game state ends on reset or reload; explicit remote MCP disconnect deletes its Durable Object journal.

@@ -40,9 +40,10 @@ built Worker route rather than only the unbundled handler.
 
 ## State boundary
 
-Each initialized connection receives a random opaque session ID and its own
-canonical graph. Sessions expire after 30 minutes, are bounded to 128 per
-Worker isolate, and disappear on disconnect or isolate restart. A remote
-ChatGPT session does not mirror a separately opened browser tab. This keeps the
-compatibility layer honest and dependency-free; durable state and an MCP Apps
-widget are possible later extensions.
+Each initialized connection receives an opaque Durable Object ID and its own
+canonical graph. Successful calls are stored as a compact deterministic replay
+journal, so later requests remain consistent across Worker routing and object
+eviction. Explicit disconnect deletes that journal. A remote ChatGPT session
+does not mirror a separately opened browser tab. This keeps the compatibility
+layer honest and dependency-free; a shared canvas and MCP Apps widget are
+possible later extensions.

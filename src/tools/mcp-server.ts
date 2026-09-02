@@ -4,10 +4,11 @@ import { createSpellToolManifest, type SpellToolName } from "./definitions.ts";
 import { createSpellToolHandlers } from "./handlers.ts";
 
 const MCP_PROTOCOL_VERSION = "2025-06-18";
+const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2025-06-18", "2025-03-26"]);
 const SESSION_TTL_MS = 30 * 60 * 1000;
 const MAX_SESSIONS = 128;
 
-interface McpSession {
+export interface McpSession {
   graph: SpellGraph;
   handlers: ReturnType<typeof createSpellToolHandlers>;
   touchedAt: number;
@@ -48,7 +49,7 @@ function pruneSessions(now: number) {
   }
 }
 
-function createSession(now: number) {
+export function createMcpSession(now = Date.now()) {
   pruneSessions(now);
   const graph = createMoonflowerScenario();
   const session = {} as McpSession;
@@ -102,23 +103,44 @@ function requestId(message: JsonRpcRequest) {
  * Streamable HTTP MCP transport for ChatGPT and other remote MCP clients.
  *
  * Browser WebMCP and remote MCP are deliberately separate transports. Both
- * expose the same manifest factory and production handlers, while each remote
- * MCP connection owns an isolated, expiring graph so one conversation cannot
- * mutate another person's lesson.
+ * expose the same manifest factory and production handlers. The Worker routes
+ * each production connection through an isolated Durable Object; the bounded
+ * module-local session is retained only as a portable/local fallback.
  */
 export async function handleMcpRequest(request: Request): Promise<Response> {
+  return handleMcpSessionRequest(request);
+}
+
+export interface McpSessionRequestOptions {
+  /** Pre-routed state, used by the Cloudflare Durable Object transport. */
+  session?: McpSession;
+  /** Stable transport session ID assigned by the Durable Object namespace. */
+  sessionId?: string;
+  onInitialize?(): Promise<void> | void;
+  onSuccessfulToolCall?(call: { name: SpellToolName; arguments: unknown }): Promise<void> | void;
+  onDelete?(): Promise<void> | void;
+}
+
+export async function handleMcpSessionRequest(
+  request: Request,
+  options: McpSessionRequestOptions = {},
+): Promise<Response> {
   if (request.method === "DELETE") {
-    const id = request.headers.get("Mcp-Session-Id");
-    if (id) sessions.delete(id);
+    if (options.session) await options.onDelete?.();
+    else {
+      const id = request.headers.get("Mcp-Session-Id");
+      if (id) sessions.delete(id);
+    }
     return new Response(null, { status: 204 });
   }
 
   if (request.method === "GET") {
-    return json({
-      name: "Hexmend MCP",
-      transport: "Streamable HTTP",
-      endpoint: "/mcp",
-      message: "Send MCP JSON-RPC requests with POST.",
+    // This implementation returns JSON directly for POST requests and does not
+    // open a server-sent event stream. Streamable HTTP explicitly permits a
+    // server to decline the optional GET stream with 405.
+    return new Response("SSE stream not supported", {
+      status: 405,
+      headers: { Allow: "POST, DELETE", "Cache-Control": "no-store" },
     });
   }
 
@@ -137,13 +159,14 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
   }
 
   if (message.method === "initialize") {
-    const sessionId = crypto.randomUUID();
-    const session = createSession(Date.now());
-    sessions.set(sessionId, session);
+    const sessionId = options.sessionId ?? crypto.randomUUID();
+    const session = options.session ?? createMcpSession();
+    if (!options.session) sessions.set(sessionId, session);
+    await options.onInitialize?.();
     const requestedVersion = typeof message.params === "object" && message.params !== null
       ? (message.params as Record<string, unknown>).protocolVersion
       : undefined;
-    const protocolVersion = typeof requestedVersion === "string" && /^\d{4}-\d{2}-\d{2}$/.test(requestedVersion)
+    const protocolVersion = typeof requestedVersion === "string" && SUPPORTED_PROTOCOL_VERSIONS.has(requestedVersion)
       ? requestedVersion
       : MCP_PROTOCOL_VERSION;
     return rpcResult(requestId(message), {
@@ -159,7 +182,9 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
     return new Response(null, { status: 202 });
   }
 
-  const found = findSession(request);
+  const found = options.session
+    ? { id: options.sessionId ?? "durable", session: options.session }
+    : findSession(request);
   if (!found) {
     return rpcError(requestId(message), -32001, "Missing or expired MCP session; initialize a new connection", 404);
   }
@@ -182,7 +207,9 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
     }
     try {
       const execute = found.session.handlers[name as SpellToolName] as (input: unknown) => Promise<unknown>;
-      const result = await execute(params.arguments ?? {});
+      const args = params.arguments ?? {};
+      const result = await execute(args);
+      await options.onSuccessfulToolCall?.({ name: name as SpellToolName, arguments: args });
       return rpcResult(requestId(message), {
         structuredContent: result,
         content: [{ type: "text", text: JSON.stringify(result) }],
