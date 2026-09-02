@@ -584,6 +584,9 @@ export function HexMachina() {
     // so the climax of the demo dropped keyboard users to <body>. The next
     // decision is the primary control again ("Try a held-out task").
     keepFocusOnPrimary();
+    // Reviewing the patch scrolled the narrative zone down to the card; the
+    // verdict that replaces it is written at the top, so bring the zone back.
+    document.querySelector<HTMLElement>(".familiar-scroll")?.scrollTo({ top: 0 });
   };
 
   const previewRepair = async () => {
@@ -597,6 +600,7 @@ export function HexMachina() {
     setConsoleOutput(JSON.stringify(result, null, 2));
     // The Undo button unmounts with the success read it lives in.
     keepFocusOnPrimary();
+    document.querySelector<HTMLElement>(".familiar-scroll")?.scrollTo({ top: 0 });
   };
 
   /**
@@ -982,9 +986,17 @@ export function HexMachina() {
               <button
                 className="primary"
                 onClick={() => {
-                  const card = document.querySelector(".patch-card");
-                  card?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  card?.querySelector<HTMLButtonElement>(".patch-apply")?.focus();
+                  const card = document.querySelector<HTMLElement>(".patch-card");
+                  const zone = card?.closest<HTMLElement>(".familiar-scroll");
+                  // The rail's narrative zone is shorter than the card on a
+                  // laptop (286px against a 344px card at 1280x720), so
+                  // centring the card scrolled its title and rationale out of
+                  // the zone and left only the buttons. Rest the zone on the
+                  // card's head when the card cannot fit, and keep the focus
+                  // call from scrolling it again.
+                  const fits = !!card && !!zone && card.offsetHeight <= zone.clientHeight;
+                  card?.scrollIntoView({ behavior: "smooth", block: fits ? "center" : "start" });
+                  card?.querySelector<HTMLButtonElement>(".patch-apply")?.focus({ preventScroll: true });
                 }}
               >
                 Review the patch
@@ -1255,7 +1267,11 @@ export function HexMachina() {
           {/* The rail itself never scrolls at desktop widths. This narrative
               zone and the feed below each scroll on their own, so the Task
               loader and Local tool console stay pinned and reachable. */}
-          <div className="familiar-scroll" ref={railZoneRef}>
+          <div
+            className="familiar-scroll"
+            ref={railZoneRef}
+            onScroll={(event) => { event.currentTarget.dataset.scrolled = event.currentTarget.scrollTop > 2 ? "true" : "false"; }}
+          >
           <div className="familiar-title"><span className="familiar-orb">M</span><div><p className="section-kicker">Field note</p><h2>Moth</h2></div></div>
 
           {patch ? (
@@ -1369,7 +1385,7 @@ export function HexMachina() {
               ))}
             </details>
             <div className="gym-foot">
-              <small title="96 variants · 3 causal families · vector + offline rollouts">96 variants · 3 causal families · vector + offline rollouts</small>
+              <small title="96 variants · 3 causal families · vector + offline rollouts">96 variants · 3 causal families</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>

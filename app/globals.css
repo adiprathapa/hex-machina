@@ -1689,7 +1689,11 @@ kbd {
 
 .gym-score strong {
   color: var(--blue-text);
-  font: 600 var(--t-xl)/1 var(--font-fira-code), monospace;
+  /* The UI face, not the code face: Fira Code's slashed zero read as "Ø / 23"
+     before the first cast, at 34px on a big monitor. Tabular so 0 and 21
+     take the same width. */
+  font: 600 var(--t-xl)/1 var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .gym-score strong small,
@@ -1870,10 +1874,6 @@ kbd {
      masked away, and at the end of the scroll range it sits under the last
      control instead of over it. A zone that fits carries no band, so the
      Agent Gym card keeps the 28px it would otherwise lose. */
-  .familiar-scroll[data-overflow="true"] {
-    padding-bottom: 4px;
-  }
-
   .familiar-scroll[data-overflow="true"]::after,
   .activity-list[data-overflow="true"]::after {
     content: "";
@@ -1881,7 +1881,25 @@ kbd {
     bottom: 0;
     display: block;
     height: var(--rail-fade);
-    background: linear-gradient(transparent, var(--paper));
+    /* Solid for the last quarter: a gradient that only reached the ground at
+       its final pixel left a 4-6px sliver of the next line showing under it. */
+    background: linear-gradient(transparent, var(--paper) 75%);
+    pointer-events: none;
+  }
+
+  /* The matching band at the top once the zone has been scrolled (the
+     Review-the-patch step scrolls it to the card), so a scrolled zone never
+     opens on a mid-sentence fragment. Sticky with a negative margin so it
+     overlays the first line instead of pushing it down. */
+  .familiar-scroll[data-scrolled="true"]::before {
+    content: "";
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: block;
+    height: var(--rail-fade);
+    margin-bottom: calc(var(--rail-fade) * -1);
+    background: linear-gradient(var(--paper) 25%, transparent);
     pointer-events: none;
   }
 
@@ -2266,7 +2284,8 @@ kbd {
   /* Above 950px tall the rail has slack once the prompt is whole. The prompt
      box and its section stop growing here — a 40vh cap still left a 423px
      tint holding 165px of text at 2560x1440 — and the quest steps take the
-     slack instead, up to 140px a row. Shrink stays on, so between 950 and
+     slack instead, up to 120px a row (140 read as stretched, with 90px of
+     blank between the lines of a step). Shrink stays on, so between 950 and
      1000px tall, where the rail is still over budget, the prompt yields
      exactly as it does on a laptop. */
   .agent-brief,
@@ -2277,7 +2296,7 @@ kbd {
   .quest-steps {
     flex: 1 0 auto;
     grid-auto-rows: 1fr;
-    max-height: 560px;
+    max-height: 480px;
   }
 }
 
