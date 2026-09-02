@@ -1,6 +1,6 @@
-# Hex Machina 75-second demo script
+# Hexmend 75-second demo script
 
-**Rendered submission video:** [`video/hex-machina-demo.mp4`](video/hex-machina-demo.mp4)
+**Rendered submission video:** [`video/hexmend-demo.mp4`](video/hexmend-demo.mp4)
 
 **Accessible captions:** [`video/captions.srt`](video/captions.srt)
 
@@ -8,7 +8,7 @@
 
 **Visual:** Open on the complete spell canvas.
 
-**Voiceover:** “Hex Machina is an agent evaluation environment disguised as a cooperative spell debugger. The executable graph is shared by a person and their agent.”
+**Voiceover:** “Hexmend is an agent evaluation environment disguised as a cooperative spell debugger. The executable graph is shared by a person and their agent.”
 
 ## 0:08 to 0:18: Cast the failure
 
@@ -62,7 +62,7 @@
 
 **Reference capture:** `screenshots/03-successful-recast.jpg`
 
-**Voiceover:** “Three causal rules and ninety-six variants separate grounded agents from unsafe shortcuts. Hex Machina turns a magical game into a deterministic gym.”
+**Voiceover:** “Three causal rules and ninety-six variants separate grounded agents from unsafe shortcuts. Hexmend turns a magical game into a deterministic gym.”
 
 ## Judge prompt
 

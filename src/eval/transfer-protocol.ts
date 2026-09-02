@@ -31,7 +31,7 @@ import {
  * that has memorized the training family's vocabulary.
  */
 
-export const AGENT_GYM_TRANSFER_PROTOCOL = "hex-machina-agent-gym-transfer/v1" as const;
+export const AGENT_GYM_TRANSFER_PROTOCOL = "hexmend-agent-gym-transfer/v1" as const;
 
 export interface TransferProtocol {
   /** The family withheld from the training pool and evaluated on. */

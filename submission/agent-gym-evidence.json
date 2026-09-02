@@ -1,5 +1,5 @@
 {
-  "protocol": "hex-machina-agent-gym-evidence/v2",
+  "protocol": "hexmend-agent-gym-evidence/v2",
   "familyId": "moonflower-opaque-roles-v1",
   "familySplitSizes": {
     "family-01-v1": {
@@ -19,7 +19,7 @@
     }
   },
   "taskDiversity": {
-    "protocol": "hex-machina-agent-gym-diversity/v1",
+    "protocol": "hexmend-agent-gym-diversity/v1",
     "familyIds": [
       "family-01-v1",
       "family-02-v1",
@@ -45,10 +45,10 @@
     "heldOutScope": "identifier-and-layout",
     "supportedClaim": "Held-out scores are evidence of robustness to identifier and layout perturbation. They are not evidence of structural generalization: every structure in the test split also appears in training, so no structure is held out."
   },
-  "datasetBytes": 7966806,
-  "datasetDigest": "sha256:97b8310e6ea330ef",
-  "preferenceDatasetBytes": 18277291,
-  "preferenceDatasetDigest": "sha256:ee10a7a5540d596a",
+  "datasetBytes": 7965270,
+  "datasetDigest": "sha256:ded8284082e1aa49",
+  "preferenceDatasetBytes": 18276267,
+  "preferenceDatasetDigest": "sha256:00396a943c4757b1",
   "claims": {
     "determinism": {
       "claim": "Every exported episode replays action-for-action against a fresh environment.",
@@ -213,5 +213,5 @@
     }
   },
   "allClaimsHold": true,
-  "evidenceDigest": "sha256:19eedf18b58ecde1"
+  "evidenceDigest": "sha256:408cf3be74f8b5fa"
 }

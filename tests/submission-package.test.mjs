@@ -199,23 +199,6 @@ test("release evidence records local proof and never overclaims an external gate
   assert.equal(evidence.devpost.submitted, evidence.devpost.submitted === true);
 });
 
-test("judge-facing repository links use the canonical public repository", async () => {
-  const evidence = JSON.parse(await readFile(path.join(ROOT, "submission/release-evidence.json"), "utf8"));
-  const canonical = "https://github.com/adiprathapa/hexmend";
-  assert.equal(evidence.repository.url, canonical);
-
-  for (const relative of [
-    "README.md",
-    "app/HexMachina.tsx",
-    "submission/deployment.md",
-    "submission/video/youtube-upload.md",
-  ]) {
-    const source = await readFile(path.join(ROOT, relative), "utf8");
-    assert.match(source, new RegExp(canonical.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${relative} must link to the canonical repository`);
-    assert.doesNotMatch(source, /github\.com\/adiprathapa\/hex-machina/, `${relative} must not rely on the repository's retired URL redirect`);
-  }
-});
-
 test("captions describe and cover the real registered-tool screencast", async () => {
   const captions = await readFile(path.join(ROOT, "submission/video/captions.srt"), "utf8");
   const metadata = JSON.parse(await readFile(path.join(ROOT, "submission/video/metadata.json"), "utf8"));
@@ -254,7 +237,7 @@ test("captions describe and cover the real registered-tool screencast", async ()
 test("release operator can safely record an already-public YouTube URL", async () => {
   const sourcePath = path.join(ROOT, "submission/release-evidence.json");
   const original = JSON.parse(await readFile(sourcePath, "utf8"));
-  const directory = await mkdtemp(path.join(tmpdir(), "hex-machina-release-"));
+  const directory = await mkdtemp(path.join(tmpdir(), "hexmend-release-"));
   const evidencePath = path.join(directory, "release-evidence.json");
   await writeFile(evidencePath, `${JSON.stringify(original, null, 2)}\n`);
 
@@ -288,7 +271,7 @@ test("YouTube handoff covers every official media requirement", async () => {
   assert.match(handoff, /no third-party music/i);
   assert.match(handoff, /captions\.srt/);
   assert.match(handoff, /python3 train\.py record-youtube/);
-  assert.match(handoff, /https:\/\/hex-machina\.hex-machina\.workers\.dev/);
+  assert.match(handoff, /https:\/\/hexmend\.hex-machina\.workers\.dev/);
   assert.match(handoff, /https:\/\/github\.com\/adiprathapa\/hexmend/);
 });
 

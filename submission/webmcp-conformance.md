@@ -2,7 +2,7 @@
 
 Audited 2026-08-27 against the [WebMCP Draft Community Group Report](https://webmachinelearning.github.io/webmcp/) published 2026-08-26 and its [primary specification source](https://github.com/webmachinelearning/webmcp/blob/main/index.bs). WebMCP is experimental, so this record identifies the exact contract the submission targets.
 
-| Current draft contract | Hex Machina evidence |
+| Current draft contract | Hexmend evidence |
 |---|---|
 | Tools register imperatively through `document.modelContext.registerTool()`. | `src/tools/webmcp.ts` feature-detects the method and registers seven definitions generated from the versioned serializable factory in `src/tools/definitions.ts`. The headless Agent Gym protocol exposes the identifier-neutral form of that same contract. |
 | Tool names are stable, non-empty identifiers of at most 128 allowed characters. | All seven names are short lowercase ASCII identifiers; contract tests compare the exact set. |

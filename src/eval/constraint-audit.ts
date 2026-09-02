@@ -21,7 +21,7 @@ import {
  */
 
 export const AGENT_GYM_CONSTRAINT_AUDIT_PROTOCOL =
-  "hex-machina-agent-gym-constraint-audit/v1" as const;
+  "hexmend-agent-gym-constraint-audit/v1" as const;
 
 interface PolicyOptions {
   family: AgentGymFamilyId;

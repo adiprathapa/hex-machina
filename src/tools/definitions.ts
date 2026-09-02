@@ -1,6 +1,6 @@
 import { MAX_TRACE_DEPTH, MAX_TRACE_PATHS } from "../solver/trace.ts";
 
-export const SPELL_TOOL_MANIFEST_PROTOCOL = "hex-machina-tool-manifest/v1" as const;
+export const SPELL_TOOL_MANIFEST_PROTOCOL = "hexmend-tool-manifest/v1" as const;
 export const MAX_INSPECT_NODES = 12;
 export const SPELL_PATCH_ID_PATTERN = "^patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+$";
 export const SPELL_REVERT_TOKEN_PATTERN = "^revert-patch-(umbrella|dampener|temporal-guard|direct)-v[0-9]+-after-v[0-9]+$";

@@ -7,9 +7,9 @@ project and explains its WebMCP use; the video must be less than three minutes.
 
 ## Upload settings
 
-- File: `submission/video/hex-machina-demo.mp4`
+- File: `submission/video/hexmend-demo.mp4`
 - Visibility: **Public (not Unlisted)**
-- Duration: 154.8 seconds (under the three-minute limit)
+- Duration: 154.5 seconds (under the three-minute limit)
 - Resolution: 1920×1080
 - Audio: AAC narration is present
 - Captions: upload `submission/video/captions.srt` as English subtitles
@@ -22,17 +22,17 @@ the link.
 ## Title
 
 ```text
-Hex Machina: A WebMCP Agent Gym for Constraint-Preserving Repairs
+Hexmend: A WebMCP Agent Gym for Constraint-Preserving Repairs
 ```
 
 ## Description
 
 ```text
-Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A browser agent uses seven WebMCP tools to inspect, cast, trace, explain, constrain, simulate, and atomically repair the same executable graph a person sees.
+Hexmend is an agent-evaluation environment disguised as a graph-native spell game. A browser agent uses seven WebMCP tools to inspect, cast, trace, explain, constrain, simulate, and atomically repair the same executable graph a person sees.
 
 The key moment: the human says “the ducks are funny, they stay.” That subjective preference becomes an executable constraint, making the cheapest destructive repair ineligible. The agent instead proves and applies an umbrella route that preserves all twelve ducks, keeps the room dry, and waters the moonflower.
 
-Live app: https://hex-machina.hex-machina.workers.dev
+Live app: https://hexmend.hex-machina.workers.dev
 Source (MIT): https://github.com/adiprathapa/hexmend
 
 00:00 WebMCP premise and registered tools

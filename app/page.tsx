@@ -1,5 +1,5 @@
-import { HexMachina } from "./HexMachina";
+import { Hexmend } from "./Hexmend";
 
 export default function Home() {
-  return <HexMachina />;
+  return <Hexmend />;
 }

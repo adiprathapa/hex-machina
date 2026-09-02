@@ -30,7 +30,7 @@ import type { SpellGraph } from "../domain/spell.ts";
  * the numbers support, in both directions.
  */
 
-export const AGENT_GYM_DIVERSITY_PROTOCOL = "hex-machina-agent-gym-diversity/v1" as const;
+export const AGENT_GYM_DIVERSITY_PROTOCOL = "hexmend-agent-gym-diversity/v1" as const;
 
 /**
  * What a held-out score is evidence for, chosen by the measurement.

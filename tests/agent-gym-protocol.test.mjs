@@ -45,7 +45,7 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
   assert.equal(description.ok, true, "a bad request must not poison the bridge");
   assert.equal(description.payload.maxEpisodeSteps, 32);
   assert.deepEqual(description.payload.resetSampling, {
-    protocol: "hex-machina-agent-gym-sampler/v1",
+    protocol: "hexmend-agent-gym-sampler/v1",
     algorithm: "xorshift32-uniform-task-v1",
     sampleSeedRange: [0, 4294967295],
     defaultSplit: "train",
@@ -58,12 +58,12 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
     Object.keys(description.payload.familySplitSizes).every((familyId) => !/moonflower|resonan|feedback|aviary/i.test(familyId)),
     true,
   );
-  assert.equal(description.payload.observationSpace.schema, "hex-machina-public-spell-graph/v1");
+  assert.equal(description.payload.observationSpace.schema, "hexmend-public-spell-graph/v1");
   assert.match(description.payload.observationSpace.excludes.join(" "), /role assignments/);
   assert.match(description.payload.observationSpace.excludes.join(" "), /pre-cast diagnostic assertions/);
   assert.equal(description.payload.actionSpace.length, 7);
   const manifest = description.payload.actionManifest;
-  assert.equal(manifest.protocol, "hex-machina-tool-manifest/v1");
+  assert.equal(manifest.protocol, "hexmend-tool-manifest/v1");
   assert.deepEqual(manifest.actionFormat.properties.tool.enum, description.payload.actionSpace);
   assert.equal(manifest.tools.length, 7);
   assert.deepEqual(manifest.tools.map((tool) => tool.name), description.payload.actionSpace);
@@ -105,7 +105,7 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
     sampleSeed: 42,
   })));
   assert.equal(sampledReset.ok, true);
-  assert.equal(sampledReset.payload.info.sampledTask.protocol, "hex-machina-agent-gym-sampler/v1");
+  assert.equal(sampledReset.payload.info.sampledTask.protocol, "hexmend-agent-gym-sampler/v1");
   assert.equal(sampledReset.payload.info.sampledTask.sampleSeed, 42);
   assert.equal(sampledReset.payload.info.sampledTask.split, "train");
   assert.equal(sampledReset.payload.info.sampledTask.scenarioId, sampledReset.payload.info.scenarioId);
@@ -175,9 +175,9 @@ test("JSONL rollout bridge is strict, recoverable, and stateful", async () => {
 test("dependency-free Python adapter drives a held-out production rollout", async () => {
   const script = String.raw`
 import json
-from adapters.hex_machina_env import HexMachinaEnv
+from adapters.hexmend_env import HexmendEnv
 
-with HexMachinaEnv() as env:
+with HexmendEnv() as env:
     description = env.describe()
     seeded_observation, seeded_info = env.reset(seed=42, options={"split": "validation"})
     repeated_observation, repeated_info = env.reset(seed=42, options={"split": "validation"})
@@ -206,7 +206,7 @@ with HexMachinaEnv() as env:
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt, {
     tools: 7,
-    manifestProtocol: "hex-machina-tool-manifest/v1",
+    manifestProtocol: "hexmend-tool-manifest/v1",
     scenario: "task-01-validation-03",
     graph: "spell-task-01-validation-03",
     reward: 1,
@@ -218,7 +218,7 @@ with HexMachinaEnv() as env:
     semanticsExposed: false,
     seededRepeatable: true,
     sampleSeed: 42,
-    sampleProtocol: "hex-machina-agent-gym-sampler/v1",
+    sampleProtocol: "hexmend-agent-gym-sampler/v1",
     sampleScenarioRepeatable: true,
   });
 });
@@ -226,9 +226,9 @@ with HexMachinaEnv() as env:
 test("Python vector adapter preserves deterministic slot order and state isolation", async () => {
   const script = String.raw`
 import json
-from adapters import HexMachinaVectorEnv
+from adapters import HexmendVectorEnv
 
-with HexMachinaVectorEnv(3) as envs:
+with HexmendVectorEnv(3) as envs:
     validationErrors = []
     try:
         envs.step([{"tool": "inspect_spell"}])
@@ -317,7 +317,7 @@ with HexMachinaVectorEnv(3) as envs:
 });
 
 test("Python preference adapter verifies and filters streaming ranked pairs", async () => {
-  const temporary = await mkdtemp(path.join(tmpdir(), "hex-machina-preferences-"));
+  const temporary = await mkdtemp(path.join(tmpdir(), "hexmend-preferences-"));
   try {
     const exported = await run(
       path.join(repository, "node_modules", ".bin", "tsx"),
@@ -341,9 +341,9 @@ test("Python preference adapter verifies and filters streaming ranked pairs", as
     const script = String.raw`
 import json
 import sys
-from adapters import HexMachinaPreferenceDataset, HexMachinaPreferenceError
+from adapters import HexmendPreferenceDataset, HexmendPreferenceError
 
-dataset = HexMachinaPreferenceDataset(sys.argv[1])
+dataset = HexmendPreferenceDataset(sys.argv[1])
 verification = dataset.verify()
 groups = list(dataset.groups())
 pairs = list(dataset.pairs())
@@ -352,15 +352,15 @@ family_groups = list(dataset.groups(split="validation", family=family))
 family_pairs = list(dataset.pairs(split="validation", family=family))
 def rejected(path):
     try:
-        list(HexMachinaPreferenceDataset(path).groups())
+        list(HexmendPreferenceDataset(path).groups())
         return False
-    except HexMachinaPreferenceError:
+    except HexmendPreferenceError:
         return True
 def filter_rejected(**filters):
     try:
         list(dataset.groups(**filters))
         return False
-    except HexMachinaPreferenceError:
+    except HexmendPreferenceError:
         return True
 first = pairs[0]
 print(json.dumps({
@@ -390,15 +390,15 @@ print(json.dumps({
     );
     assert.equal(result.code, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), {
-      verificationProtocol: "hex-machina-agent-gym-preference-verifier/v2",
+      verificationProtocol: "hexmend-agent-gym-preference-verifier/v2",
       verifiedGroups: 16,
       groups: 16,
       pairs: 160,
-      pairSchema: "hex-machina-agent-gym-preference-pair/v2",
+      pairSchema: "hexmend-agent-gym-preference-pair/v2",
       chosen: "grounded-reference",
       rejected: "mutate-before-explain",
       margin: 5,
-      actionManifest: "hex-machina-tool-manifest/v1",
+      actionManifest: "hexmend-tool-manifest/v1",
       scenario: "task-01-validation-00",
       family: "family-01-v1",
       familyGroups: 8,

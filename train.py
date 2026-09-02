@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resumable work driver for the seven-day Hex Machina build.
+"""Resumable work driver for the seven-day Hexmend build.
 
 This does not implement the game or pretend to be an autonomous coding agent.
 It preserves durable milestone state between scheduled Codex continuations and
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent
 PROGRAM = ROOT / "program.md"
 PREPARE = ROOT / "prepare.py"
 STATE_DIR = ROOT / "work"
-STATE_FILE = STATE_DIR / "hex_machina_state.json"
+STATE_FILE = STATE_DIR / "hexmend_state.json"
 RELEASE_EVIDENCE = ROOT / "submission" / "release-evidence.json"
 YOUTUBE_URL_PATTERN = re.compile(
     r"https://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[A-Za-z0-9_-]+(?:[&?][^\s]*)?"
@@ -48,7 +48,7 @@ def now() -> str:
 
 def initial_state() -> dict[str, Any]:
     return {
-        "project": "Hex Machina",
+        "project": "Hexmend",
         "schema_version": 1,
         "created_at": now(),
         "updated_at": now(),
@@ -108,7 +108,7 @@ def next_unfinished(state: dict[str, Any]) -> str | None:
 
 
 def command_status(state: dict[str, Any]) -> int:
-    print("Hex Machina build status")
+    print("Hexmend build status")
     print(f"Updated: {state['updated_at']}")
     print()
     for key, _ in MILESTONES:

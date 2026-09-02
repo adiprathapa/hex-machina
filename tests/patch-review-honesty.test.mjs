@@ -6,7 +6,7 @@ import { proposePatches } from "../src/solver/repair.ts";
 import { createMoonflowerScenario } from "../src/scenarios/moonflower.ts";
 import { createResonantAviaryScenario } from "../src/scenarios/resonant-aviary.ts";
 
-const client = await readFile(new URL("../app/HexMachina.tsx", import.meta.url), "utf8");
+const client = await readFile(new URL("../app/Hexmend.tsx", import.meta.url), "utf8");
 
 test("the patch review card never asserts a protection the graph does not have", () => {
   // The footer was the literal string "Locked: ducks remain sacred", with no

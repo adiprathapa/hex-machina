@@ -186,7 +186,7 @@ const STORY: Record<string, {
   },
 };
 
-export function HexMachina() {
+export function Hexmend() {
   const [graph, setGraph] = useState<SpellGraph>(() => createMoonflowerScenario());
   const tallViewport = useSyncExternalStore(subscribeTallViewport, readTallViewport, readTallViewportOnServer);
   const graphRef = useRef(graph);
@@ -272,25 +272,31 @@ export function HexMachina() {
     if (!el) return;
     // Show only whole lines: the box's height is whatever slack the rail has,
     // so the clamp is recomputed from it (see .agent-brief-prompt).
+    const text = el.querySelector<HTMLElement>(".agent-brief-prompt-text");
+    if (!text) return;
     const style = getComputedStyle(el);
     const lineHeight = parseFloat(style.lineHeight) || 18;
     const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
     if (el.classList.contains("expanded")) {
       el.style.removeProperty("max-height");
-      el.style.removeProperty("-webkit-line-clamp");
+      text.style.removeProperty("max-height");
+      text.style.removeProperty("-webkit-line-clamp");
     } else {
       // Release the cap and the clamp first so the box can take whatever
       // slack the rail has now (a clamped box reports only its clamped lines
-      // as content, which made the last measurement sticky), then cap it to
-      // the whole lines that fit: the clamp alone leaves the next line
-      // showing under the ellipsis in the leftover height.
+      // as content, which made the last measurement sticky), then cap the
+      // text to the whole lines that fit and the box to those lines plus its
+      // padding. The text has its own clipping box: clipping the padded box
+      // instead showed the top of the next line inside the bottom padding.
       el.style.removeProperty("max-height");
-      el.style.removeProperty("-webkit-line-clamp");
+      text.style.removeProperty("max-height");
+      text.style.removeProperty("-webkit-line-clamp");
       const lines = Math.max(1, Math.floor((el.clientHeight - padding) / lineHeight + 0.01));
-      el.style.setProperty("-webkit-line-clamp", String(lines));
+      text.style.setProperty("-webkit-line-clamp", String(lines));
+      text.style.maxHeight = `${lines * lineHeight}px`;
       el.style.maxHeight = `${lines * lineHeight + padding}px`;
     }
-    const clips = el.scrollHeight - el.clientHeight > 1;
+    const clips = text.scrollHeight - text.clientHeight > 1;
     // Blanking the control while it owns focus drops the keyboard user to
     // <body>. Leave it until focus moves on; onBlur measures again.
     if (!clips && document.activeElement === promptToggleRef.current) return;
@@ -304,7 +310,9 @@ export function HexMachina() {
     if (el && promptExpanded) {
       // The open prompt shows everything: drop the collapsed cap and clamp.
       el.style.removeProperty("max-height");
-      el.style.removeProperty("-webkit-line-clamp");
+      const text = el.querySelector<HTMLElement>(".agent-brief-prompt-text");
+      text?.style.removeProperty("max-height");
+      text?.style.removeProperty("-webkit-line-clamp");
     }
     if (!el || promptExpanded || typeof ResizeObserver === "undefined") return;
     measurePromptClips();
@@ -737,7 +745,7 @@ export function HexMachina() {
     const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "hex-machina-agent-gym-episode.json";
+    link.download = "hexmend-agent-gym-episode.json";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -983,7 +991,7 @@ export function HexMachina() {
   );
 
   return (
-    <div className="machina">
+    <div className="hexmend">
       <a className="skip-link" href="#workspace">Skip to the spell workspace</a>
       <header className="topbar">
         <div className="brand-lockup">
@@ -997,7 +1005,7 @@ export function HexMachina() {
               <path d={BRAND_MARK_HEX} fill="currentColor" stroke="currentColor" strokeWidth={BRAND_MARK_CORNER} strokeLinejoin="round" />
             </svg>
           </span>
-          <h1>Hex Machina</h1>
+          <h1>Hexmend</h1>
         </div>
         <div className="mission-chip">
           <span>Objective</span>
@@ -1107,7 +1115,7 @@ export function HexMachina() {
               </button>
               <a className="quiet" href={REPO_URL} target="_blank" rel="noreferrer noopener">Source</a>
             </div>
-            <p ref={promptRef} className={`agent-brief-prompt ${promptExpanded ? "expanded" : ""}`}>{story.prompt}</p>
+            <p ref={promptRef} className={`agent-brief-prompt ${promptExpanded ? "expanded" : ""}`}><span className="agent-brief-prompt-text">{story.prompt}</span></p>
             {/* A mask fade over clamped text reads as "this is cut off", not as
                 "this continues" — measured, it hid up to 69% of the prompt with
                 no scrollbar painted. An explicit control says which it is. */}

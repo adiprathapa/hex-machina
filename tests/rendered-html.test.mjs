@@ -15,19 +15,19 @@ function contrastRatio(foreground, background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-test("ships Hex Machina instead of the starter preview", async () => {
+test("ships Hexmend instead of the starter preview", async () => {
   const [page, layout, client, packageJson, css, policy, scenario] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/HexMachina.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/Hexmend.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../src/eval/policy-benchmark.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/scenarios/moonflower.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /<HexMachina \/>/);
-  assert.match(layout, /Hex Machina \| Agent Gym for Constraint-Aware Repair/);
+  assert.match(page, /<Hexmend \/>/);
+  assert.match(layout, /Hexmend \| Agent Gym for Constraint-Aware Repair/);
   // Two faces, two roles: a neutral grotesk for anything a person reads, a
   // monospace for machine data where character alignment carries meaning.
   assert.match(layout, /Inter/);
@@ -135,7 +135,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   // controls, which kept drifting as controls were added — the task loader, the
   // prompt actions and the source link all measured 32px while the list said 44.
   assert.match(mobileCss, /:root\s*\{\s*--control-min-h:\s*44px;\s*\}/);
-  assert.match(mobileCss, /\.machina button,[\s\S]*?\.skip-link\s*\{\s*min-height:\s*var\(--control-min-h\);/);
+  assert.match(mobileCss, /\.hexmend button,[\s\S]*?\.skip-link\s*\{\s*min-height:\s*var\(--control-min-h\);/);
   assert.match(css, /--control-min-h:\s*32px;/);
   // No control may pin itself to a pointer-sized height and escape the compact
   // override. A rule may still ask for something taller, as long as it does so

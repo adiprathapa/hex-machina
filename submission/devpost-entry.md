@@ -2,7 +2,7 @@
 
 ## Project name
 
-Hex Machina
+Hexmend
 
 ## Tagline
 
@@ -10,7 +10,7 @@ An agent gym where humans decide what matters and agents prove the smallest repa
 
 ## Short description
 
-Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste (“the ducks must stay”) while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
+Hexmend is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste (“the ducks must stay”) while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
 
 ## How to try it
 
@@ -26,7 +26,7 @@ and every result in them comes from the production handlers.
 
 ## Why this is a strong fit for WebMCP
 
-Most agents have to infer application state from pixels and imitate clicks. That is especially brittle in a graph editor, where direction, type, version, and causality matter more than position. Hex Machina exposes the spell as a semantic, versioned artifact instead.
+Most agents have to infer application state from pixels and imitate clicks. That is especially brittle in a graph editor, where direction, type, version, and causality matter more than position. Hexmend exposes the spell as a semantic, versioned artifact instead.
 
 Seven narrow WebMCP tools let the agent inspect the exact graph, trace a side effect, run deterministic simulations, explain the smallest responsible subgraph, record a human-authored sacred constraint, rank valid repairs, and atomically apply an approved patch. Focused inspection never hands the agent dangling references or a pre-solved diagnosis: it separates the closed selected subgraph from boundary edges and returns only high-level scenario status. The trace is a bounded graph traversal, not a prose guess: it returns the complete ordered Moonwell → Multiply → Summon ducks → Pour → Room path, all responsible edges, and explicit cycle/type evidence. The explanation is also executable evidence rather than a prose claim: it returns the typed five-rune/four-edge subgraph, the positive route facts, the absence of an Umbrella route, and four counterfactual simulations proving every responsible edge is necessary. A repair can first be simulated by its bounded patch ID: the result proves the editor was not mutated, and the interface visibly labels the stable prediction as unapplied. The tools return stable node and edge IDs, ordered events, cast assertions, before/after evidence, minimality evidence, and a stale-safe revert token. The browser agent works with the application’s source of truth rather than reconstructing it from the interface.
 
@@ -46,11 +46,11 @@ This is the central thesis: graph interfaces let people and agents negotiate exe
 
 ## Why it is more than a game
 
-Hex Machina also exposes a headless Agent Gym protocol. The typed graph is the observation, the seven tools are the action space, and the shared application handlers define deterministic transitions. A nine-milestone, 23-point rubric rewards grounding, failure observation, causal tracing, explanation, intent preservation, safe patch preview, atomic application, and final verification. Invalid calls score −2; mutating before explaining scores an additional −5. The visible scorecard updates for both UI and WebMCP calls, and a complete trajectory can be exported as JSON.
+Hexmend also exposes a headless Agent Gym protocol. The typed graph is the observation, the seven tools are the action space, and the shared application handlers define deterministic transitions. A nine-milestone, 23-point rubric rewards grounding, failure observation, causal tracing, explanation, intent preservation, safe patch preview, atomic application, and final verification. Invalid calls score −2; mutating before explaining scores an additional −5. The visible scorecard updates for both UI and WebMCP calls, and a complete trajectory can be exported as JSON.
 
 Three semantic families contain 96 deterministic tasks: 48 Moonflower carrier-path variants across 32/8/8 splits, 24 Resonant Aviary feedback-cycle variants across 16/4/4, and 24 Clockwork Orchard temporal-guard variants across 16/4/4. Node, edge, and effect IDs are opaque and remapped per task; serialized order, layout, and prompt wording also change. Each variant activates one to three seeded, typed decoy edges outside the answer-key route, giving every family at least three visible topologies and testing whether a policy can reject causal distractors. Public observations deliberately omit the simulator's role map, causal rule ID, answer-key edges, rule-revealing family/scenario names, and pre-cast diagnostic assertions. Tests prove that a transparent policy can ground protected intent from natural-language constraints plus inspected rune text and earn 23/23 on held-out variants from all three rules, while a memorized training ID is rejected without mutation. That is meaningful cross-rule grounding evidence, not a claim of broad transfer or reinforcement-learning gains.
 
-The reproducible benchmark command runs the transparent reference policy over all 96 variants in three distinct causal families and emits JSON episode receipts and split means. It currently reports 96/96 completions at 23/23. Moonflower requires repairing an unshielded amplified carrier path; Resonant Aviary requires detecting and breaking a reachable directed feedback cycle; Clockwork Orchard requires adding a missing temporal guard before a preserved subject can act safely. A held-out contrast suite proves that the reward separates grounded completion (23), unsafe mutation-first completion (18), safe but incomplete diagnosis (6), constraint-violating completion (4), and canonical-ID memorization (−8); its aggregate results are visible in the product. A group-relative exporter turns those five controls into 64 train-task records with centered 14.4/9.4/−2.6/−4.6/−16.6 advantages and all ten positive-margin chosen/rejected pairs; its verifier regenerates every labeled policy and rejects changed trajectories, safety and constraint flags, rankings, advantages, or margins. A v2 JSONL exporter emits standalone training episodes containing the task prompt, human constraint, initial public graph/state key, complete tool manifest, replay-complete transitions, rewards, termination/truncation flags, results, and variant metadata. An independent bounded verifier reconstructs each task, authenticates its entire reset context, and replays every action through production handlers; altered metadata, actions, rewards, observations, results, terminal scores, reset prompts, initial graphs/state keys, manifests, or duplicate scenarios make it exit nonzero. A strict streaming JSONL service and dependency-free Python adapters let an external trainer drive those same production transitions online as one environment or as isolated parallel vectors with Gymnasium-shaped reset/step results. The service is self-describing: `describe` and every reset provide `hex-machina-tool-manifest/v1`, with the exact tool-call envelope, descriptions, narrow JSON Schemas, and read/write annotations generated from the same definitions as browser WebMCP registration. The generic manifest contains no task-specific opaque IDs. Seeded resets select reproducibly across all tasks or within a family-restricted curriculum, and their receipts expose the exact sampler, family, index, and scenario chosen. Invalid calls are scored without crashing the rollout, and unfinished episodes truncate deterministically at 32 actions. These validate the environment and scripted controls, not a learned-policy result.
+The reproducible benchmark command runs the transparent reference policy over all 96 variants in three distinct causal families and emits JSON episode receipts and split means. It currently reports 96/96 completions at 23/23. Moonflower requires repairing an unshielded amplified carrier path; Resonant Aviary requires detecting and breaking a reachable directed feedback cycle; Clockwork Orchard requires adding a missing temporal guard before a preserved subject can act safely. A held-out contrast suite proves that the reward separates grounded completion (23), unsafe mutation-first completion (18), safe but incomplete diagnosis (6), constraint-violating completion (4), and canonical-ID memorization (−8); its aggregate results are visible in the product. A group-relative exporter turns those five controls into 64 train-task records with centered 14.4/9.4/−2.6/−4.6/−16.6 advantages and all ten positive-margin chosen/rejected pairs; its verifier regenerates every labeled policy and rejects changed trajectories, safety and constraint flags, rankings, advantages, or margins. A v2 JSONL exporter emits standalone training episodes containing the task prompt, human constraint, initial public graph/state key, complete tool manifest, replay-complete transitions, rewards, termination/truncation flags, results, and variant metadata. An independent bounded verifier reconstructs each task, authenticates its entire reset context, and replays every action through production handlers; altered metadata, actions, rewards, observations, results, terminal scores, reset prompts, initial graphs/state keys, manifests, or duplicate scenarios make it exit nonzero. A strict streaming JSONL service and dependency-free Python adapters let an external trainer drive those same production transitions online as one environment or as isolated parallel vectors with Gymnasium-shaped reset/step results. The service is self-describing: `describe` and every reset provide `hexmend-tool-manifest/v1`, with the exact tool-call envelope, descriptions, narrow JSON Schemas, and read/write annotations generated from the same definitions as browser WebMCP registration. The generic manifest contains no task-specific opaque IDs. Seeded resets select reproducibly across all tasks or within a family-restricted curriculum, and their receipts expose the exact sampler, family, index, and scenario chosen. Invalid calls are scored without crashing the rollout, and unfinished episodes truncate deterministically at 32 actions. These validate the environment and scripted controls, not a learned-policy result.
 
 ## What adversarial testing found
 
@@ -119,11 +119,11 @@ WebMCP is the collaboration layer, not a decorative integration. The canonical j
 
 ### Execution
 
-The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 154.8-second screencast driven through the registered WebMCP tools by a scripted client standing in for a host.
+The project is a complete responsive game and split-aware agent-evaluation environment with a typed graph editor, 96 deterministic task variants across three causal rules, failure and success spectacle, visible scoring, exportable trajectories, accessible keyboard and touch behavior, local fallback, reset and undo, security headers, zero runtime third-party requests, production packaging, screenshots, and a narrated 154.5-second screencast driven through the registered WebMCP tools by a scripted client standing in for a host.
 
 ### Potential impact
 
-Hex Machina gives builders and users a concrete model for agent-native interfaces: expose structured application state, let people author subjective constraints, make proposals reviewable, and require the application to prove every mutation. This replaces fragile pixel automation with trustworthy collaboration.
+Hexmend gives builders and users a concrete model for agent-native interfaces: expose structured application state, let people author subjective constraints, make proposals reviewable, and require the application to prove every mutation. This replaces fragile pixel automation with trustworthy collaboration.
 
 ### Trustworthiness
 
@@ -140,7 +140,7 @@ The app turns graph debugging into magical comedy without reducing WebMCP to a n
 
 ## How to test
 
-1. Open <https://hex-machina.hex-machina.workers.dev> in ChatGPT’s in-app browser or WebMCP-enabled Chrome.
+1. Open <https://hexmend.hex-machina.workers.dev> in ChatGPT’s in-app browser or WebMCP-enabled Chrome.
 2. Reset the lesson if it is not at graph v1.
 3. Give the browser agent this exact prompt:
 
@@ -152,7 +152,7 @@ Expected result: seven tools are discoverable; the initial cast floods the room 
 
 ## Build provenance
 
-Hex Machina is a new project created during the challenge period. Its first commit is `c661551` at 2026-08-26 22:55 EDT, and the complete timestamped history is preserved in the repository.
+Hexmend is a new project created during the challenge period. Its first commit is `c661551` at 2026-08-26 22:55 EDT, and the complete timestamped history is preserved in the repository.
 
 ## Submission links
 

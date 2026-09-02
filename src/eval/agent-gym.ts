@@ -70,7 +70,7 @@ export interface AgentGymStep {
 }
 
 export interface AgentGymSnapshot {
-  protocol: "hex-machina-agent-gym/v1";
+  protocol: "hexmend-agent-gym/v1";
   readiness: "multi-family-prototype";
   familyId: AgentGymFamilyId;
   scenarioId: string;
@@ -231,7 +231,7 @@ export class AgentGymSession {
 
   snapshot(): AgentGymSnapshot {
     return {
-      protocol: "hex-machina-agent-gym/v1",
+      protocol: "hexmend-agent-gym/v1",
       readiness: "multi-family-prototype",
       familyId: this.config.familyId,
       scenarioId: this.config.scenarioId,
@@ -530,8 +530,8 @@ export function createAgentGymEnvironment(options?: AgentGymEnvironmentOptions) 
         task: session.snapshot().task,
         episode: session.snapshot(),
         info: {
-          protocol: "hex-machina-agent-gym/v1" as const,
-          observationSchema: "hex-machina-public-spell-graph/v1" as const,
+          protocol: "hexmend-agent-gym/v1" as const,
+          observationSchema: "hexmend-public-spell-graph/v1" as const,
           scenarioId: session.snapshot().scenarioId,
           actionSpace: AGENT_GYM_TOOL_NAMES,
           actionManifest: createSpellToolManifest(),

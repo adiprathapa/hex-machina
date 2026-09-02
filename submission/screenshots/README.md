@@ -1,6 +1,6 @@
-# Hex Machina screenshot set
+# Hexmend screenshot set
 
-These 1280×720 captures come from the canonical local judge journey. The current set was regenerated on 2026-09-02 (commit 6dabc1d) against the reworked layout; the git history of the three JPGs records every recapture. The capture script verifies zero console errors and zero cross-origin requests while producing them. Regenerate the complete set with `npm run capture:submission`.
+These 1280×720 captures come from the canonical local judge journey. The current set was regenerated on 2026-09-02 for the Hexmend rename, against the reworked layout; the git history of the three JPGs records every recapture. The capture script verifies zero console errors and zero cross-origin requests while producing them. Regenerate the complete set with `npm run capture:submission`.
 
 ## 01: Failure diagnosis
 

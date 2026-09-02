@@ -155,7 +155,7 @@ summary:focus-visible,
   outline-offset: 2px;
 }
 
-.machina {
+.hexmend {
   height: 100svh;
   display: flex;
   flex-direction: column;
@@ -496,7 +496,7 @@ summary:focus-visible,
 
 .controls .quiet {
   flex: 0 0 auto;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 1px solid var(--line-control);
   background: transparent;
   color: var(--muted);
@@ -591,13 +591,22 @@ kbd {
   flex: 1 1 var(--prompt-clamp);
   min-height: var(--prompt-clamp);
   overflow: hidden;
-  /* The box's height comes from the rail's slack, so it is rarely a whole
-     number of lines (63px held 2.3 lines at 1440x815 and cut the third
-     through its x-height). The component measures how many whole lines fit
-     and sets the clamp, so the cut always lands between lines and the last
-     visible line ends in an ellipsis. */
+}
+
+/* The box's height comes from the rail's slack, so it is rarely a whole
+   number of lines (63px held 2.3 lines at 1440x815 and cut the third through
+   its x-height). The component measures how many whole lines fit and clamps
+   the text to them, so the cut always lands between lines and the last
+   visible line ends in an ellipsis. The text clips inside its own box so the
+   padded tint around it stays whole. */
+.agent-brief-prompt-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.agent-brief-prompt.expanded .agent-brief-prompt-text {
+  display: block;
 }
 
 .agent-brief-prompt.expanded {
@@ -2423,7 +2432,7 @@ kbd {
 }
 
 @media (max-width: 1100px) {
-  .machina { height: auto; min-height: 100svh; overflow: visible; }
+  .hexmend { height: auto; min-height: 100svh; overflow: visible; }
   .workspace { min-height: 0; }
   .brief-panel, .familiar-panel { overflow: visible; }
   .canvas-panel { min-height: 560px; }
@@ -2452,11 +2461,11 @@ kbd {
 @media (min-width: 761px) {
   /* Secondary controls track the type scale; the root token stays the 32px
      floor and the compact block below still raises it to 44px. */
-  .machina { --control-min-h: calc(32px + var(--step) * 2); }
+  .hexmend { --control-min-h: calc(32px + var(--step) * 2); }
 }
 
 @media (max-width: 760px) {
-  .machina { height: auto; min-height: 0; padding: 0 10px 14px; overflow: visible; }
+  .hexmend { height: auto; min-height: 0; padding: 0 10px 14px; overflow: visible; }
   .workspace { display: block; }
   .canvas-panel { margin: 0; min-height: 0; }
   .spell-canvas { flex: none; min-height: 460px; }
@@ -2484,13 +2493,13 @@ kbd {
 
   /* Anything interactive that never set its own height still needs the touch
      target; an allowlist of named controls drifted every time one was added. */
-  .machina button,
-  .machina select,
-  .machina summary,
-  .machina a,
+  .hexmend button,
+  .hexmend select,
+  .hexmend summary,
+  .hexmend a,
   .skip-link { min-height: var(--control-min-h); }
-  .machina a,
-  .machina summary { display: flex; align-items: center; }
+  .hexmend a,
+  .hexmend summary { display: flex; align-items: center; }
   .node-inspector { grid-template-columns: 34px 92px 1fr; }
 }
 

@@ -72,7 +72,7 @@ test("generated layouts are deterministic", () => {
 // The shared skeleton left an empty band across the middle of the canvas
 // (authored y 43-63) and a pocket at x 30-66 / y 9-25 in every scenario. The
 // generator and the base scenarios now run a centroidal fill pass before the
-// relaxer. This test renders each layout the way HexMachina does at 1920x1080
+// relaxer. This test renders each layout the way Hexmend does at 1920x1080
 // (a 1034x839 canvas, 181x87 runes, the same inset formula) and bounds the
 // two void metrics the product owner's complaint was measured with: the
 // largest empty circle (distance from a point to the nearest rune box or
@@ -97,9 +97,9 @@ const MAX_EMPTY_CIRCLE_RUNE_HEIGHTS = 1.75;
 const MAX_EMPTY_RECT_FRACTION = 0.15;
 
 function runeBoxes(nodes) {
-  // Mirrors HexMachina's inset: the widest rune is at least 1.15x the
+  // Mirrors Hexmend's inset: the widest rune is at least 1.15x the
   // stylesheet width, and the canvas keeps half a rune plus a 28px margin
-  // clear (EDGE_MARGIN in HexMachina; it was 8px vertical / 10px horizontal
+  // clear (EDGE_MARGIN in Hexmend; it was 8px vertical / 10px horizontal
   // when the fill pass left the top row at authored y ~14 — the layout now
   // reaches the authored box, so the margin is the whole ink gap on every
   // edge).

@@ -1,4 +1,4 @@
-"""Dependency-free Python client for the Hex Machina JSONL rollout bridge."""
+"""Dependency-free Python client for the Hexmend JSONL rollout bridge."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 
-class HexMachinaProtocolError(RuntimeError):
+class HexmendProtocolError(RuntimeError):
     """Raised when the rollout subprocess rejects a transport operation."""
 
 
-class HexMachinaEnv:
+class HexmendEnv:
     """Small Gymnasium-shaped adapter over the production Agent Gym handlers.
 
     Actions are dictionaries shaped as ``{"tool": "inspect_spell", "input": {}}``.
@@ -51,7 +51,7 @@ class HexMachinaEnv:
     def _request(self, op: str, **values: Any) -> Any:
         process = self._start()
         if process.stdin is None or process.stdout is None:
-            raise HexMachinaProtocolError("Rollout subprocess streams are unavailable")
+            raise HexmendProtocolError("Rollout subprocess streams are unavailable")
         self._request_id += 1
         request = {"id": self._request_id, "op": op, **values}
         process.stdin.write(json.dumps(request, separators=(",", ":")) + "\n")
@@ -59,15 +59,15 @@ class HexMachinaEnv:
         line = process.stdout.readline()
         if not line:
             detail = process.stderr.read().strip() if process.stderr is not None else ""
-            raise HexMachinaProtocolError(
+            raise HexmendProtocolError(
                 f"Rollout subprocess ended without a response{': ' + detail if detail else ''}"
             )
         response = json.loads(line)
         if response.get("id") != self._request_id:
-            raise HexMachinaProtocolError("Rollout response id does not match request id")
+            raise HexmendProtocolError("Rollout response id does not match request id")
         if not response.get("ok"):
             error = response.get("error", {})
-            raise HexMachinaProtocolError(str(error.get("message", "Rollout operation failed")))
+            raise HexmendProtocolError(str(error.get("message", "Rollout operation failed")))
         return response["payload"]
 
     def describe(self) -> Mapping[str, Any]:
@@ -144,15 +144,15 @@ class HexMachinaEnv:
             self._process.wait(timeout=5)
         self._process = None
 
-    def __enter__(self) -> "HexMachinaEnv":
+    def __enter__(self) -> "HexmendEnv":
         return self
 
     def __exit__(self, *_: object) -> None:
         self.close()
 
 
-class HexMachinaVectorEnv:
-    """Parallel, isolated Hex Machina environments with vector-style returns.
+class HexmendVectorEnv:
+    """Parallel, isolated Hexmend environments with vector-style returns.
 
     Each slot owns a separate production rollout subprocess. Calls execute in
     parallel, preserve slot order, and never share graph or episode state.
@@ -168,11 +168,11 @@ class HexMachinaVectorEnv:
             raise ValueError("num_envs must be a positive integer")
         self.num_envs = num_envs
         self._environments = [
-            HexMachinaEnv(command=command, cwd=cwd) for _ in range(num_envs)
+            HexmendEnv(command=command, cwd=cwd) for _ in range(num_envs)
         ]
         self._executor = ThreadPoolExecutor(
             max_workers=num_envs,
-            thread_name_prefix="hex-machina-rollout",
+            thread_name_prefix="hexmend-rollout",
         )
         self._closed = False
 
@@ -237,7 +237,7 @@ class HexMachinaVectorEnv:
             else [family] * self.num_envs
         )
 
-        def reset_slot(values: tuple[HexMachinaEnv, int | None, str | None, int | None]):
+        def reset_slot(values: tuple[HexmendEnv, int | None, str | None, int | None]):
             env, index, selected_family, selected_seed = values
             return env.reset(split=selected_split, index=index, family=selected_family, seed=selected_seed)
 
@@ -254,7 +254,7 @@ class HexMachinaVectorEnv:
         if any(not isinstance(action, Mapping) for action in selected_actions):
             raise ValueError("every action must be a mapping")
 
-        def step_slot(values: tuple[HexMachinaEnv, Mapping[str, Any]]):
+        def step_slot(values: tuple[HexmendEnv, Mapping[str, Any]]):
             env, action = values
             return env.step(action)
 
@@ -282,7 +282,7 @@ class HexMachinaVectorEnv:
         self._executor.shutdown(wait=True)
         self._closed = True
 
-    def __enter__(self) -> "HexMachinaVectorEnv":
+    def __enter__(self) -> "HexmendVectorEnv":
         return self
 
     def __exit__(self, *_: object) -> None:

@@ -25,7 +25,7 @@ async function renderBuiltPage(headers = {}) {
   workerUrl.searchParams.set("deployment-readiness", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
   return worker.fetch(
-    new Request("https://hex-machina.example/", {
+    new Request("https://hexmend.example/", {
       headers: { accept: "text/html", ...headers },
     }),
     {
@@ -104,14 +104,14 @@ test("deployment output contains the worker and complete app-owned assets only",
 
 test("built worker emits canonical host-derived sharing metadata and release headers", async () => {
   const response = await renderBuiltPage({
-    "x-forwarded-host": "hex-machina.example",
+    "x-forwarded-host": "hexmend.example",
     "x-forwarded-proto": "https",
   });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.match(response.headers.get("content-security-policy") ?? "", /default-src 'self'/);
   const html = await response.text();
-  assert.match(html, /<meta property="og:image" content="https:\/\/hex-machina\.example\/og\.png"/);
+  assert.match(html, /<meta property="og:image" content="https:\/\/hexmend\.example\/og\.png"/);
   assert.match(html, /<meta name="twitter:card" content="summary_large_image"/);
   // The alt text describes the sharing card, so it has to name the product
   // rather than the scene from a card that no longer exists.
@@ -119,7 +119,7 @@ test("built worker emits canonical host-derived sharing metadata and release hea
     ?? html.match(/name="twitter:image:alt" content="([^"]+)"/)?.[1]
     ?? html.match(/"alt":"([^"]+)"/)?.[1];
   assert.ok(ogAlt, "the sharing card carries alt text");
-  assert.match(ogAlt, /Hex Machina/, "the alt text names the product");
+  assert.match(ogAlt, /Hexmend/, "the alt text names the product");
   assert.ok(ogAlt.length > 20, "the alt text describes the card rather than labelling it");
   assert.doesNotMatch(html, /localhost:3000|codex-preview|react-loading-skeleton/);
 });

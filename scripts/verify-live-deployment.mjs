@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const URL_UNDER_TEST = process.env.HEX_MACHINA_LIVE_URL ?? "https://hex-machina.hex-machina.workers.dev";
+const URL_UNDER_TEST = process.env.HEXMEND_LIVE_URL ?? "https://hexmend.hex-machina.workers.dev";
 const OUTPUT = path.join(ROOT, "tests/browser-acceptance.json");
 
 const HOST_SHIM = () => {

@@ -11,7 +11,7 @@ export const AGENT_GYM_FAMILY_IDS = {
   clockworkOrchard: "family-03-v1",
 } as const;
 export type AgentGymFamilyId = typeof AGENT_GYM_FAMILY_IDS[keyof typeof AGENT_GYM_FAMILY_IDS];
-export const AGENT_GYM_SAMPLER_PROTOCOL = "hex-machina-agent-gym-sampler/v1" as const;
+export const AGENT_GYM_SAMPLER_PROTOCOL = "hexmend-agent-gym-sampler/v1" as const;
 export const AGENT_GYM_MAX_SAMPLE_SEED = 0xffff_ffff;
 
 export const AGENT_GYM_SPLIT_SIZES: Record<AgentGymSplit, number> = {

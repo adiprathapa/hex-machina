@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Acceptance harness for Hex Machina.
+"""Acceptance harness for Hexmend.
 
 The harness is intentionally useful before scaffolding: missing product pieces
 are reported as actionable failures. As the app appears, it discovers and runs
@@ -129,7 +129,7 @@ def screenshot_capture_check(relative_path: str, expected_size: tuple[int, int] 
 
 
 def demo_video_check() -> Check:
-    video_path = ROOT / "submission" / "video" / "hex-machina-demo.mp4"
+    video_path = ROOT / "submission" / "video" / "hexmend-demo.mp4"
     metadata_path = ROOT / "submission" / "video" / "metadata.json"
     try:
         header = video_path.read_bytes()[:32]
@@ -428,7 +428,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
     deterministic_agent_gym = all(
         marker in combined
         for marker in (
-            "hex-machina-agent-gym/v1",
+            "hexmend-agent-gym/v1",
             "multi-family-prototype",
             "AGENT_GYM_MAX_SCORE",
             "AGENT_GYM_SPLIT_SIZES",
@@ -442,40 +442,40 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "opaque-edge-ids",
             "benign-decoy-subgraph",
             "sampleAgentGymTask",
-            "hex-machina-agent-gym-sampler/v1",
+            "hexmend-agent-gym-sampler/v1",
             "xorshift32-uniform-task-v1",
             "benchmarkAgentGymFamily",
-            "hex-machina-agent-gym-benchmark/v1",
+            "hexmend-agent-gym-benchmark/v1",
             "AGENT_GYM_MAX_EPISODE_STEPS",
             "observationBefore",
             "observeSpellGraph",
-            "hex-machina-public-spell-graph/v1",
+            "hexmend-public-spell-graph/v1",
             "groundConstraintTarget",
             "stateKeyBefore",
             "terminated",
             "truncated",
             "serializeAgentGymDatasetJsonl",
-            "hex-machina-agent-gym-episode/v2",
+            "hexmend-agent-gym-episode/v2",
             "initialObservation",
             "initialStateKey",
             "verifyAgentGymDatasetJsonl",
-            "hex-machina-agent-gym-replay-verifier/v1",
-            "hex-machina-agent-gym-policy-benchmark/v1",
+            "hexmend-agent-gym-replay-verifier/v1",
+            "hexmend-agent-gym-policy-benchmark/v1",
             "benchmarkAgentGymPolicies",
             "AGENT_GYM_POLICY_BASELINES",
-            "hex-machina-agent-gym-preference-group/v2",
-            "hex-machina-agent-gym-preference-verifier/v2",
+            "hexmend-agent-gym-preference-group/v2",
+            "hexmend-agent-gym-preference-verifier/v2",
             "collectAgentGymPreferenceGroups",
             "verifyAgentGymPreferenceGroupsJsonl",
-            "hex-machina-agent-gym/jsonl-v1",
-            "hex-machina-tool-manifest/v1",
+            "hexmend-agent-gym/jsonl-v1",
+            "hexmend-tool-manifest/v1",
             "createSpellToolManifest",
             "actionManifest",
             "createAgentGymJsonlBridge",
-            "HexMachinaEnv",
-            "HexMachinaVectorEnv",
-            "HexMachinaPreferenceDataset",
-            "hex-machina-agent-gym-preference-pair/v2",
+            "HexmendEnv",
+            "HexmendVectorEnv",
+            "HexmendPreferenceDataset",
+            "hexmend-agent-gym-preference-pair/v2",
             "constraintViolation",
             "constraintPreserved",
             "instrumentSpellToolHandlers",
@@ -489,7 +489,7 @@ def static_checks(files: list[Path], combined: str) -> list[Check]:
             "no preference groups match",
             "self.groups(split=split, family=family)",
         )
-    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hex_machina_env.py").exists() and preference_adapter_path.exists() and (ROOT / "tests" / "webmcp-multi-scenario.test.mjs").exists()
+    ) and (ROOT / "scripts" / "serve-agent-gym.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-dataset.ts").exists() and (ROOT / "scripts" / "export-agent-gym-preferences.ts").exists() and (ROOT / "scripts" / "verify-agent-gym-preferences.ts").exists() and (ROOT / "adapters" / "hexmend_env.py").exists() and preference_adapter_path.exists() and (ROOT / "tests" / "webmcp-multi-scenario.test.mjs").exists()
     tests = [path for path in relative_files if re.search(r"(?:test|spec)\.[cm]?[jt]sx?$", path)]
     scenario_present = "moonflower" in combined.lower() and "duck" in combined.lower()
 
@@ -650,7 +650,7 @@ def main() -> int:
         "submission/video/captions.srt",
         "submission/video/render-demo.sh",
         "submission/video/metadata.json",
-        "submission/video/hex-machina-demo.mp4",
+        "submission/video/hexmend-demo.mp4",
         "public/og.png",
         "public/favicon.png",
     ):
@@ -699,7 +699,7 @@ def main() -> int:
             )
             checks.append(browser_evidence_check(require_site_tools=True))
 
-    print("\nHex Machina acceptance report")
+    print("\nHexmend acceptance report")
     print("=" * 36)
     for check in checks:
         marker = "PASS" if check.passed else "FAIL"

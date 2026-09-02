@@ -1,4 +1,4 @@
-name: Hex Machina CI
+name: Hexmend CI
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: hex-machina-${{ github.workflow }}-${{ github.ref }}
+  group: hexmend-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

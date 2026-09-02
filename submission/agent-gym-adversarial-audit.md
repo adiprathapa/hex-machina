@@ -1,6 +1,6 @@
 # Adversarial audit of the Agent Gym
 
-Hex Machina is an evaluation environment, so the interesting question is not
+Hexmend is an evaluation environment, so the interesting question is not
 whether a good agent scores well. It is whether a bad one can. This is what
 adversarial testing found, what it cost, and what changed.
 

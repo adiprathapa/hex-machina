@@ -6,7 +6,7 @@
     "requirements_url": "https://webmcp.devpost.com/"
   },
   "project": {
-    "name": "Hex Machina",
+    "name": "Hexmend",
     "created_during_submission_period": true,
     "first_commit": "c661551",
     "first_commit_at": "2026-08-26T22:55:14-04:00"
@@ -15,7 +15,7 @@
     "sites_project_configured": true,
     "access_before_release": "public",
     "saved_versions": 1,
-    "live_url": "https://hex-machina.hex-machina.workers.dev",
+    "live_url": "https://hexmend.hex-machina.workers.dev",
     "webmcp_discovered_live": true,
     "host": "Cloudflare Workers (account: aprathapa01@gmail.com)",
     "deployed_at": "2026-08-30T20:51:24-04:00"
@@ -27,8 +27,8 @@
     "released_at": "2026-08-29"
   },
   "video": {
-    "local_path": "submission/video/hex-machina-demo.mp4",
-    "duration_seconds": 154.8,
+    "local_path": "submission/video/hexmend-demo.mp4",
+    "duration_seconds": 154.5,
     "has_audio": true,
     "public_youtube_url": null,
     "kind": "screencast with narration",

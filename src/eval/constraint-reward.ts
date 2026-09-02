@@ -3,7 +3,7 @@ import { reachableFromSources, type SpellGraph } from "../domain/spell.ts";
 /**
  * Scoring the part of the task the reward function was ignoring.
  *
- * Hex Machina's thesis is that a human's subjective constraint materially
+ * Hexmend's thesis is that a human's subjective constraint materially
  * changes the correct repair: preserving the ducks must produce a different
  * valid patch than removing them. The product honors it. Once a constraint is
  * locked, patch search drops the destructive candidate, and atomic application

@@ -6,18 +6,18 @@ set -euo pipefail
 # never showed a tool being called — the entire claim — and the challenge rules
 # let judges score a submission from the video alone.
 #
-# Requires a running instance. Point at it with HEX_MACHINA_DEMO_URL; defaults
+# Requires a running instance. Point at it with HEXMEND_DEMO_URL; defaults
 # to the local dev server.
 
 VIDEO_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$VIDEO_DIR/../.." && pwd)"
-VIDEO_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hex-machina-video.XXXXXX")"
+VIDEO_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hexmend-video.XXXXXX")"
 trap 'rm -rf -- "$VIDEO_TMP_DIR"' EXIT
 
-VOICE="${HEX_MACHINA_VOICE:-Samantha}"
+VOICE="${HEXMEND_VOICE:-Samantha}"
 NARRATION="$VIDEO_DIR/narration.txt"
-OUTPUT="$VIDEO_DIR/hex-machina-demo.mp4"
-DEMO_URL="${HEX_MACHINA_DEMO_URL:-http://localhost:4321/}"
+OUTPUT="$VIDEO_DIR/hexmend-demo.mp4"
+DEMO_URL="${HEXMEND_DEMO_URL:-http://localhost:4321/}"
 
 command -v ffmpeg >/dev/null
 command -v ffprobe >/dev/null

@@ -1,14 +1,14 @@
-# Hex Machina
+# Hexmend
 
 **Magic is just code with worse documentation.**
 
-Hex Machina is an agent-evaluation environment disguised as a graph-native cooperative spell game. A person and an agent share the same executable canvas: the person decides what must remain magical, while the agent traces causal failures and searches for the smallest valid repair. Every semantic action becomes a scored, exportable transition, so the playful judge journey doubles as a deterministic test of tool use, causal reasoning, intent preservation, and safe mutation.
+Hexmend is an agent-evaluation environment disguised as a graph-native cooperative spell game. A person and an agent share the same executable canvas: the person decides what must remain magical, while the agent traces causal failures and searches for the smallest valid repair. Every semantic action becomes a scored, exportable transition, so the playful judge journey doubles as a deterministic test of tool use, causal reasoning, intent preservation, and safe mutation.
 
 In the opening lesson, a rain spell intended for a rare Moonflower multiplies before it has a bounded target. Twelve lunar ducks appear and flood the observatory. A conventional optimizer would delete the duck branch. The player refuses: “The ducks are funny. They stay.” That subjective preference becomes a sacred constraint in the graph. The agent must find a stranger solution: give the ducks umbrellas, redirect their rain onto the Moonflower, and recast without flooding the room.
 
 ## Why WebMCP matters
 
-The spell canvas is not a picture for an agent to guess at. Hex Machina exposes seven narrow semantic tools for inspection, simulation, diagnosis, human-authored constraints, patch planning, and atomic patch application. Every tool call operates on stable node and edge identifiers and returns structured evidence that the interface can visualize.
+The spell canvas is not a picture for an agent to guess at. Hexmend exposes seven narrow semantic tools for inspection, simulation, diagnosis, human-authored constraints, patch planning, and atomic patch application. Every tool call operates on stable node and edge identifiers and returns structured evidence that the interface can visualize.
 
 The browser application remains the source of truth. It validates every mutation, rejects stale patches, simulates outcomes deterministically, and makes agent activity visible. The same handlers power both WebMCP and the built-in local spell console, so the game remains playable in browsers without Site Tools.
 
@@ -48,7 +48,7 @@ TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test
 
 ## Submission assets
 
-- [`video/hex-machina-demo.mp4`](video/hex-machina-demo.mp4): reproducible narrated 154.8-second registered-tool screencast
+- [`video/hexmend-demo.mp4`](video/hexmend-demo.mp4): reproducible narrated 154.5-second registered-tool screencast
 - [`video/captions.srt`](video/captions.srt): accessible English caption sidecar
 - [`screenshots/01-failure-diagnosis.jpg`](screenshots/01-failure-diagnosis.jpg): failed cast, deterministic diagnosis, and advisory Familiar ranking
 - [`screenshots/02-constraint-aware-patch.jpg`](screenshots/02-constraint-aware-patch.jpg): sacred duck constraint and reviewable patch preview

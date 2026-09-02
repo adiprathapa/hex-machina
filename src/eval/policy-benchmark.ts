@@ -142,7 +142,7 @@ export async function benchmarkAgentGymPolicies(split: AgentGymSplit = "test") {
     policies.push(summarizePolicy(policyId, episodes));
   }
   return {
-    protocol: "hex-machina-agent-gym-policy-benchmark/v1" as const,
+    protocol: "hexmend-agent-gym-policy-benchmark/v1" as const,
     familyIds,
     split,
     scenarioCount: familyIds.reduce((total, family) => total + AGENT_GYM_FAMILY_SPLIT_SIZES[family][split], 0),

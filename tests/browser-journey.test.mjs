@@ -336,7 +336,7 @@ test("production browser completes the constraint-preserving spell journey", { t
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Export episode JSON" }).click(),
     ]);
-    assert.equal(episodeDownload.suggestedFilename(), "hex-machina-agent-gym-episode.json");
+    assert.equal(episodeDownload.suggestedFilename(), "hexmend-agent-gym-episode.json");
     const episodePath = await episodeDownload.path();
     assert.ok(episodePath, "the browser produced a local episode artifact");
     const exportedEpisode = JSON.parse(await readFile(episodePath, "utf8"));

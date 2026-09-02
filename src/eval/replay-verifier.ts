@@ -10,13 +10,13 @@ import {
   type AgentGymSplit,
 } from "../scenarios/agent-gym-family.ts";
 
-export const AGENT_GYM_DATASET_SCHEMA = "hex-machina-agent-gym-episode/v2" as const;
+export const AGENT_GYM_DATASET_SCHEMA = "hexmend-agent-gym-episode/v2" as const;
 export const MAX_REPLAY_EPISODES = 1_000;
 
 interface DatasetEpisodeRecord {
   schema: typeof AGENT_GYM_DATASET_SCHEMA;
-  environmentProtocol: "hex-machina-agent-gym/v1";
-  observationSchema: "hex-machina-public-spell-graph/v1";
+  environmentProtocol: "hexmend-agent-gym/v1";
+  observationSchema: "hexmend-public-spell-graph/v1";
   actionManifest: ReturnType<typeof createSpellToolManifest>;
   familyId: AgentGymFamilyId;
   scenarioId: string;
@@ -67,12 +67,12 @@ function parseEpisode(value: unknown): DatasetEpisodeRecord | string {
   const record = recordOf(value);
   if (!record) return "Episode must be a JSON object";
   if (record.schema !== AGENT_GYM_DATASET_SCHEMA) return `schema must be ${AGENT_GYM_DATASET_SCHEMA}`;
-  if (record.environmentProtocol !== "hex-machina-agent-gym/v1" ||
-      record.observationSchema !== "hex-machina-public-spell-graph/v1") {
+  if (record.environmentProtocol !== "hexmend-agent-gym/v1" ||
+      record.observationSchema !== "hexmend-public-spell-graph/v1") {
     return "environmentProtocol and observationSchema are invalid";
   }
   const actionManifest = recordOf(record.actionManifest);
-  if (actionManifest?.protocol !== "hex-machina-tool-manifest/v1" || !Array.isArray(actionManifest.tools)) {
+  if (actionManifest?.protocol !== "hexmend-tool-manifest/v1" || !Array.isArray(actionManifest.tools)) {
     return "actionManifest is invalid";
   }
   if (typeof record.familyId !== "string" || !Object.hasOwn(AGENT_GYM_FAMILY_SPLIT_SIZES, record.familyId)) {
@@ -240,7 +240,7 @@ export async function verifyAgentGymDatasetJsonl(jsonl: string) {
   }
 
   return {
-    protocol: "hex-machina-agent-gym-replay-verifier/v1" as const,
+    protocol: "hexmend-agent-gym-replay-verifier/v1" as const,
     valid: issues.length === 0,
     episodeCount: lines.length,
     verifiedEpisodes,

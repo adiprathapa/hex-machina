@@ -106,7 +106,7 @@ export async function benchmarkAgentGymFamily() {
   }
 
   return {
-    protocol: "hex-machina-agent-gym-benchmark/v1" as const,
+    protocol: "hexmend-agent-gym-benchmark/v1" as const,
     familyIds: Object.keys(AGENT_GYM_FAMILY_SPLIT_SIZES) as AgentGymFamilyId[],
     episodeCount: episodes.length,
     completedCount: episodes.filter((episode) => episode.status === "complete").length,
@@ -140,7 +140,7 @@ export function serializeAgentGymDatasetJsonl(episodes: AgentGymSnapshot[]) {
   return `${episodes.map((episode) => JSON.stringify({
     schema: AGENT_GYM_DATASET_SCHEMA,
     environmentProtocol: episode.protocol,
-    observationSchema: "hex-machina-public-spell-graph/v1",
+    observationSchema: "hexmend-public-spell-graph/v1",
     actionManifest: createSpellToolManifest(),
     familyId: episode.familyId,
     scenarioId: episode.scenarioId,

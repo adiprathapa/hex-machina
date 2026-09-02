@@ -7,7 +7,7 @@ async function renderProductionPage() {
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://hex-machina.local/", {
+    new Request("http://hexmend.local/", {
       headers: { accept: "text/html" },
     }),
     {
@@ -28,7 +28,7 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Hex Machina \| Agent Gym for Constraint-Aware Repair<\/title>/i);
+  assert.match(html, /<title>Hexmend \| Agent Gym for Constraint-Aware Repair<\/title>/i);
   assert.match(html, /The overenthusiastic rain spell/);
   // The objective is rendered from the loaded task's own graph rather than
   // written into the markup, so the shell shows the canonical scenario's

@@ -207,7 +207,7 @@ test("inspection-driven policy solves held-out opaque-ID variants at full reward
 
 test("benchmark runner completes all 96 split episodes across three causal families", async () => {
   const benchmark = await benchmarkAgentGymFamily();
-  assert.equal(benchmark.protocol, "hex-machina-agent-gym-benchmark/v1");
+  assert.equal(benchmark.protocol, "hexmend-agent-gym-benchmark/v1");
   assert.equal(benchmark.episodeCount, 96);
   assert.equal(benchmark.completedCount, 96);
   assert.equal(benchmark.meanScore, 23);
@@ -217,7 +217,7 @@ test("benchmark runner completes all 96 split episodes across three causal famil
 
 test("behavioral benchmark separates grounded, unsafe, incomplete, overruling, and memorized policies", async () => {
   const benchmark = await benchmarkAgentGymPolicies("test");
-  assert.equal(benchmark.protocol, "hex-machina-agent-gym-policy-benchmark/v1");
+  assert.equal(benchmark.protocol, "hexmend-agent-gym-policy-benchmark/v1");
   assert.equal(benchmark.scenarioCount, 16);
   assert.deepEqual(benchmark.policies.map((policy) => ({
     policyId: policy.policyId,
@@ -252,7 +252,7 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
     AGENT_GYM_FAMILY_IDS.resonantAviary,
     AGENT_GYM_FAMILY_IDS.clockworkOrchard,
   ]));
-  assert.equal(groups.every((group) => group.schema === "hex-machina-agent-gym-preference-group/v2"), true);
+  assert.equal(groups.every((group) => group.schema === "hexmend-agent-gym-preference-group/v2"), true);
   assert.equal(groups.every((group) => group.groupMeanReward === 8.6), true);
   assert.equal(groups.every((group) => group.preferencePairs.length === 10), true);
 
@@ -281,7 +281,7 @@ test("preference groups expose deterministic GRPO advantages and DPO-style margi
   const jsonl = serializeAgentGymPreferenceGroupsJsonl(groups);
   const verified = await verifyAgentGymPreferenceGroupsJsonl(jsonl);
   assert.deepEqual(verified, {
-    protocol: "hex-machina-agent-gym-preference-verifier/v2",
+    protocol: "hexmend-agent-gym-preference-verifier/v2",
     valid: true,
     groupCount: 16,
     verifiedGroups: 16,
@@ -323,10 +323,10 @@ test("dataset exporter emits standalone replay-authenticated JSONL episodes", as
     AGENT_GYM_FAMILY_IDS.resonantAviary,
     AGENT_GYM_FAMILY_IDS.clockworkOrchard,
   ]));
-  assert.equal(lines.every((line) => line.schema === "hex-machina-agent-gym-episode/v2"), true);
-  assert.equal(lines.every((line) => line.environmentProtocol === "hex-machina-agent-gym/v1"), true);
-  assert.equal(lines.every((line) => line.observationSchema === "hex-machina-public-spell-graph/v1"), true);
-  assert.equal(lines.every((line) => line.actionManifest.protocol === "hex-machina-tool-manifest/v1"), true);
+  assert.equal(lines.every((line) => line.schema === "hexmend-agent-gym-episode/v2"), true);
+  assert.equal(lines.every((line) => line.environmentProtocol === "hexmend-agent-gym/v1"), true);
+  assert.equal(lines.every((line) => line.observationSchema === "hexmend-public-spell-graph/v1"), true);
+  assert.equal(lines.every((line) => line.actionManifest.protocol === "hexmend-tool-manifest/v1"), true);
   assert.equal(lines.every((line) => line.actionManifest.tools.length === 7), true);
   assert.equal(lines.every((line) => (
     typeof line.task.objective === "string" &&
@@ -355,7 +355,7 @@ test("dataset exporter emits standalone replay-authenticated JSONL episodes", as
 
   const verified = await verifyAgentGymDatasetJsonl(jsonl);
   assert.deepEqual(verified, {
-    protocol: "hex-machina-agent-gym-replay-verifier/v1",
+    protocol: "hexmend-agent-gym-replay-verifier/v1",
     valid: true,
     episodeCount: 16,
     verifiedEpisodes: 16,
@@ -463,8 +463,8 @@ test("Agent Gym penalizes invalid calls and premature mutation without hiding er
 test("rollout transitions include replayable observations, stable keys, and Gym-style flags", async () => {
   const gym = createAgentGymEnvironment({ split: "test", index: 1 });
   const reset = gym.reset();
-  assert.equal(reset.info.protocol, "hex-machina-agent-gym/v1");
-  assert.equal(reset.info.observationSchema, "hex-machina-public-spell-graph/v1");
+  assert.equal(reset.info.protocol, "hexmend-agent-gym/v1");
+  assert.equal(reset.info.observationSchema, "hexmend-public-spell-graph/v1");
   assert.equal(Object.hasOwn(reset.observation, "semantics"), false);
   assert.doesNotMatch(
     `${reset.episode.familyId} ${reset.episode.scenarioId} ${reset.observation.id} ${reset.observation.scenario}`,
@@ -480,7 +480,7 @@ test("rollout transitions include replayable observations, stable keys, and Gym-
     "propose_spell_patch",
     "apply_spell_patch",
   ]);
-  assert.equal(reset.info.actionManifest.protocol, "hex-machina-tool-manifest/v1");
+  assert.equal(reset.info.actionManifest.protocol, "hexmend-tool-manifest/v1");
   assert.deepEqual(
     reset.info.actionManifest.tools.map((tool) => tool.name),
     reset.info.actionSpace,

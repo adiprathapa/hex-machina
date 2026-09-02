@@ -1,15 +1,15 @@
-"""Python rollout adapters for Hex Machina Agent Gym."""
+"""Python rollout adapters for Hexmend Agent Gym."""
 
-from .hex_machina_env import HexMachinaEnv, HexMachinaProtocolError, HexMachinaVectorEnv
+from .hexmend_env import HexmendEnv, HexmendProtocolError, HexmendVectorEnv
 from .preference_dataset import (
-    HexMachinaPreferenceDataset,
-    HexMachinaPreferenceError,
+    HexmendPreferenceDataset,
+    HexmendPreferenceError,
 )
 
 __all__ = [
-    "HexMachinaEnv",
-    "HexMachinaPreferenceDataset",
-    "HexMachinaPreferenceError",
-    "HexMachinaProtocolError",
-    "HexMachinaVectorEnv",
+    "HexmendEnv",
+    "HexmendPreferenceDataset",
+    "HexmendPreferenceError",
+    "HexmendProtocolError",
+    "HexmendVectorEnv",
 ]

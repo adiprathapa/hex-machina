@@ -1,12 +1,12 @@
-# Hex Machina
+# Hexmend
 
-**Live: <https://hex-machina.hex-machina.workers.dev>**
+**Live: <https://hexmend.hex-machina.workers.dev>**
 
 **Magic is just code with worse documentation.**
 
 > An agent gym where humans decide what matters and agents prove the smallest repair, disguised as a graph-native spell game.
 
-Hex Machina is a deterministic WebMCP environment for evaluating whether an agent can inspect state, explain causality, preserve human intent, and make a safe repair. The playable spell game makes that evaluation understandable at a glance: the human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same typed graph both participants can see.
+Hexmend is a deterministic WebMCP environment for evaluating whether an agent can inspect state, explain causality, preserve human intent, and make a safe repair. The playable spell game makes that evaluation understandable at a glance: the human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same typed graph both participants can see.
 
 The canonical lesson asks the player to water a Moonflower. The initial spell floods the observatory with twelve lunar ducks. The player protects the ducks as a sacred constraint, forcing a stranger but valid repair: give them umbrellas and redirect their rain onto the flower.
 
@@ -14,7 +14,7 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 
 ## Try it in two minutes
 
-Open the [live site](https://hex-machina.hex-machina.workers.dev). If you have a
+Open the [live site](https://hexmend.hex-machina.workers.dev). If you have a
 WebMCP-capable browser agent, paste this prompt into it. It is the same one the left
 rail offers as **Copy prompt**:
 
@@ -71,15 +71,15 @@ The default train export contains 64 independent task groups. Each group shares 
 The dependency-free Python reader verifies that artifact with the canonical production-policy verifier, then streams one group or chosen/rejected pair at a time without loading or duplicating the complete corpus:
 
 ```python
-from adapters import HexMachinaPreferenceDataset
+from adapters import HexmendPreferenceDataset
 
-dataset = HexMachinaPreferenceDataset("train-preferences.jsonl")
+dataset = HexmendPreferenceDataset("train-preferences.jsonl")
 receipt = dataset.verify()
 for pair in dataset.pairs(split="train", family="family-02-v1"):
     train_on(pair["task"], pair["chosen"], pair["rejected"])
 ```
 
-Both `groups()` and `pairs()` accept optional exact `split` and `family` filters for reproducible curricula and held-out evaluation while retaining file order and one-group-at-a-time streaming. A filter that matches nothing fails explicitly instead of silently running an empty training epoch. Each projected `hex-machina-agent-gym-preference-pair/v2` record retains the initial public graph, state commitment, action manifest, complete chosen and rejected tool trajectories, explicit constraint outcome labels, and exact positive reward margin. Structural validation is bounded to 64 MiB, 256 groups, and 4 MiB per group; `verify()` remains the trust boundary because it regenerates every named policy through the TypeScript production handlers.
+Both `groups()` and `pairs()` accept optional exact `split` and `family` filters for reproducible curricula and held-out evaluation while retaining file order and one-group-at-a-time streaming. A filter that matches nothing fails explicitly instead of silently running an empty training epoch. Each projected `hexmend-agent-gym-preference-pair/v2` record retains the initial public graph, state commitment, action manifest, complete chosen and rejected tool trajectories, explicit constraint outcome labels, and exact positive reward margin. Structural validation is bounded to 64 MiB, 256 groups, and 4 MiB per group; `verify()` remains the trust boundary because it regenerates every named policy through the TypeScript production handlers.
 
 Export standalone, replay-authenticated JSONL for offline training experiments:
 
@@ -87,7 +87,7 @@ Export standalone, replay-authenticated JSONL for offline training experiments:
 npm run --silent gym:dataset -- --split=test > test-episodes.jsonl
 ```
 
-Omit `--split` to export all 96 episodes across all three causal families. Every `hex-machina-agent-gym-episode/v2` line is independently usable: it contains the human-visible objective and preservation constraint, the initial public graph and state commitment, the identifier-neutral action manifest, explicit family/split/variant metadata, terminal receipt, and nine transitions with both graph observations and deterministic state keys. No separate prompt or tool-schema sidecar is required.
+Omit `--split` to export all 96 episodes across all three causal families. Every `hexmend-agent-gym-episode/v2` line is independently usable: it contains the human-visible objective and preservation constraint, the initial public graph and state commitment, the identifier-neutral action manifest, explicit family/split/variant metadata, terminal receipt, and nine transitions with both graph observations and deterministic state keys. No separate prompt or tool-schema sidecar is required.
 
 Independently replay every episode before trusting a dataset:
 
@@ -103,7 +103,7 @@ Drive live online rollouts from any process over a strict newline-delimited prot
 npm run --silent gym:serve
 ```
 
-Write one JSON request per line to stdin and read one correlated response per line from stdout. The operations are `describe`, `reset`, `step`, and `snapshot`; transport errors stay separate from scored agent mistakes, so a bad action cannot crash or desynchronize a training run. `describe` returns `hex-machina-tool-manifest/v1`, including the exact `{tool, input}` action envelope, all seven schemas, and five-read/two-write safety annotations. For example:
+Write one JSON request per line to stdin and read one correlated response per line from stdout. The operations are `describe`, `reset`, `step`, and `snapshot`; transport errors stay separate from scored agent mistakes, so a bad action cannot crash or desynchronize a training run. `describe` returns `hexmend-tool-manifest/v1`, including the exact `{tool, input}` action envelope, all seven schemas, and five-read/two-write safety annotations. For example:
 
 ```json
 {"id":1,"op":"reset","split":"test","index":0}
@@ -112,24 +112,24 @@ Write one JSON request per line to stdin and read one correlated response per li
 
 Use `{"op":"reset","sampleSeed":42}` to select reproducibly across every training task, or add `family` to restrict sampling to one curriculum family. The default sampled split is `train`; explicit `split` values keep train, validation, and test selection disjoint. The reset receipt records the sampler protocol, seed, chosen family, index, and scenario ID.
 
-[`adapters/hex_machina_env.py`](adapters/hex_machina_env.py) wraps that bridge with dependency-free, Gymnasium-shaped Python `reset()` and `step()` signatures. It launches the exact TypeScript environment and shared production handlers rather than maintaining a Python simulator fork:
+[`adapters/hexmend_env.py`](adapters/hexmend_env.py) wraps that bridge with dependency-free, Gymnasium-shaped Python `reset()` and `step()` signatures. It launches the exact TypeScript environment and shared production handlers rather than maintaining a Python simulator fork:
 
 ```python
-from adapters.hex_machina_env import HexMachinaEnv
+from adapters.hexmend_env import HexmendEnv
 
-with HexMachinaEnv() as env:
+with HexmendEnv() as env:
     observation, info = env.reset(seed=42, options={"split": "train"})
     observation, reward, terminated, truncated, info = env.step(
         {"tool": "inspect_spell", "input": {}}
     )
 ```
 
-For batched training, `HexMachinaVectorEnv` runs isolated environment subprocesses concurrently and returns Gymnasium-style vectors in deterministic slot order:
+For batched training, `HexmendVectorEnv` runs isolated environment subprocesses concurrently and returns Gymnasium-style vectors in deterministic slot order:
 
 ```python
-from adapters import HexMachinaVectorEnv
+from adapters import HexmendVectorEnv
 
-with HexMachinaVectorEnv(4) as envs:
+with HexmendVectorEnv(4) as envs:
     observations, infos = envs.reset("train", seed=42)
     observations, rewards, terminated, truncated, infos = envs.step(
         [{"tool": "inspect_spell"}] * 4
@@ -242,11 +242,11 @@ tool calls; every result in them comes from the production handlers.
 
 ## Judge journey
 
-![Hex Machina failure diagnosis with the graph-native Familiar ranking](submission/screenshots/01-failure-diagnosis.jpg)
+![Hexmend failure diagnosis with the graph-native Familiar ranking](submission/screenshots/01-failure-diagnosis.jpg)
 
 The complete submission capture set covers the [failure diagnosis](submission/screenshots/01-failure-diagnosis.jpg), [constraint-aware patch](submission/screenshots/02-constraint-aware-patch.jpg), and [successful recast](submission/screenshots/03-successful-recast.jpg). Captions and capture evidence live in [submission/screenshots/README.md](submission/screenshots/README.md).
 
-The [narrated 154.8-second demo](submission/video/hex-machina-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
+The [narrated 154.5-second demo](submission/video/hexmend-demo.mp4) records a real registered-tool journey and held-out task swap as a judge-ready H.264 video. Its narration, SRT captions, probe metadata, and deterministic local render script live in [`submission/video/`](submission/video/README.md).
 
 ## Architecture
 
@@ -286,7 +286,7 @@ The targeted experimental API surface and evidence are recorded in the dated [`s
 
 ## Security and privacy
 
-Hex Machina has no accounts, analytics, cookies, browser persistence, external APIs, or runtime third-party requests. The worker emits a tested Content Security Policy and browser capability, referrer, framing, MIME, and cross-origin protections. The complete posture and its deliberate framework compatibility exception are documented in [`submission/security.md`](submission/security.md).
+Hexmend has no accounts, analytics, cookies, browser persistence, external APIs, or runtime third-party requests. The worker emits a tested Content Security Policy and browser capability, referrer, framing, MIME, and cross-origin protections. The complete posture and its deliberate framework compatibility exception are documented in [`submission/security.md`](submission/security.md).
 
 ## Experimental Familiar
 

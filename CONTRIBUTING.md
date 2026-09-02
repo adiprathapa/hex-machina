@@ -1,6 +1,6 @@
-# Contributing to Hex Machina
+# Contributing to Hexmend
 
-Hex Machina is deliberately small: one polished graph-debugging lesson, one deterministic simulator, and one semantic tool surface shared by people and browser agents. Changes should strengthen that loop before expanding its scope.
+Hexmend is deliberately small: one polished graph-debugging lesson, one deterministic simulator, and one semantic tool surface shared by people and browser agents. Changes should strengthen that loop before expanding its scope.
 
 ## Local setup
 

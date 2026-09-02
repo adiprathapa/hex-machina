@@ -46,7 +46,7 @@ const OG = `<!doctype html><meta charset="utf-8">
           padding: 7px 13px; font-size: 17px; color: ${MUTED}; white-space: nowrap; }
 </style>
 <div class="grid"></div>
-<div class="top">${MARK(52)}<span class="name">Hex Machina</span></div>
+<div class="top">${MARK(52)}<span class="name">Hexmend</span></div>
 <h1>Humans decide what matters.<br>Agents prove the <em>smallest repair</em>.</h1>
 <div class="foot">
   <div><b>An agent gym on one executable graph.</b><br>Seven WebMCP tools · 96 deterministic tasks</div>

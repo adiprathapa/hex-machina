@@ -12,8 +12,8 @@ import {
   type AgentGymPolicyId,
 } from "./policy-benchmark.ts";
 
-export const AGENT_GYM_PREFERENCE_SCHEMA = "hex-machina-agent-gym-preference-group/v2" as const;
-export const AGENT_GYM_PREFERENCE_VERIFIER_PROTOCOL = "hex-machina-agent-gym-preference-verifier/v2" as const;
+export const AGENT_GYM_PREFERENCE_SCHEMA = "hexmend-agent-gym-preference-group/v2" as const;
+export const AGENT_GYM_PREFERENCE_VERIFIER_PROTOCOL = "hexmend-agent-gym-preference-verifier/v2" as const;
 export const MAX_PREFERENCE_GROUPS = 256;
 
 function pairCount(candidateCount: number) {
@@ -41,8 +41,8 @@ export interface AgentGymPreferenceCandidate {
 
 export interface AgentGymPreferenceGroup {
   schema: typeof AGENT_GYM_PREFERENCE_SCHEMA;
-  environmentProtocol: "hex-machina-agent-gym/v1";
-  observationSchema: "hex-machina-public-spell-graph/v1";
+  environmentProtocol: "hexmend-agent-gym/v1";
+  observationSchema: "hexmend-public-spell-graph/v1";
   actionManifest: ReturnType<typeof createSpellToolManifest>;
   familyId: AgentGymFamilyId;
   scenarioId: string;
@@ -147,7 +147,7 @@ export async function buildAgentGymPreferenceGroup(options: {
   return {
     schema: AGENT_GYM_PREFERENCE_SCHEMA,
     environmentProtocol: reference.protocol,
-    observationSchema: "hex-machina-public-spell-graph/v1",
+    observationSchema: "hexmend-public-spell-graph/v1",
     actionManifest: createSpellToolManifest(),
     familyId: reference.familyId,
     scenarioId: reference.scenarioId,

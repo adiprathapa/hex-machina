@@ -1,8 +1,8 @@
-# Hex Machina — Seven-Day Build Program
+# Hexmend — Seven-Day Build Program
 
 ## Mission
 
-Build, verify, polish, and prepare a submission-ready version of **Hex Machina**, a graph-native WebMCP game in which a person and an agent collaboratively debug executable spells.
+Build, verify, polish, and prepare a submission-ready version of **Hexmend**, a graph-native WebMCP game in which a person and an agent collaboratively debug executable spells.
 
 The product thesis is:
 
@@ -25,7 +25,7 @@ The canonical demo begins with a request to water a moonflower. A faulty multipl
 
 ## Definition of done
 
-Hex Machina is done only when all of the following are true:
+Hexmend is done only when all of the following are true:
 
 1. A new visitor can understand the objective without reading documentation.
 2. The moonflower scenario can be completed from initial failure through a constraint-preserving successful recast.
@@ -298,6 +298,6 @@ Every four-hour work cycle must:
 
 ## Progress record
 
-Machine-readable milestone status and chronological notes live in `work/hex_machina_state.json`, maintained by `train.py`. Product code, test results, and deployed behavior remain the authoritative evidence. This section may contain short human-readable handoff notes, but should not duplicate the state file.
+Machine-readable milestone status and chronological notes live in `work/hexmend_state.json`, maintained by `train.py`. Product code, test results, and deployed behavior remain the authoritative evidence. This section may contain short human-readable handoff notes, but should not duplicate the state file.
 
 Initial state: specification established; product implementation not yet scaffolded.

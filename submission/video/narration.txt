@@ -1,4 +1,4 @@
-This is Hex Machina. It is an agent gym for constraint aware repair, and a WebMCP client is about to drive it through seven registered tools.
+This is Hexmend. It is an agent gym for constraint aware repair, and a WebMCP client is about to drive it through seven registered tools.
 
 The page registers those tools on document dot modelContext. A test harness stands in for a WebMCP host, because hosts are not broadly shipped yet. Every repair you are about to see is a tool call, not a click.
 

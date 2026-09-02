@@ -16,7 +16,7 @@ const firaCode = Fira_Code({
   subsets: ["latin"],
 });
 
-const title = "Hex Machina | Agent Gym for Constraint-Aware Repair";
+const title = "Hexmend | Agent Gym for Constraint-Aware Repair";
 const description =
   "An agent gym where humans decide what matters and agents prove the smallest repair, over seven WebMCP tools on one executable graph.";
 
@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       title,
       description,
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hex Machina: an agent gym for constraint-aware repair" }],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: "Hexmend: an agent gym for constraint-aware repair" }],
     },
     twitter: {
       card: "summary_large_image",

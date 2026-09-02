@@ -31,7 +31,7 @@ import { AGENT_GYM_FAMILY_SPLIT_SIZES, type AgentGymSplit } from "../scenarios/a
  * committed evidence is stale.
  */
 
-export const AGENT_GYM_EVIDENCE_PROTOCOL = "hex-machina-agent-gym-evidence/v2" as const;
+export const AGENT_GYM_EVIDENCE_PROTOCOL = "hexmend-agent-gym-evidence/v2" as const;
 
 const SPLITS = ["train", "validation", "test"] as AgentGymSplit[];
 
