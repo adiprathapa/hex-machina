@@ -257,7 +257,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     // place as the code sample.
     const computedFonts = await page.evaluate(() => ({
       body: getComputedStyle(document.body).fontFamily,
-      semanticLabel: getComputedStyle(document.querySelector(".eyebrow")).fontFamily,
+      semanticLabel: getComputedStyle(document.querySelector(".section-kicker")).fontFamily,
       tableLabel: getComputedStyle(document.querySelector(".policy-baseline span")).fontFamily,
       machineData: getComputedStyle(document.querySelector(".tool-console-grid button code")).fontFamily,
     }));
@@ -300,7 +300,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByRole("button", { name: "Protect the ducks", exact: true }), "constraint action is available");
     await page.getByRole("button", { name: "Protect the ducks", exact: true }).click();
     await assertVisible(page.locator(".rune.sacred"), "the duck rune visibly carries its sacred constraint");
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v2/);
 
     await page.getByRole("button", { name: "Find a repair", exact: true }).click();
     await assertVisible(page.getByRole("heading", { name: "Give the ducks umbrellas", exact: true }), "constraint-aware patch is previewed");
@@ -308,12 +308,12 @@ test("production browser completes the constraint-preserving spell journey", { t
     const patchLedger = page.locator(".patch-ledger");
     await assertVisible(patchLedger, "the human can inspect every proposed structural mutation before approval");
     assert.equal(await patchLedger.locator("li").count(), 8, "the ledger accounts for all eight graph edits");
-    assert.match(await patchLedger.innerText(), /Disconnect Summon ducks → Pour · flows to/);
-    assert.match(await patchLedger.innerText(), /Connect Pour → Moonflower · targets/);
+    assert.match(await patchLedger.innerText(), /Disconnect Summon ducks → Pour \(flows to\)/);
+    assert.match(await patchLedger.innerText(), /Connect Pour → Moonflower \(targets\)/);
     assert.match(await patchLedger.innerText(), /Awaken Umbrella/);
     const patchPreflight = page.locator(".patch-preflight");
     await assertVisible(patchPreflight, "the approval card exposes exact structural preconditions");
-    assert.match(await patchPreflight.innerText(), /Preflight · graph v2[\s\S]*2 live edges · 2 dormant runes · 1 sacred lock/i);
+    assert.match(await patchPreflight.innerText(), /Preflight for graph v2[\s\S]*2 live edges, 2 dormant runes, 1 sacred lock/i);
     assert.equal(await page.locator(".edge-layer line.patch-remove").count(), 2, "removed connections are previewed on the graph");
     assert.equal(await page.locator(".edge-layer line.patch-add").count(), 4, "new connections are previewed on the graph");
     assert.equal(await page.locator(".rune.patch-activate").count(), 2, "dormant runes to awaken are previewed on the graph");
@@ -322,12 +322,12 @@ test("production browser completes the constraint-preserving spell journey", { t
     await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "a human can safely test the repair before approval");
     await assertVisible(page.locator(".preview-verdict"), "the unapplied prediction is visibly distinguished from editor state");
     assert.match(await page.locator(".preview-verdict").innerText(), /Predicted\s+Stable[\s\S]*Editor remains at graph v2/i);
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/, "preview simulation does not advance the graph");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v2/, "preview simulation does not advance the graph");
     await page.getByRole("button", { name: "Apply patch & recast", exact: true }).click();
     await assertVisible(page.getByText("Stable", { exact: true }), "successful cast is stable");
     await assertVisible(page.getByText("The moonflower blooms", { exact: true }), "successful outcome is visible");
     assert.match(await page.locator(".cast-vision").innerText(), /twelve umbrella-equipped ducks/i);
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v3/);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v3/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "the repaired spell preserves one sacred rune");
     await assertVisible(page.locator(".agent-gym-heading .complete"), "apply and recast completes the visible evaluation episode");
     assert.match(await page.locator(".agent-gym").innerText(), /complete[\s\S]*23\s*\/\s*23/i);
@@ -352,18 +352,18 @@ test("production browser completes the constraint-preserving spell journey", { t
 
     await page.getByRole("button", { name: "Undo agent patch", exact: true }).click();
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "undo restores the failed spell");
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v4/);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v4/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "undo preserves the human's sacred constraint");
 
     await page.getByRole("button", { name: "Reset lesson", exact: true }).click();
     await assertVisible(page.getByText("Ready to cast", { exact: true }), "reset returns to the initial state");
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v1/);
 
     await page.locator(".scenario-lab > summary").click();
     await page.getByRole("combobox", { name: "Rule" }).selectOption("family-02-v1");
     await page.getByRole("button", { name: "Load task", exact: true }).click();
     await assertVisible(page.getByText("task-02-test-00", { exact: true }), "the selected held-out task is loaded");
-    await assertVisible(page.getByText("WebMCP · 7 tools registered", { exact: true }), "scenario swap re-registers WebMCP");
+    await assertVisible(page.getByText("7 WebMCP tools registered", { exact: true }), "scenario swap re-registers WebMCP");
     const swapped = await page.evaluate(async () => {
       const tools = window.__hexWebMCPTools;
       const inspect = tools.get("inspect_spell");
@@ -521,7 +521,7 @@ test("production browser completes the constraint-preserving spell journey", { t
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.reload({ waitUntil: "networkidle" });
-    await assertVisible(page.getByText("WebMCP · 7 tools registered", { exact: true }), "production WebMCP registration names the protocol");
+    await assertVisible(page.getByText("7 WebMCP tools registered", { exact: true }), "production WebMCP registration names the protocol");
     const registeredNames = await page.evaluate(() => [...window.__hexWebMCPTools.keys()].sort());
     assert.deepEqual(registeredNames, [
       "apply_spell_patch",
@@ -555,7 +555,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.deepEqual(focusedInspection.edges.map((edge) => edge.id), ["e-multiply-ducks"]);
     assert.deepEqual(focusedInspection.boundaryEdges.map((edge) => edge.id), ["e-water-multiply", "e-ducks-pour"]);
     assert.equal(focusedInspection.filter.omittedNodeCount, 10);
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "inspection does not advance the graph");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v1/, "inspection does not advance the graph");
     const agentFailure = await invokeTool("simulate_cast");
     assert.equal(agentFailure.success, false);
     await assertVisible(page.getByText("Twelve ducks. One indoor lake.", { exact: true }), "agent simulation drives the visible failure");
@@ -568,7 +568,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     const boundedSourceTrace = await invokeTool("trace_effect", { sourceId: "moonwell", maxDepth: 2, maxPaths: 1 });
     assert.equal(boundedSourceTrace.truncated, true);
     assert.deepEqual(boundedSourceTrace.bounds, { maxDepth: 2, maxPaths: 1 });
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "read-only traces do not advance the graph");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v1/, "read-only traces do not advance the graph");
     const agentExplanation = await invokeTool("explain_side_effect", { sideEffectId: "flooded-observatory" });
     assert.deepEqual(agentExplanation.subgraph.nodes.map((node) => node.id), ["moonwell", "multiply", "summon-ducks", "pour", "room"]);
     assert.deepEqual(agentExplanation.subgraph.edges.map((edge) => edge.id), ["e-water-multiply", "e-multiply-ducks", "e-ducks-pour", "e-pour-room"]);
@@ -576,7 +576,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.equal(agentExplanation.ruleEvidence.allPremisesSatisfied, true);
     assert.equal(agentExplanation.minimality.everyResponsibleEdgeNecessary, true);
     assert.equal(agentExplanation.minimality.necessityChecks.every((check) => !check.sideEffectStillPresent), true);
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v1/, "side-effect proof does not advance the graph");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v1/, "side-effect proof does not advance the graph");
     await invokeTool("set_sacred_constraint", {
       targetId: "summon-ducks",
       reason: "The ducks are funny. They must remain in the final spell.",
@@ -613,7 +613,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.deepEqual(agentPreview.patchReview.operationLedger, agentProposal.patches[0].operationLedger);
     assert.deepEqual(agentPreview.patchReview.reviewSummary, agentProposal.patches[0].reviewSummary);
     await assertVisible(page.getByText("Unapplied simulation", { exact: true }), "agent patch simulations remain visibly pending");
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v2/, "agent preview does not advance the live graph");
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v2/, "agent preview does not advance the live graph");
     const agentApply = await invokeTool("apply_spell_patch", { patchId: agentProposal.patches[0].id });
     await assertVisible(page.getByText("Stable", { exact: true }), "agent patch drives the visible stable cast");
     assert.equal(agentApply.verification.success, true);
@@ -637,7 +637,7 @@ test("production browser completes the constraint-preserving spell journey", { t
     assert.deepEqual(agentRevert.revertedPatch.operationLedger, agentProposal.patches[0].operationLedger);
     assert.deepEqual(agentRevert.revertedPatch.reviewSummary, agentProposal.patches[0].reviewSummary);
     await assertVisible(page.getByText("Side effect detected", { exact: true }), "agent rollback restores visible failure state");
-    assert.match(await page.locator(".canvas-header").textContent(), /Live spell · v4/);
+    assert.match(await page.locator(".canvas-header").textContent(), /Live spell v4/);
     assert.equal(await page.locator(".rune.sacred").count(), 1, "agent rollback preserves sacred intent");
 
     assert.deepEqual(browserErrors, [], `production browser emitted errors:\n${browserErrors.join("\n")}`);

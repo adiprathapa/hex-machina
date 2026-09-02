@@ -40,7 +40,7 @@ export function buildPatchPreview(graph: SpellGraph, patch: SpellPatch): PatchPr
       return {
         key: `${index}-disconnect-${edge.id}`,
         kind: "disconnect",
-        label: `Disconnect ${nodeLabel(graph, edge.from)} → ${nodeLabel(graph, edge.to)} · ${readableEdgeType(edge.type)}`,
+        label: `Disconnect ${nodeLabel(graph, edge.from)} → ${nodeLabel(graph, edge.to)} (${readableEdgeType(edge.type)})`,
         nodeIds: [edge.from, edge.to],
         edgeId: edge.id,
         fromId: edge.from,
@@ -52,7 +52,7 @@ export function buildPatchPreview(graph: SpellGraph, patch: SpellPatch): PatchPr
     return {
       key: `${index}-connect-${edge.id}`,
       kind: "connect",
-      label: `Connect ${nodeLabel(graph, edge.from)} → ${nodeLabel(graph, edge.to)} · ${readableEdgeType(edge.type)}`,
+      label: `Connect ${nodeLabel(graph, edge.from)} → ${nodeLabel(graph, edge.to)} (${readableEdgeType(edge.type)})`,
       nodeIds: [edge.from, edge.to],
       edgeId: edge.id,
       fromId: edge.from,

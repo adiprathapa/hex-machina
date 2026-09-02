@@ -149,7 +149,7 @@ const STORY: Record<string, {
   prompt: string;
 }> = {
   "unshielded-amplified-carrier": {
-    lesson: "Family 01 · amplified carrier",
+    lesson: "Family 01, amplified carrier",
     title: "The overenthusiastic rain spell",
     lede: "This spell is almost right. Cast it, find the unstable path, then repair it without losing what you love.",
     canvas: "Rain for a moonflower",
@@ -161,7 +161,7 @@ const STORY: Record<string, {
     prompt: "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The ducks are funny, so preserve them as a sacred constraint. Find the smallest repair that waters the moonflower without flooding the room, show me the proposed patch, apply it, and cast the spell again.",
   },
   "resonant-feedback-cycle": {
-    lesson: "Family 02 · resonant feedback",
+    lesson: "Family 02, resonant feedback",
     title: "The spell that will not stop singing",
     lede: "A note feeds itself. Cast it, find the cycle that keeps it alive, then break it without silencing the choir.",
     canvas: "Harmony for a glass dome",
@@ -173,7 +173,7 @@ const STORY: Record<string, {
     prompt: "Inspect my spell and cast it. Explain why it failed, but do not change anything yet. The choir is the point of the piece, so preserve the thunderbirds as a sacred constraint. Find the smallest repair that rings the crystal bell without shattering the glass dome, show me the proposed patch, apply it, and cast the spell again.",
   },
   "unguarded-premature-action": {
-    lesson: "Family 03 · missing temporal guard",
+    lesson: "Family 03, missing temporal guard",
     title: "The spell that acts too early",
     lede: "Everything here is correct except its timing. Cast it, find the missing guard, then add it without cutting anything out.",
     canvas: "Pollination on a clock",
@@ -928,10 +928,7 @@ export function HexMachina() {
               <path d={BRAND_MARK_HEX} fill="currentColor" stroke="currentColor" strokeWidth={BRAND_MARK_CORNER} strokeLinejoin="round" />
             </svg>
           </span>
-          <div>
-            <h1>Hex Machina</h1>
-            <p className="eyebrow">Agent gym for constraint-aware repair</p>
-          </div>
+          <h1>Hex Machina</h1>
         </div>
         <div className="mission-chip">
           <span>Objective</span>
@@ -944,16 +941,20 @@ export function HexMachina() {
         <div className={`site-tool-state ${mcpState}`} title="This page defines seven semantic tools and registers them on document.modelContext whenever a browser agent provides one.">
           <span className="status-dot" />
           {mcpState === "live"
-            ? "WebMCP · 7 tools registered"
+            ? "7 WebMCP tools registered"
             : mcpState === "checking"
-              ? "WebMCP · connecting to host…"
-              : "WebMCP · 7 tools ready for a host"}
+              ? "WebMCP connecting to host…"
+              : "7 WebMCP tools ready for a host"}
         </div>
       </header>
 
       <main className="workspace" id="workspace" tabIndex={-1}>
         <aside className="brief-panel panel" aria-label="Lesson and browser-agent brief">
           <div>
+            {/* The lesson is one instance of the larger claim, so the claim is
+                stated once, above every lesson, in the words the social card
+                uses. Without it the interface read as a single puzzle. */}
+            <p className="thesis">Humans decide what matters. Agents prove the <em>smallest repair</em>.</p>
             <p className="section-kicker">{story.lesson}</p>
             <h2>{story.title}</h2>
             <p className="lede">
@@ -1063,7 +1064,7 @@ export function HexMachina() {
 
         <section className="canvas-panel panel" aria-label="Executable spell graph">
           <div className="canvas-header">
-            <div><p className="section-kicker">Live spell · v{graph.version}</p><h2>{story.canvas}</h2></div>
+            <div><p className="section-kicker">Live spell v{graph.version}</p><h2>{story.canvas}</h2></div>
             <p className="graph-legend" aria-label="Graph edge legend">
               <span><i /> Flow</span>
               <span className="legend-target"><i /> Target</span>
@@ -1211,7 +1212,7 @@ export function HexMachina() {
             })}
 
             <p className="canvas-hint">
-              <span className="hint-pan">Swipe to pan the graph · </span>Drag runes to rearrange<span className="hint-keys"> · Arrow keys nudge</span>
+              <span className="hint-pan">Swipe to pan the graph. </span>Drag runes to rearrange<span className="hint-keys">. Arrow keys nudge</span>
             </p>
 
           </div>
@@ -1281,8 +1282,8 @@ export function HexMachina() {
               )}
               <dl><div><dt>Rank</dt><dd>#{patch.searchEvidence.rank}</dd></div><div><dt>Edits</dt><dd>{patch.searchEvidence.editCount}</dd></div><div><dt>Eligible</dt><dd>{patch.searchEvidence.eligibleCandidateCount}/{patch.searchEvidence.candidateCount}</dd></div></dl>
               <div className="patch-preflight" aria-label="Patch preconditions">
-                <span>Preflight · graph v{patch.preconditions.expectedGraphVersion}</span>
-                <strong>{patch.preconditions.requiredEdgeIds.length} live edges · {patch.preconditions.requiredDormantNodeIds.length} dormant runes · {patch.preconditions.requiredConstraintIds.length} sacred lock</strong>
+                <span>Preflight for graph v{patch.preconditions.expectedGraphVersion}</span>
+                <strong>{patch.preconditions.requiredEdgeIds.length} live edges, {patch.preconditions.requiredDormantNodeIds.length} dormant runes, {patch.preconditions.requiredConstraintIds.length} sacred lock</strong>
               </div>
               <div className="patch-actions">
                 {!previewCast && <button type="button" className="patch-simulate" onClick={previewRepair}>Simulate patch safely</button>}
@@ -1316,7 +1317,7 @@ export function HexMachina() {
           ) : (
             <div className="familiar-message">
               <p className="section-kicker">Current read</p>
-              <p>{cast?.success ? "The graph is stable. Every promise survived the repair." : cast ? story.read : "Cast first. Good magic begins with evidence."}</p>
+              <p>{cast?.success ? "The graph is stable. Every promise survived the repair. That is the whole idea: you named what mattered, and the agent proved the smallest change around it." : cast ? story.read : "Cast first. Good magic begins with evidence."}</p>
               {/* The patch card unmounts once the repair is applied, so the way
                   back lives with the read that reports the repair held. */}
               {cast?.success && revertToken && (
@@ -1351,19 +1352,19 @@ export function HexMachina() {
 
           <section className="agent-gym" aria-label="Agent Gym evaluation" ref={gymCardRef}>
             <div className="agent-gym-heading">
-              <div><p className="section-kicker">Agent Gym · evaluation mode</p><h3>Scored, replayable episode</h3></div>
+              <div><p className="section-kicker">Agent Gym evaluation mode</p><h3>Scored, replayable episode</h3></div>
               <span className={gymSnapshot.status}>{gymSnapshot.status}</span>
             </div>
             <p>Every site-tool call records reward plus before/after graph observations. The interface and visiting agents use the same handlers.</p>
             <div className="gym-score">
               <strong>{gymSnapshot.score}<small> / {gymSnapshot.maxScore}</small></strong>
-              <span>{gymSnapshot.trajectory.length} steps · {gymSnapshot.completedMilestones.length}/9 milestones</span>
+              <span>{gymSnapshot.trajectory.length} steps, {gymSnapshot.completedMilestones.length}/9 milestones</span>
             </div>
             <div className="gym-meter" aria-hidden="true"><i style={{ width: `${Math.max(0, Math.min(100, (gymSnapshot.score / gymSnapshot.maxScore) * 100))}%` }} /></div>
             <details className="policy-baselines" aria-label="Held-out policy benchmark" open={policyOpen} onToggle={onPolicyToggle} ref={policyDetailsRef}>
               <summary className="policy-baselines-heading">
                 <span>Held-out policy</span>
-                <span>Mean reward · {AGENT_GYM_POLICY_BASELINES.length} policies</span>
+                <span>Mean reward, {AGENT_GYM_POLICY_BASELINES.length} policies</span>
                 <span className="rail-disclosure" aria-hidden="true">⌄</span>
               </summary>
               <p className="policy-baselines-note">
@@ -1378,13 +1379,13 @@ export function HexMachina() {
               ))}
             </details>
             <div className="gym-foot">
-              <small title="96 variants · 3 causal families · vector + offline rollouts">96 variants · 3 causal families</small>
+              <small title="96 variants across 3 causal families, with vector and offline rollouts">96 variants, 3 causal families</small>
               <button type="button" onClick={exportEpisode} disabled={!gymSnapshot.trajectory.length}>Export episode JSON</button>
             </div>
           </section>
           </div>
 
-          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting · 7 tools registered"}</small></div>
+          <div className="activity-header"><span>Tool activity</span><small>{activity.length ? "Live" : "Waiting, 7 tools registered"}</small></div>
           <div className="activity-list" role="log" aria-live="polite" aria-label="Agent activity" ref={railFeedRef}>
             {activity.map((item) => (
               <article key={item.id}><span className="activity-mark">{item.tool === "simulate_cast" ? "↯" : item.tool.includes("patch") ? "⌁" : "◎"}</span><div><strong>{item.tool}</strong><p>{item.detail}</p></div></article>
@@ -1404,7 +1405,7 @@ export function HexMachina() {
             <summary>
               <span>
                 <strong>Task loader</strong>
-                <small>Swap in any of 96 generated tasks · 3 causal rules</small>
+                <small>Swap in any of 96 generated tasks across 3 causal rules</small>
               </span>
               <span aria-hidden="true">⌄</span>
             </summary>
@@ -1453,14 +1454,14 @@ export function HexMachina() {
             {variant && (
               <div className="lab-loaded">
                 <code>{variant.scenarioId}</code>
-                <small>seed {variant.seed} · protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
+                <small>seed {variant.seed}, protects {graph.nodes.find((node) => node.id === subjectId)?.label}</small>
               </div>
             )}
           </details>
 
           <details className="tool-console">
             <summary>
-              <span><strong>Local tool console</strong><small>Same handlers · structured JSON</small></span>
+              <span><strong>Local tool console</strong><small>Same handlers, structured JSON</small></span>
               <span aria-hidden="true">⌄</span>
             </summary>
             <p>Invoke the seven semantic tools directly when browser Site Tools are unavailable.</p>
@@ -1472,7 +1473,7 @@ export function HexMachina() {
                   onClick={() => runConsoleTool(tool.name)}
                   disabled={consoleBusy !== null || (tool.name === "apply_spell_patch" && !patch)}
                   title={tool.name}
-                  aria-label={`${tool.label} — ${tool.name}, ${tool.mutates ? "mutating" : "read-only"}`}
+                  aria-label={`${tool.label}: ${tool.name}, ${tool.mutates ? "mutating" : "read-only"}`}
                 >
                   <span>{tool.label}</span>
                   <small>{tool.mutates ? "Write" : "Read"}</small>

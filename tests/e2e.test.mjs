@@ -42,10 +42,10 @@ test("production worker renders the complete playable shell", async () => {
   assert.match(html, /document\.modelContext/);
   assert.match(html, /Copy prompt/);
   assert.match(html, /github\.com\/adiprathapa\/hex-machina/);
-  assert.match(html, /Agent Gym · evaluation mode/);
+  assert.match(html, /Agent Gym evaluation mode/);
   assert.match(html, /Scored, replayable episode/);
   assert.match(html, /reward plus before\/after graph observations/);
-  assert.match(html, /96 variants · 3 causal families · vector \+ offline rollouts/);
+  assert.match(html, /96 variants across 3 causal families, with vector and offline rollouts/);
   assert.match(html, /Held-out policy/);
   assert.match(html, /Memorized IDs/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/);

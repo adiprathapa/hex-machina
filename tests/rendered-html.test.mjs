@@ -53,8 +53,8 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(client, /Graph edge legend/);
   assert.match(client, /marker id="arrow-default"/);
   assert.match(client, /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"/);
-  assert.match(client, /Same handlers · structured JSON/);
-  assert.match(client, /Agent Gym · evaluation mode/);
+  assert.match(client, /Same handlers, structured JSON/);
+  assert.match(client, /Agent Gym evaluation mode/);
   assert.match(client, /Scored, replayable episode/);
   assert.match(client, /before\/after graph observations/);
   assert.match(client, /Held-out policy/);
@@ -63,7 +63,7 @@ test("ships Hex Machina instead of the starter preview", async () => {
   assert.match(policy, /Memorized IDs/);
   assert.match(client, /instrumentSpellToolHandlers/);
   assert.match(client, /Export episode JSON/);
-  assert.match(client, /96 variants · 3 causal families · vector \+ offline rollouts/i);
+  assert.match(client, /96 variants across 3 causal families, with vector and offline rollouts/i);
   assert.match(client, /aria-label="Semantic tool console"/);
   assert.match(client, /handlers\.inspect_spell/);
   assert.match(client, /handlers\.apply_spell_patch/);

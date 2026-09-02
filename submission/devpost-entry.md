@@ -10,15 +10,15 @@ An agent gym where humans decide what matters and agents prove the smallest repa
 
 ## Short description
 
-Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste—“the ducks must stay”—while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
+Hex Machina is an agent-evaluation environment disguised as a graph-native spell game. A person contributes taste (“the ducks must stay”) while a browser agent inspects, traces, simulates, and repairs the same executable spell through seven WebMCP tools. Those calls form a deterministic, scored, exportable trajectory.
 
 ## How to try it
 
 WebMCP tools register only when a host provides `document.modelContext`, and
 hosts are not broadly shipped yet, so the page tells you which case you are in
 instead of pretending. Opened by a WebMCP-capable browser agent the header reads
-`WebMCP · 7 tools registered`; opened in an ordinary browser it reads
-`WebMCP · 7 tools ready for a host`. Either way the lesson is playable, because
+`7 WebMCP tools registered`; opened in an ordinary browser it reads
+`7 WebMCP tools ready for a host`. Either way the lesson is playable, because
 the local tool console calls the same production handlers a visiting agent
 would. The screenshots, the demo video, and the browser tests install a stand-in
 `document.modelContext` to play the host; that shim only delivers the calls,
@@ -34,7 +34,7 @@ Seven narrow WebMCP tools let the agent inspect the exact graph, trace a side ef
 
 The agent does not disappear into a chat transcript. Its work is visible on the shared canvas: inspected runes select, causal paths glow, constraints become physical pins, and every proposed connection, disconnection, and rune activation appears both in an eight-step review ledger and as a pending graph overlay before approval. Crucially, the human card renders the exact structured ledger returned to the agent; simulation, application, and rollback repeat that receipt so review cannot silently drift from execution. Mutations advance the graph version, and verification casts animate the outcome. The same shared handlers power WebMCP, human controls, and a local fallback console, so the experience remains understandable in an ordinary browser.
 
-Every write is bounded and reversible. The agent can apply only a current application-generated patch ID—not arbitrary graph operations. The proposal names its exact graph-version, live-edge, dormant-rune, and sacred-lock preconditions; the approval card shows them, application revalidates them before cloning, and the result returns what was checked. The human can undo the latest unchanged patch without losing their sacred constraint.
+Every write is bounded and reversible. The agent can apply only a current application-generated patch ID, not arbitrary graph operations. The proposal names its exact graph-version, live-edge, dormant-rune, and sacred-lock preconditions; the approval card shows them, application revalidates them before cloning, and the result returns what was checked. The human can undo the latest unchanged patch without losing their sacred constraint.
 
 ## What people and agents can do together
 
@@ -64,8 +64,8 @@ stayed eligible, applied it and recast was graded `goal-verified` at 20/23 on
 every test scenario in every family, with the protected branch orphaned in all
 of them. It was indistinguishable from the grounded reference on score,
 completion, unsafe-episode rate, invalid-action rate and step count. The
-mechanism was always sound — patch search really does drop the destructive
-candidate once a constraint is locked — but the evaluation never required
+mechanism was always sound (patch search really does drop the destructive
+candidate once a constraint is locked), but the evaluation never required
 anyone to use it. Reaching the goal by discarding what the human protected now
 ends the episode as `constraint-violated`, and that policy scores 4. It is a
 visible row in the on-screen baseline table, because the point is that it looks
@@ -75,7 +75,7 @@ clean on every other column.
 enums were built from a hardcoded scenario at registration time, so on any
 other family the only correct arguments were schema-invalid and the two tools
 carrying the human-constraint story were uncallable by a schema-conforming
-agent. Registration now describes the graph it is registering for — and
+agent. Registration now describes the graph it is registering for, and
 deliberately does not enumerate the protected rune, since that is the answer an
 agent is meant to ground from the human's stated constraint.
 
@@ -93,7 +93,7 @@ identifiers, or says plainly that nothing is protected.
 **The splits held out identifiers, not structure.** Measured rather than
 asserted: the suite fingerprints every task and derives the claim a held-out
 score is entitled to support. A separate transfer protocol withholds an entire
-family — a grounded policy scores 23/23 with every constraint preserved on a
+family: a grounded policy scores 23/23 with every constraint preserved on a
 structure it never saw, while an otherwise identical policy that memorized the
 training family's vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Two of the three still reach the goal; only the reward tells them apart.
 

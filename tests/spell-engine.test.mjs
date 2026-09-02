@@ -267,14 +267,14 @@ test("constraint-aware repairs expose every structural edit as a human-readable 
   assert.deepEqual(
     preview.map((entry) => entry.label),
     [
-      "Disconnect Summon ducks → Pour · flows to",
-      "Disconnect Pour → The room · targets",
+      "Disconnect Summon ducks → Pour (flows to)",
+      "Disconnect Pour → The room (targets)",
       "Awaken Umbrella",
-      "Connect Summon ducks → Umbrella · flows to",
-      "Connect Umbrella → Pour · flows to",
-      "Connect Pour → Moonflower · targets",
+      "Connect Summon ducks → Umbrella (flows to)",
+      "Connect Umbrella → Pour (flows to)",
+      "Connect Pour → Moonflower (targets)",
       "Awaken Bloom",
-      "Connect Moonflower → Bloom · flows to",
+      "Connect Moonflower → Bloom (flows to)",
     ],
   );
   assert.deepEqual(preview.filter((entry) => entry.kind === "disconnect").map((entry) => entry.edgeId), ["e-ducks-pour", "e-pour-room"]);

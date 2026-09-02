@@ -34,7 +34,7 @@ Patch IDs have a second application-owned boundary: preview and write handlers a
 - Every tool declares the current standard annotations explicitly: reads use `readOnlyHint: true`, writes use `readOnlyHint: false`, and deterministic application-owned outputs use `untrustedContentHint: false`.
 - Registered callbacks reject already-cancelled executions before invoking shared application logic.
 - Agent-supplied graph operations are never accepted.
-- Every application fails before cloning when its graph version, required live edges, dormant-rune states, or sacred locks have drifted—even if corrupted state reused the same version number.
+- Every application fails before cloning when its graph version, required live edges, dormant-rune states, or sacred locks have drifted, even if corrupted state reused the same version number.
 - Atomic patch application independently proves that every sacred node or edge remains reachable from an active source, even if a future solver candidate is wrong.
 - Unknown nodes, side effects, empty reasons, oversized inputs, and stale patches fail safely.
 - Patch applications return one-use revert tokens; rollback fails closed after any intervening graph mutation and never discards the human's sacred constraint. Apply/revert pattern constants are shared by the manifest and runtime validator, including the temporal-guard family.

@@ -181,30 +181,39 @@ summary:focus-visible,
   gap: 10px;
 }
 
-/* Align to the wordmark's own line, not to the centre of the stacked pair. */
+/* The mark sits on the wordmark's capitals: it takes the h1's size, and at
+   line-height 1 Inter's cap centre is the line box's centre, so centring the
+   pair aligns the hexagon to the letters rather than to the descender space
+   under them. Its height is a little over the cap height (0.73em), since a
+   shape matched exactly to the caps reads as smaller than the type. */
 .brand-lockup {
   align-items: center;
-}
-
-.brand-lockup > div {
-  display: grid;
-  gap: 1px;
+  gap: .5em;
+  font-size: var(--t-xl);
 }
 
 .brand-mark,
 .familiar-orb {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
   flex: none;
   color: var(--blue);
 }
 
+.brand-mark {
+  width: 1em;
+  height: 1em;
+}
+
 .brand-mark svg {
-  width: 30px;
-  height: 30px;
+  width: 100%;
+  height: 100%;
   display: block;
+}
+
+.familiar-orb {
+  width: 32px;
+  height: 32px;
 }
 
 
@@ -229,19 +238,31 @@ summary:focus-visible,
   letter-spacing: -0.025em;
 }
 
-.brand-lockup .eyebrow {
-  margin: 0;
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
 .topbar h1 {
   font-size: var(--t-xl);
   font-weight: 600;
+  line-height: 1;
   letter-spacing: -0.02em;
 }
 
-.eyebrow,
+/* The claim above every lesson. Its own size rather than the kicker's so it
+   reads as a sentence, not a label, and the one emphasised phrase takes the
+   brand blue the social card gives it. */
+.thesis {
+  max-width: 30ch;
+  margin: 0 0 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font: 600 var(--t-sm)/1.4 var(--font-inter), system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+.thesis em {
+  color: var(--blue-text);
+  font-style: normal;
+}
+
 .section-kicker {
   margin: 0 0 4px;
   color: var(--subtle);
@@ -2280,6 +2301,19 @@ kbd {
   .lede {
     display: none;
   }
+}
+
+/* On the shortest laptop rails (1280x720, 1366x768) the thesis line costs
+   36px the rail did not have, and the agent-brief section, which is allowed
+   to shrink below its content so the prompt can yield, ran into the steps
+   under it. Take the air out of the rows instead: nothing is hidden. */
+@media (max-height: 780px) and (min-width: 761px) {
+  .thesis { margin-bottom: 8px; padding-bottom: 8px; }
+  .controls { padding: 6px 0 6px; }
+  .agent-brief { margin-top: 6px; padding: 8px 10px; }
+  .prompt-toggle { margin-top: 2px; }
+  .quest-steps li { padding-top: 2px; padding-bottom: 2px; }
+  .brief-panel { padding-bottom: 6px; }
 }
 
 @media (min-height: 950px) and (min-width: 761px) {

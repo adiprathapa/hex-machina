@@ -235,14 +235,14 @@ test("tool handlers preserve human intent through a verified write", async () =>
   assert.equal(proposal.patches[0].searchEvidence.editCount, 8);
   assert.equal(proposal.patches[0].searchEvidence.eligibleCandidateCount, 1);
   assert.deepEqual(proposal.patches[0].operationLedger.map((entry) => entry.label), [
-    "Disconnect Summon ducks → Pour · flows to",
-    "Disconnect Pour → The room · targets",
+    "Disconnect Summon ducks → Pour (flows to)",
+    "Disconnect Pour → The room (targets)",
     "Awaken Umbrella",
-    "Connect Summon ducks → Umbrella · flows to",
-    "Connect Umbrella → Pour · flows to",
-    "Connect Pour → Moonflower · targets",
+    "Connect Summon ducks → Umbrella (flows to)",
+    "Connect Umbrella → Pour (flows to)",
+    "Connect Pour → Moonflower (targets)",
     "Awaken Bloom",
-    "Connect Moonflower → Bloom · flows to",
+    "Connect Moonflower → Bloom (flows to)",
   ]);
   assert.deepEqual(proposal.patches[0].reviewSummary, {
     totalOperations: 8,

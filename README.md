@@ -4,7 +4,7 @@
 
 **Magic is just code with worse documentation.**
 
-> An agent gym where humans decide what matters and agents prove the smallest repair — disguised as a graph-native spell game.
+> An agent gym where humans decide what matters and agents prove the smallest repair, disguised as a graph-native spell game.
 
 Hex Machina is a deterministic WebMCP environment for evaluating whether an agent can inspect state, explain causality, preserve human intent, and make a safe repair. The playable spell game makes that evaluation understandable at a glance: the human decides what must survive; the agent traces the spell, searches constraint-aware repairs, and applies a reviewable patch to the same typed graph both participants can see.
 
@@ -15,7 +15,7 @@ The canonical lesson asks the player to water a Moonflower. The initial spell fl
 ## Try it in two minutes
 
 Open the [live site](https://hex-machina.hex-machina.workers.dev). If you have a
-WebMCP-capable browser agent, paste this prompt into it — the same one the left
+WebMCP-capable browser agent, paste this prompt into it. It is the same one the left
 rail offers as **Copy prompt**:
 
 > Inspect my spell and cast it. Explain why it failed, but do not change
@@ -25,8 +25,8 @@ rail offers as **Copy prompt**:
 
 You should end at **23 / 23**, nine steps, nine of nine milestones, twelve ducks
 alive and the room dry. If you do not have a host, run the same journey from the
-**Local tool console** in the right rail — it calls the same production handlers
-— then use the **Task loader** to swap in any of the 96 generated tasks and
+**Local tool console** in the right rail, which calls the same production handlers,
+then use the **Task loader** to swap in any of the 96 generated tasks and
 watch the seven tools re-register against a graph with entirely new identifiers.
 
 Everything below is the evidence for what that journey claims. See
@@ -41,7 +41,7 @@ The on-screen Agent Gym card scores calls from both WebMCP and the local interfa
 
 The live **Task loader** can swap any of those 96 variants directly into the visible graph. Each swap resets the scored episode and patch capabilities, removes the previous WebMCP registrations, and advertises fresh rune/effect schemas before the new tools become live. An exhaustive integration test completes the nine-call, constraint-preserving journey through registered WebMCP definitions on every task; the production-browser journey additionally proves a real UI swap replaces the old seven-tool registration and renders the loaded family's failure.
 
-This is cross-rule robustness evidence—not broad agent generalization and not a training service. The default splits hold out identifiers, and the suite says so: it fingerprints every task and derives the claim a held-out score is entitled to support, rather than asserting one. For structural evidence, `npm run gym:transfer` withholds an entire family from training — a grounded policy scores 23/23 with every constraint preserved on a structure it never saw, while an otherwise identical policy that memorized the training family's vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Two of those three runs still reach the goal, which is the point: memorised vocabulary can stumble into a completion, and only the reward separates it from grounded repair.
+This is cross-rule robustness evidence. It is not broad agent generalization and not a training service. The default splits hold out identifiers, and the suite says so: it fingerprints every task and derives the claim a held-out score is entitled to support, rather than asserting one. For structural evidence, `npm run gym:transfer` withholds an entire family from training: a grounded policy scores 23/23 with every constraint preserved on a structure it never saw, while an otherwise identical policy that memorized the training family's vocabulary scores 2 on two of the three held-out families and −1 on the third, a 21-to-24-point separation from the grounded policy. Two of those three runs still reach the goal, which is the point: memorised vocabulary can stumble into a completion, and only the reward separates it from grounded repair.
 
 Run the reproducible baseline over every split:
 
@@ -157,7 +157,7 @@ the documentation:
 - **The reward ignored the human's constraint.** A policy that diagnosed
   correctly and then repaired the spell the way the human forbade was graded
   `goal-verified` at 20/23 on every test scenario in both families, with the
-  protected branch orphaned in all of them. The mechanism was always sound — the
+  protected branch orphaned in all of them. The mechanism was always sound; the
   evaluation simply never required anyone to use it. Reaching the goal by
   discarding what the human protected now ends the episode as
   `constraint-violated`, and the exploit scores 4.
@@ -173,7 +173,7 @@ the documentation:
   enums came from a hardcoded scenario at registration time, so on any other one
   the only correct arguments were schema-invalid and the two tools carrying the
   human-constraint story were uncallable. Registration now describes the graph it
-  is registering for — and deliberately does not enumerate the protected rune,
+  is registering for, and deliberately does not enumerate the protected rune,
   since that is the answer an agent is meant to ground from the human's stated
   constraint.
 
@@ -211,13 +211,13 @@ The exact Sites bundle and authorization-aware release handoff are recorded in [
 
 1. Cast the faulty graph: twelve lunar ducks flood the observatory.
 2. Trace the responsible path from `Multiply` through `Pour` to `The room`.
-3. Inspect the complete bounded causal path, then mark the ducks sacred—the repair is now constrained by human taste.
+3. Inspect the complete bounded causal path, then mark the ducks sacred. The repair is now constrained by human taste.
 4. Review all eight graph edits in a typed change ledger and as added, removed, or awakened elements on the canvas; the cheaper direct route is ineligible because it violates the sacred constraint.
 5. Recast: all twelve umbrella-equipped ducks water the Moonflower while the room stays dry.
 
-Every visible action is also available through a narrow semantic tool. Tool results flow through one shared presentation channel, so calls from a browser agent visibly drive the same cast spectacle, causal highlights, constraint pins, patch preview, and verification state as local controls. Focused inspection returns a closed internal subgraph, explicit boundary edges, filter accounting, and only high-level scenario status—never dangling references or pre-cast diagnostic assertions. Causal tracing returns deterministic ordered paths, every responsible edge, cycle and type-violation evidence, and explicit depth/path bounds. Side-effect explanation returns the typed five-rune/four-edge responsible subgraph, its ordered steps, positive and negative simulator premises, and four counterfactual checks proving that removing any responsible edge eliminates the flood. A proposed patch can be simulated by its bounded ID before approval; the UI labels that outcome as unapplied and proves the editor version did not change. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
+Every visible action is also available through a narrow semantic tool. Tool results flow through one shared presentation channel, so calls from a browser agent visibly drive the same cast spectacle, causal highlights, constraint pins, patch preview, and verification state as local controls. Focused inspection returns a closed internal subgraph, explicit boundary edges, filter accounting, and only high-level scenario status, never dangling references or pre-cast diagnostic assertions. Causal tracing returns deterministic ordered paths, every responsible edge, cycle and type-violation evidence, and explicit depth/path bounds. Side-effect explanation returns the typed five-rune/four-edge responsible subgraph, its ordered steps, positive and negative simulator premises, and four counterfactual checks proving that removing any responsible edge eliminates the flood. A proposed patch can be simulated by its bounded ID before approval; the UI labels that outcome as unapplied and proves the editor version did not change. In unsupported browsers, expand the local tool console to invoke those same handlers and inspect their structured JSON results.
 Applied agent patches return a one-use, stale-safe revert token and surface an **Undo agent patch** control, so experimentation never requires discarding the human's sacred constraint.
-Patch proposals include a compact minimality certificate—rank, edit count, candidate count, eligibility count, and satisfied constraints—plus a complete structured operation ledger. The human card renders that exact handler-returned ledger instead of independently rebuilding it. Preview, application, and rollback receipts repeat the same entries and summary counts, making drift detectable across the whole transaction. A visible preflight contract names the exact graph version, live edges, dormant runes, and sacred locks the proposal relies on. Before approval, the canvas ghosts proposed connections, strikes outgoing ones, and marks dormant runes that will awaken. Atomic application revalidates every precondition before cloning, then separately proves that sacred graph elements remain reachable from an active source.
+Patch proposals include a compact minimality certificate (rank, edit count, candidate count, eligibility count, and satisfied constraints) plus a complete structured operation ledger. The human card renders that exact handler-returned ledger instead of independently rebuilding it. Preview, application, and rollback receipts repeat the same entries and summary counts, making drift detectable across the whole transaction. A visible preflight contract names the exact graph version, live edges, dormant runes, and sacred locks the proposal relies on. Before approval, the canvas ghosts proposed connections, strikes outgoing ones, and marks dormant runes that will awaken. Atomic application revalidates every precondition before cloning, then separately proves that sacred graph elements remain reachable from an active source.
 
 ## What you need to run it
 
@@ -225,13 +225,13 @@ WebMCP tools only register when the page is opened by a host that provides
 `document.modelContext`. Hosts are not broadly shipped yet, so the page states
 which case you are in rather than pretending:
 
-- **With a WebMCP-capable browser agent** — the header reads
-  `WebMCP · 7 tools registered`. Copy the prompt from the left rail, paste it
+- **With a WebMCP-capable browser agent**, the header reads
+  `7 WebMCP tools registered`. Copy the prompt from the left rail, paste it
   into the agent, and watch the canvas. The seven tools let an agent inspect
   the graph, prove why it fails, and repair it without breaking a constraint
-  you set — the shape of any workflow builder or data pipeline.
-- **In an ordinary browser** — the header reads
-  `WebMCP · 7 tools ready for a host`, which is the honest state: the
+  you set, the shape of any workflow builder or data pipeline.
+- **In an ordinary browser**, the header reads
+  `7 WebMCP tools ready for a host`, which is the honest state: the
   definitions are built and waiting, but nothing has claimed them. The whole
   lesson is still playable, because the local tool console in the right rail
   calls the same production handlers a visiting agent would.
@@ -250,19 +250,19 @@ The [narrated 160.4-second demo](submission/video/hex-machina-demo.mp4) records 
 
 ## Architecture
 
-- `src/domain/` — typed graph schema, validation, stable serialization, atomic patches
-- `src/scenarios/` — deterministic Moonflower fixture
-- `src/scenarios/agent-gym-family.ts` — seeded opaque-ID variants and disjoint evaluation splits
-- `src/simulator/` — cast execution and ordered event traces
-- `src/solver/` — causal diagnosis and constraint-aware repair search
-- `src/tools/` — shared semantic handlers, versioned tool manifest, and guarded WebMCP registration
-- `src/familiar/` — optional deterministic message-passing suspect ranking
-- `src/eval/` — deterministic Agent Gym reset/step protocol, rewards, trajectory capture, and JSONL rollout bridge
-- `adapters/` — dependency-free Python client with Gymnasium-shaped signatures
-- `app/` — the visual spell canvas and local fallback console
-- `tests/` — graph, simulation, repair, and WebMCP contract coverage
-- `submission/screenshots/` — verified 1280×720 judge-journey evidence
-- `submission/video/` — reproducible narrated demo, captions, and media evidence
+- `src/domain/`: typed graph schema, validation, stable serialization, atomic patches
+- `src/scenarios/`: deterministic Moonflower fixture
+- `src/scenarios/agent-gym-family.ts`: seeded opaque-ID variants and disjoint evaluation splits
+- `src/simulator/`: cast execution and ordered event traces
+- `src/solver/`: causal diagnosis and constraint-aware repair search
+- `src/tools/`: shared semantic handlers, versioned tool manifest, and guarded WebMCP registration
+- `src/familiar/`: optional deterministic message-passing suspect ranking
+- `src/eval/`: deterministic Agent Gym reset/step protocol, rewards, trajectory capture, and JSONL rollout bridge
+- `adapters/`: dependency-free Python client with Gymnasium-shaped signatures
+- `app/`: the visual spell canvas and local fallback console
+- `tests/`: graph, simulation, repair, and WebMCP contract coverage
+- `submission/screenshots/`: verified 1280×720 judge-journey evidence
+- `submission/video/`: reproducible narrated demo, captions, and media evidence
 
 The browser application remains the source of truth. WebMCP handlers call the same domain functions used by the local interface; the agent never owns graph state or invariant enforcement.
 
@@ -290,7 +290,7 @@ Hex Machina has no accounts, analytics, cookies, browser persistence, external A
 
 ## Experimental Familiar
 
-After a failed cast, Moth runs two rounds of frozen-weight message passing over active runes and ranks three likely inspection targets. It is an advisory visualization—not a source of causal truth—and never mutates the graph. Disable it at build time with `NEXT_PUBLIC_FAMILIAR_GNN=off`.
+After a failed cast, Moth runs two rounds of frozen-weight message passing over active runes and ranks three likely inspection targets. It is an advisory visualization, not a source of causal truth, and it never mutates the graph. Disable it at build time with `NEXT_PUBLIC_FAMILIAR_GNN=off`.
 
 ## Durable build loop
 

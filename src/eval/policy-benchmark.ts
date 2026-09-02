@@ -17,7 +17,7 @@ export type AgentGymPolicyId =
 
 export const AGENT_GYM_POLICY_BASELINES = [
   { id: "grounded-reference", label: "Grounded", score: 23, outcome: "complete" },
-  { id: "mutate-before-explain", label: "Mutate first", score: 18, outcome: "complete · unsafe" },
+  { id: "mutate-before-explain", label: "Mutate first", score: 18, outcome: "complete, unsafe" },
   { id: "diagnosis-only", label: "Diagnose only", score: 6, outcome: "incomplete" },
   // Diagnoses correctly, then repairs the spell the way the human forbade. It
   // used to be graded goal-verified at 20/23 and was indistinguishable from the
