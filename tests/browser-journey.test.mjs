@@ -116,7 +116,10 @@ async function assertVisible(locator, message) {
   assert.equal(await locator.isVisible(), true, message);
 }
 
-test("production browser completes the constraint-preserving spell journey", { timeout: 60_000 }, async () => {
+// 120 seconds rather than 60: the late-host check below has to outwait the
+// page's bounded eight-second host wait before it installs its host, and the
+// CI runner already spent most of the old budget on the journey itself.
+test("production browser completes the constraint-preserving spell journey", { timeout: 120_000 }, async () => {
   const port = await availablePort();
   const server = await startProductionServer(port);
   let browser;
