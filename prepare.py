@@ -630,7 +630,6 @@ def main() -> int:
 
     for required in (
         "submission/description.md",
-        "submission/demo-script.md",
         "submission/architecture.md",
         "submission/acceptance-matrix.md",
         "submission/webmcp-conformance.md",

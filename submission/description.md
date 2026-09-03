@@ -53,4 +53,3 @@ TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test
 - [`screenshots/01-failure-diagnosis.jpg`](screenshots/01-failure-diagnosis.jpg): failed cast, deterministic diagnosis, and advisory Familiar ranking
 - [`screenshots/02-constraint-aware-patch.jpg`](screenshots/02-constraint-aware-patch.jpg): sacred duck constraint and reviewable patch preview
 - [`screenshots/03-successful-recast.jpg`](screenshots/03-successful-recast.jpg): Stable v3 graph, blooming Moonflower, and visible tool history
-- [`demo-script.md`](demo-script.md): timed 75-second judge walkthrough
