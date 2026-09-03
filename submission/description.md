@@ -44,7 +44,7 @@ A reproducible benchmark command runs the transparent reference policy across al
 
 ## Built with
 
-TypeScript, React, vinext, Cloudflare-compatible Sites output, WebMCP, Node test runner, a small deterministic graph engine, and an optional frozen-weight message-passing Familiar.
+TypeScript, React, vinext on Cloudflare Workers, WebMCP, a Streamable HTTP MCP endpoint for ChatGPT, Node test runner, a small deterministic graph engine, and an optional frozen-weight message-passing Familiar.
 
 ## Submission assets
 
